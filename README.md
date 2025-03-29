@@ -51,7 +51,7 @@ In specific, the differences between my fork and the original are:
 * **Added the usual power patches**: Compound assignments (`+=`, `-=`, `..=` and friends), `continue`, `!=` alias for `~=`, digit separators (`1_000`).
 
 > [!WARNING]
-> While this library is functional, expect bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find then by grepping **CSLUA_FAIL** in the test/suite folder. Don't expect a stable API.
+> While this library is functional, expect bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find them by grepping **CSLUA_FAIL** in the test/suite folder. Don't expect a stable API.
 
 
 Pull requests are welcome.
