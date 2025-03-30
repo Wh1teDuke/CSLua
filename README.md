@@ -45,7 +45,7 @@ This project is a big refactoring of the original code. [@Xebecnan](https://gith
 In specific, the differences between my fork and the original are:
 
 * **Code refactoring**: Remove references to unity, create new folders.
-* **Performance improvements**: Converted code to use structs and spans where it makes sense. For example, `StkId` is no longer a class but a ref a `TValue`.
+* **Performance improvements**: Converted code to use structs and spans where it makes sense. For example, `StkId` is no longer a class but a ref to `TValue`.
 * **Added Tests**: Including some of the basic [Lua 5.2 test suite](https://www.lua.org/tests/).
 * **Implement some functions of the standard library that were missing**: This is still incomplete.
 * **Added some [power patches](Test/TestPatches.cs)**: Compound assignments (`+=`, `-=`, `..=` and friends), `continue`, `!=` alias for `~=`, digit separators (`1_000`), implicit pairs (`for i, v in {1, 2, 3} do ...`).
