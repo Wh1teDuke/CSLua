@@ -40,7 +40,7 @@ Lua 5.2 implemented in pure C#. For more examples, check out the [`Test` folder]
 ## About CSLua
 
 **CSLua** is fork of [UniLua](https://github.com/xebecnan/UniLua). I needed a Lua interpreter compatible with [AoT C#](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) and as efficient as possible. Unfortunately most libraries don't make the cut due to being focused on unity or allocating too much garbage.
-This project is a big refactoring of the original code. Xebecnan's UniLua targets version 5.2 but it also includes some 5.3 features such as utf8 support and integers.
+This project is a big refactoring of the original code. [@Xebecnan](https://github.com/xebecnan)'s UniLua targets version 5.2 but it also includes some 5.3 features such as utf8 support and integers.
 
 In specific, the differences between my fork and the original are:
 
