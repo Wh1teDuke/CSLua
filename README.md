@@ -48,10 +48,10 @@ In specific, the differences between my fork and the original are:
 * **Performance improvements**: Converted code to use structs and spans where it makes sense. For example, `StkId` is no longer a class but a ref a `TValue`.
 * **Added Tests**: Including some of the basic [Lua 5.2 test suite](https://www.lua.org/tests/).
 * **Implement some functions of the standard library that were missing**: This is still incomplete.
-* **Added the usual power patches**: Compound assignments (`+=`, `-=`, `..=` and friends), `continue`, `!=` alias for `~=`, digit separators (`1_000`).
+* **Added some [power patches](Test/TestPatches.cs)**: Compound assignments (`+=`, `-=`, `..=` and friends), `continue`, `!=` alias for `~=`, digit separators (`1_000`), implicit pairs (`for i, v in {1, 2, 3} do ...`).
 
 > [!WARNING]
-> While this library is functional, expect bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find them by grepping **CSLUA_FAIL** in the [test/suite folder](Test/suite). Don't expect a stable API.
+> While this library is functional, expect some bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find them by grepping **CSLUA_FAIL** in the [test/suite folder](Test/suite). Don't expect a stable API.
 
 
-Pull requests are welcome.
+Contributions are welcome.
