@@ -24,6 +24,9 @@ public sealed class TestPatches
         L.Eval("local foo = 1; foo += 1; return foo;");
         Assert.Equal(2, L.PopInteger());
         
+        L.Eval("local foo = {bar=1}; foo.bar += 1; return foo.bar;");
+        Assert.Equal(2, L.PopInteger());
+        
         L.Eval("local foo = 2; foo -= 1; return foo;");
         Assert.Equal(1, L.PopInteger());
         
