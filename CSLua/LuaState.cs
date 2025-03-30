@@ -3269,7 +3269,7 @@ public sealed class LuaState : ILuaState
 							GetGlobal("pairs");
 							if (!Stack[cbi].TtIsFunction())
 							{
-								G_TypeError(ra, "invalid iterator");
+								G_TypeError(ra, "iterate");
 							}
 						}
 						else
