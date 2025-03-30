@@ -253,7 +253,8 @@ public sealed class LuaState : ILuaState
 	private enum TMS
 	{
 		TM_INDEX, TM_NEWINDEX, TM_GC, TM_MODE, TM_LEN, TM_EQ, TM_ADD, TM_SUB,
-		TM_MUL, TM_DIV, TM_MOD, TM_POW, TM_UNM, TM_LT, TM_LE, TM_CONCAT, TM_CALL
+		TM_MUL, TM_DIV, TM_MOD, TM_POW, TM_UNM, TM_LT, TM_LE, TM_CONCAT, 
+		TM_CALL, TM_ITER,
 	}
 
 	private static string GetTagMethodName(TMS tm)
@@ -277,6 +278,7 @@ public sealed class LuaState : ILuaState
 			TMS.TM_LE => "__le",
 			TMS.TM_CONCAT => "__concat",
 			TMS.TM_CALL => "__call",
+			TMS.TM_ITER => "__iter",
 			_ => throw new ArgumentOutOfRangeException(nameof(tm), tm, null)
 		};
 	}
@@ -3257,6 +3259,40 @@ public sealed class LuaState : ILuaState
 				{
 					var rai = raIdx;
 					var cbi = raIdx + 3;
+
+					if (!ra.V.TtIsFunction())
+					{
+						if (!T_TryGetTMByObj(ra, TMS.TM_ITER, out var tm)
+						    || !tm.V.TtIsFunction())
+						{
+							TopIndex = cbi;
+							GetGlobal("pairs");
+							if (!Stack[cbi].TtIsFunction())
+							{
+								G_TypeError(ra, "invalid iterator");
+							}
+						}
+						else
+						{
+							Stack[cbi].SetObj(tm);
+						}
+
+						Stack[cbi + 1].SetObj(ra);
+						TopIndex = cbi + 2;
+						// PROTECT
+						D_Call(Ref[cbi], 3, true);
+						env.Base = ci.BaseIndex;
+						//
+						TopIndex = CI.TopIndex;
+						rai = env.RAIndex;
+						ra = env.RA;
+						cbi = rai + 3;
+						Stack[rai + 2].SetObj(Ref[cbi + 2]);
+						Stack[rai + 1].SetObj(Ref[cbi + 1]);
+						Stack[rai].SetObj(Ref[cbi]);
+						TopIndex = rai + 3;
+					}
+					
 					Stack[cbi + 2].SetObj(Ref[rai + 2]);
 					Stack[cbi + 1].SetObj(Ref[rai + 1]);
 					Stack[cbi].SetObj(Ref[rai]);
