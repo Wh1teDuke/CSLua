@@ -17,6 +17,7 @@ public interface ILuaAuxLib
 	int 	L_CheckInteger(int narg);
 	string 	L_CheckString(int narg);
 	uint	L_CheckUnsigned(int narg);
+	object	L_CheckUserData(int narg);
 	void 	L_ArgCheck(bool cond, int narg, string extraMsg);
 	int 	L_ArgError( int nArg, string extraMsg );
 	string 	L_TypeName( int index );

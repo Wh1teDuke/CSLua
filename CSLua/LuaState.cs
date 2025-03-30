@@ -247,6 +247,14 @@ public sealed class LuaState : ILuaState
 
 	public void DumpStack(int baseIndex, string tag = "") => 
 		ULDebug.Log(DumpStackToString(baseIndex, tag));
+	
+	
+	// grep `NoTagMethodFlags' if num of TMS >= 32
+	private enum TMS
+	{
+		TM_INDEX, TM_NEWINDEX, TM_GC, TM_MODE, TM_LEN, TM_EQ, TM_ADD, TM_SUB,
+		TM_MUL, TM_DIV, TM_MOD, TM_POW, TM_UNM, TM_LT, TM_LE, TM_CONCAT, TM_CALL
+	}
 
 	private static string GetTagMethodName(TMS tm)
 	{
@@ -2115,6 +2123,13 @@ public sealed class LuaState : ILuaState
 		return d;
 	}
 
+	public object L_CheckUserData(int nArg)
+	{
+		var o = API.ToUserData(nArg);
+		if (o == null) TagError(nArg, LuaType.LUA_TUSERDATA);
+		return o;
+	}
+
 	public T L_Opt<T>(Func<int,T> f, int n, T def)
 	{
 		var t = API.Type(n);
@@ -2718,6 +2733,7 @@ public sealed class LuaState : ILuaState
 			}
 #endif
 
+			// WARNING: several calls may realloc the stack and invalidate 'ra'
 			var raIdx = env.Base + i.GETARG_A();
 			var ra = env.RA;
 

@@ -435,7 +435,7 @@ public static class LuaBaseLib
 		return lua.IsNil(-1) ? 1 : 2;
 	}
 
-	static readonly CSharpFunctionDelegate DG_IpairsAux = IpairsAux;
+	private static readonly CSharpFunctionDelegate DG_IpairsAux = IpairsAux;
 
 	public static int B_Ipairs(ILuaState lua) => 
 		PairsMeta(lua, "__ipairs", true, DG_IpairsAux);

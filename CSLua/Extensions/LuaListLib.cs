@@ -12,18 +12,20 @@ public static class LuaListLib
     {
         Span<NameFuncPair> define =
         [
-            new("new",      ListNew),
-            new("del",      ListDel),
-            new("contains", ListContains),
-            new("indexof",  ListIndexOf),
-            new("add",      ListAdd),
-            new("get",      ListGet),
-            new("set",      ListSet),
-            new("len",      ListLength),
-            new("sort",     ListSort),
-            new("clear",    ListClear),
-            new("isempty",  ListIsEmpty),
-            new("next",     ListNext),
+            new("new",          ListNew),
+            new("del",          ListDel),
+            new("contains",     ListContains),
+            new("indexof",      ListIndexOf),
+            new("add",          ListAdd),
+            new("addall",       ListAddAll),
+            new("get",          ListGet),
+            new("set",          ListSet),
+            new("len",          ListLength),
+            new("sort",         ListSort),
+            new("clear",        ListClear),
+            new("isempty",      ListIsEmpty),
+            new("next",         ListNext),
+            new("pairs", 	    ListPairs),
         ];
 
         lua.L_NewLib(define);
@@ -51,7 +53,7 @@ public static class LuaListLib
     private static int ListDel(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         var index = lua.ToInteger(2);
         var value = list[index];
 
@@ -72,7 +74,7 @@ public static class LuaListLib
     private static int ListIndexOf(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         if (!L.Index2Addr(2, out var addr))
             lua.L_Error("Can't access variable");
 
@@ -92,7 +94,7 @@ public static class LuaListLib
     private static int ListContains(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         if (!L.Index2Addr(2, out var addr))
             lua.L_Error("Can't access variable");
 
@@ -111,7 +113,7 @@ public static class LuaListLib
     private static int ListAdd(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         var top = lua.GetTop();
 
         for (var i = 2; i <= top; i++)
@@ -123,11 +125,26 @@ public static class LuaListLib
 
         return 0;
     }
+    
+    private static int ListAddAll(ILuaState lua)
+    {
+        var list1 = CheckList(lua, 1);
+        var top = lua.GetTop();
+
+        for (var i = 2; i <= top; i++)
+        {
+            var list2 = CheckList(lua, i);
+            foreach (var t in list2)
+                list1.Add(t);
+        }
+
+        return 0;
+    }
 
     private static int ListGet(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         var index = lua.ToInteger(2);
         var value = list[index];
         L.Push(value);
@@ -137,7 +154,7 @@ public static class LuaListLib
     private static int ListSet(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         var index = lua.ToInteger(2);
         if (!L.Index2Addr(3, out var addr))
             lua.L_Error("Can't access variable");
@@ -148,28 +165,28 @@ public static class LuaListLib
 
     private static int ListLength(ILuaState lua)
     {
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         lua.PushInteger(list.Count);
         return 1;
     }
 
     private static int ListSort(ILuaState lua)
     {
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         list.Sort();
         return 0;
     }
     
     private static int ListClear(ILuaState lua)
     {
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         list.Clear();
         return 0;
     }
     
     private static int ListIsEmpty(ILuaState lua)
     {
-        var list = (List<TValue>)lua.ToUserData(1);
+        var list = CheckList(lua, 1);
         lua.PushBoolean(list.Count == 0);
         return 1;
     }
@@ -178,10 +195,8 @@ public static class LuaListLib
     {
         var L = (LuaState)lua;
         lua.SetTop(2);
-        
-        if (L.Ref[L.TopIndex - 2].V.OValue is not List<TValue> list)
-            throw new LuaException("List expected");
 
+        var list = CheckList(lua, 1);
         var key = L.Ref[L.TopIndex - 1];
         var index = 0;
 
@@ -205,5 +220,26 @@ public static class LuaListLib
         lua.Pop(1);
         lua.PushNil();
         return 1;
+    }
+    
+    private static int ListPairs(ILuaState lua)
+    {
+        CheckList(lua, 1);
+        lua.PushCSharpFunction(ListNext);
+        lua.PushValue(1);
+        lua.PushNil();
+
+        return 3;
+    }
+
+    private static List<TValue> CheckList(ILuaState L, int arg)
+    {
+        if (L.L_CheckUserData(arg) is not List<TValue> list)
+        {
+            L.L_ArgError(arg, "expected a list");
+            return null!;// Never happens
+        }
+
+        return list;
     }
 }

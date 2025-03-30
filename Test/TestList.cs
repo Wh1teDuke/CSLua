@@ -77,4 +77,54 @@ public sealed class TestList
         var i = L.PopInteger();
         Assert.Equal(6, i);
     }
+
+    [Fact]
+    public void TestPairs1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               local res = 0
+
+               for i, v in list.pairs(list1) do
+                 assert(list.get(list1, i) == v)
+                 res += v
+               end
+
+               return res
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(6, i);
+    }
+    
+    [Fact]
+    public void TestAddAll1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               local list2 = list.new(4, 5, 6)
+
+               list.addall(list1, list2)
+
+               return list1
+               """);
+
+        var list = (List<TValue>)L.PopUserData()!;
+        Assert.Equal(6, list.Count);
+        
+        for (var i = 0; i < list.Count; i++)
+        {
+            Assert.Equal(i + 1, list[i].NValue);
+        }
+    }
 }
