@@ -96,6 +96,16 @@ public static class TestError
             Eval("foobar()"));
         Assert.StartsWith("foobar():1: Attempt to call a nil value", e.Message);
     }
+    
+    [Fact]
+    public static void TestParserCompoundAssBug1()
+    {
+        // Comp ass bug
+        var L = new LuaState();
+        var e = Assert.ThrowsAny<LuaException>(() =>
+            L.Eval("for i = 1, 10 do res += i end"));
+        Assert.StartsWith("for i = 1, 10 do res += i end:1: Attempt to Perform arithmetic on a nil value", e.Message);
+    }
 
     private static void Parse(string src) => Parser.Read(src, "Test");
     private static void Eval(string src) => new LuaState().Eval(src);

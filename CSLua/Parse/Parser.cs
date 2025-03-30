@@ -64,6 +64,8 @@ public enum ExpKind
 	VVARARG	/* info = instruction pc */
 }
 
+internal enum AssignmentKind { NORMAL_ASSIGNMENT, COMPOUND_ASSIGNMENT }
+
 public static class ExpKindUtl
 {
 	public static bool VKIsVar(ExpKind k) =>
@@ -125,7 +127,7 @@ public record struct LabelDesc(
 
 public sealed class LHSAssign
 {
-	public LHSAssign? 	Prev;
+	public LHSAssign? 	Prev, Next;
 	public readonly ExpDesc	Exp = new();
 }
 
@@ -1005,8 +1007,7 @@ public sealed class Parser
 		SuffixedExp(v.Exp);
 
 		// stat -> assignment ?
-		if ((_lexer.Token.Val1 is '=' or ',') || 
-		    (_lexer.Token.Val1 > (int)TK.COMP_START && _lexer.Token.Val1 < (int)TK.COMP_END))
+		if ((_lexer.Token.Val1 is '=' or ',' or > (int)TK.COMP_START and < (int)TK.COMP_END))
 		{
 			v.Prev = null;
 			Assignment(v, 1);
@@ -1292,27 +1293,28 @@ public sealed class Parser
 	}
 
 	// assignment -> ',' suffixedexp assignment
-	private void Assignment(LHSAssign lh, int nVars)
+	private AssignmentKind Assignment(LHSAssign lh, int nVars)
 	{
+		var kind = AssignmentKind.NORMAL_ASSIGNMENT;
 		CheckCondition(ExpKindUtl.VKIsVar(lh.Exp.Kind), "syntax error");
 		var e = new ExpDesc();
 
 		if (TestNext(','))
 		{
-			var nv = new LHSAssign { Prev = lh };
+			var nv = new LHSAssign { Prev = lh, Next = null };
+			lh.Next = nv;
 			SuffixedExp(nv.Exp);
 			if (nv.Exp.Kind != ExpKind.VINDEXED)
 				CheckConflict(lh, nv.Exp);
 			CheckLimit(_curFunc, nVars + _NumCSharpCalls,
 				LuaLimits.LUAI_MAXCCALLS, "C# levels");
-			Assignment(nv, nVars + 1);
+			kind = Assignment(nv, nVars + 1);
 		}
-		else if (_lexer.Token.Val1 > (int)TK.COMP_START && _lexer.Token.Val1 < (int)TK.COMP_END) 
+		else if (_lexer.Token.Val1 is > (int)TK.COMP_START and < (int)TK.COMP_END) 
 		{ 
 			/* restassign -> opeq expr */
 			CheckCondition(nVars == 1, "compound assignment not allowed on tuples");
-			CompoundAssignment(lh.Exp);
-			return;
+			return CompoundAssignment(lh, nVars);
 		} 
 		else
 		{
@@ -1331,37 +1333,54 @@ public sealed class Parser
 			{
 				Coder.SetOneRet(_curFunc, e);
 				Coder.StoreVar(_curFunc, lh.Exp, e);
-				return;
+				return kind; /* avoid default */
 			}
 		}
+
+		if (kind == AssignmentKind.COMPOUND_ASSIGNMENT)
+			return kind;
 
 		// default assignment
 		InitExp(e, ExpKind.VNONRELOC, _curFunc.FreeReg - 1);
 		Coder.StoreVar(_curFunc, lh.Exp, e);
+		return kind;
 	}
 
-	private void CompoundAssignment(ExpDesc exp)
+	private AssignmentKind CompoundAssignment(LHSAssign lh, int nVars)
 	{
+		// https://github.com/SnapperTT/lua-luajit-compound-operators
 		var bop = GetBinOpr(_lexer.Token.Val1);
 		var fState = _curFunc;
 		var toLevel = fState.NumActVar;
 		var oldFree = fState.FreeReg;
 		var line = _lexer.LineNumber;
+		var e = new ExpDesc();
+		var infix = new ExpDesc();
+
+		var assign = lh;
+		while(assign.Prev != null) 
+			assign = assign.Prev;
 
 		_lexer.Next();
 
 		/* create temporary local variables to lock up any registers needed by indexed lvalues. */
 		var top = fState.NumActVar;
-		// protect both the table and index result registers,
-		// ensuring that they won't be overwritten prior to the
-		// storevar calls.
-
-		if (exp.Kind == ExpKind.VINDEXED)
+		var a = lh;
+		while (a != null)
 		{
-			if (exp.Ind.T >= top)
-				top = exp.Ind.T + 1;
-			if (exp.Kind == ExpKind.VINDEXED && exp.Ind.Idx >= top)
-				top = exp.Ind.Idx + 1;
+			var exp = a.Exp;
+			// protect both the table and index result registers,
+			// ensuring that they won't be overwritten prior to the
+			// storevar calls.
+
+			if (exp.Kind == ExpKind.VINDEXED)
+			{
+				if (!Instruction.ISK(exp.Ind.T) && exp.Ind.T >= top)
+					top = exp.Ind.T + 1;
+				if (!Instruction.ISK(exp.Ind.Idx) && exp.Ind.Idx >= top)
+					top = exp.Ind.Idx + 1;
+			}
+			a = a.Prev;
 		}
 
 		var nExtra = top - fState.NumActVar;
@@ -1372,19 +1391,61 @@ public sealed class Parser
 			AdjustLocalVars(nExtra);
 		}
 
-		var infix = new ExpDesc();
-		infix.CopyFrom(exp);
-		Coder.Infix(fState, bop, infix);
+		var npexs = 0;
+		while (true)
+		{
+			if (assign == null)
+			{
+				_lexer.SyntaxError("too many right hand side values in compound assignment");
+			}
 
-		var e = new ExpDesc();
-		Expr(e);
+			infix.CopyFrom(assign.Exp);
+			Coder.Infix(fState, bop, infix);
+			Expr(e);
 
-		Coder.PosFix(fState, bop, infix, e, line);
-		Coder.StoreVar(fState, exp, infix);
+			if (_lexer.Token.Val1 == ',')
+			{
+				Coder.PosFix(fState, bop, infix, e, line);
+				Coder.StoreVar(fState, assign.Exp, infix);
+				assign = assign.Next;
+				npexs++;
+			}
+
+			if (!TestNext(',')) break;
+		}
+
+		if (npexs + 1 == nVars)
+		{
+			Coder.PosFix(fState, bop, infix, e, line);
+			Coder.StoreVar(fState, lh.Exp, infix);
+		}
+		else if (HasMultiRet(e.Kind))
+		{
+			AdjustAssign(nVars - npexs, 1, e);
+			assign = lh;
+
+			var top2 = _curFunc.FreeReg - 1;
+			var firstTop = top2;
+
+			for (var i = 0; i < nVars - npexs; i++)
+			{
+				infix = assign.Exp;
+				Coder.Infix(fState, bop, infix);
+				InitExp(e, ExpKind.VNONRELOC, top2--);
+				Coder.PosFix(fState, bop, infix, infix, line);
+				Coder.StoreVar(fState, assign.Exp, infix);
+			}
+		}
+		else
+		{
+			_lexer.SyntaxError("insufficient right hand variables in compound assignment.");
+		}
+		
 		RemoveVars(fState, toLevel);
-
 		if (oldFree < fState.FreeReg)
 			fState.FreeReg = oldFree;
+
+		return AssignmentKind.COMPOUND_ASSIGNMENT;
 	}
 
 	private int ExpList(ExpDesc e)
