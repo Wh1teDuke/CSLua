@@ -2,6 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using CSLua.Utils;
 using NotImplementedException = System.NotImplementedException;
+// ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+// ReSharper disable InconsistentNaming
 
 namespace CSLua.Parse;
 
@@ -173,7 +175,6 @@ public struct Instruction(uint val)
 		(Instruction)((((uint)op) << POS_OP) | ((uint)a << POS_Ax));
 }
 
-[SuppressMessage("ReSharper", "SwitchStatementHandlesSomeKnownEnumValuesWithDefault")]
 public static class Coder
 {
 	public const int NO_JUMP = -1;

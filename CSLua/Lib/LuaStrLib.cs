@@ -373,27 +373,27 @@ public static class LuaStrLib
 		return -1;
 	}
 
-	private static int Match( MatchState ms, int s, int p )
+	private static int Match(MatchState ms, int s, int p)
 	{
 		var lua = ms.Lua;
 		init: // using goto's to optimize tail recursion
-		if( p == ms.PatternEnd )
+		if (p == ms.PatternEnd)
 			return s;
-		switch( ms.Pattern[p] )
+		switch (ms.Pattern[p])
 		{
 			case '(': // start capture
 			{
-				if( ms.Pattern[p+1] == ')' ) // position capture?
-					return StartCapture( ms, s, p+2, CAP_POSITION );
-				return StartCapture( ms, s, p+1, CAP_UNFINISHED );
+				if (ms.Pattern[p + 1] == ')') // position capture?
+					return StartCapture(ms, s, p + 2, CAP_POSITION);
+				return StartCapture(ms, s, p + 1, CAP_UNFINISHED);
 			}
 			case ')': // end capture
 			{
-				return EndCapture( ms, s, p+1 );
+				return EndCapture(ms, s, p + 1);
 			}
 			case '$':
 			{
-				if( p+1 == ms.PatternEnd ) // is the `$' the last char in pattern?
+				if (p + 1 == ms.PatternEnd) // is the `$' the last char in pattern?
 					return (s == ms.SrcEnd) ? s : -1; // check end of string
 				goto default;
 			}
@@ -698,8 +698,8 @@ public static class LuaStrLib
 				}
 				default: // also treat cases `pnLlh'
 				{
-					return lua.L_Error( "invalid option '{0}' to 'format'",
-						format[s - 1] );
+					return lua.L_Error("invalid option '{0}' to 'format'",
+						format[s - 1]);
 				}
 			}
 		}
@@ -733,7 +733,7 @@ public static class LuaStrLib
 	{
 		var src = lua.ToString(lua.UpValueIndex(1));
 		var pattern = lua.ToString(lua.UpValueIndex(2));
-		
+
 		var ms = new MatchState(lua, src, pattern)
 		{
 			SrcInit = 0,
