@@ -49,6 +49,16 @@ In specific, the differences between my fork and the original are:
 * **Added Tests**: Including some of the basic [Lua 5.2 test suite](https://www.lua.org/tests/).
 * **Implement some functions of the standard library that were missing**: This is still incomplete.
 * **Added some [power patches](Test/TestPatches.cs)**: Compound assignments (`+=`, `-=`, `..=` and friends), `continue`, `!=` alias for `~=`, digit separators (`1_000`), implicit pairs (`for i, v in {1, 2, 3} do ...`).
+* **First class citizen support for lists**: 
+```lua
+local list = require 'list'
+local list1 = list.new(1, 2, 3)
+list1[0] = 2
+assert(list1[0] == 2)
+assert(#list1 == 3)
+list.add(list1, 4)
+assert(#list1 == 4)
+```
 
 > [!WARNING]
 > While this library is functional, expect some bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find them by grepping **CSLUA_FAIL** in the [test/suite folder](Test/suite). Don't expect a stable API.
