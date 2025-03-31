@@ -689,7 +689,7 @@ public sealed class Parser
 		CheckRepeated(fs, _activeLabels, label);
 		CheckNext(TK.DBCOLON);
 
-		var desc = NewLabelEntry(label, line, fs.Pc);
+		var desc = NewLabelEntry(label, line, Coder.GetLabel(fs));
 		_activeLabels.Add(desc);
 		SkipNoOpStat();
 		if (BlockFollow(false))
@@ -879,8 +879,7 @@ public sealed class Parser
 			// handle goto/break
 			GotoStat(v.ExitTrue);
 
-			// skip other no-op statements
-			SkipNoOpStat();
+			while (TestNext(';'));  /* skip semicolons */
 
 			// `goto' is the entire block?
 			if (BlockFollow(false))
@@ -1247,6 +1246,8 @@ public sealed class Parser
 				Coder.CodeNil(fs, reg, extra);
 			}
 		}
+		if (nexps > nvars)
+			fs.FreeReg -= nexps - nvars; // Remove extra values
 	}
 
 	// check whether, in an assignment to an upvalue/local variable, the
@@ -1323,11 +1324,6 @@ public sealed class Parser
 			if (nexps != nVars)
 			{
 				AdjustAssign(nVars, nexps, e);
-				if (nexps > nVars)
-				{
-					// remove extra values
-					_curFunc.FreeReg -= (nexps - nVars);
-				}
 			}
 			else
 			{
