@@ -31,7 +31,7 @@ public sealed class TestParseString
         var parser = Of(src);
         // Const#1   string   "s1"
         // Const#2   string   ???
-        return parser.Proto.K[1].SValue();
+        return parser.Proto.K[1].AsString();
     }
     
     private static Parser Of(string src) => 

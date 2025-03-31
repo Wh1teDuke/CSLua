@@ -202,7 +202,7 @@ public sealed class TestOP
             var v = consts[kIdx++];
             if (v is int vInt)
             {
-                Assert.True(k.TtIsNumber());
+                Assert.True(k.IsNumber());
                 Assert.Equal(LuaType.LUA_TNUMBER, (LuaType)k.Tt);
                 Assert.Equal(vInt, k.NValue);
             }

@@ -30,7 +30,7 @@ public sealed class LuaTable
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
 		if (key.V.Tt == (int)LuaType.LUA_TSTRING)
-			return TryGetStr(key.V.SValue(), out value);
+			return TryGetStr(key.V.AsString(), out value);
 
 		var h = key.V.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
@@ -48,7 +48,7 @@ public sealed class LuaTable
 	public TValue? TryGet(string key)
 	{
 		var val = new TValue();
-		val.SetSValue(key);
+		val.SetString(key);
 		if (TryGet(new StkId(ref val), out var result))
 			return result.V;
 		return null;
@@ -60,7 +60,7 @@ public sealed class LuaTable
 		var h = key.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
 		{
-			if (node.Key.TtIsString() && node.Key.SValue() == key)
+			if (node.Key.IsString() && node.Key.AsString() == key)
 			{
 				value = node.PtrVal;
 				return true;
@@ -80,10 +80,10 @@ public sealed class LuaTable
 		}
 
 		var k = new TValue();
-		k.SetNValue(key);
+		k.SetDouble(key);
 		for (var node = GetHashNode(new StkId(ref k)); node != null; node = node.Next) 
 		{
-			if (node.Key.TtIsNumber() && node.Key.NValue == key)
+			if (node.Key.IsNumber() && node.Key.NValue == key)
 			{
 				value = node.PtrVal;
 				return true;
@@ -101,7 +101,7 @@ public sealed class LuaTable
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
 		if (key.V.Tt == (int)LuaType.LUA_TSTRING)
-			return TryGetStr(key.V.SValue(), out value);
+			return TryGetStr(key.V.AsString(), out value);
 
 		var h = key.V.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
@@ -128,8 +128,8 @@ public sealed class LuaTable
 		var k = new TValue();
 		var v = new TValue();
 		
-		k.SetSValue(key);
-		v.SetSValue(val);
+		k.SetString(key);
+		v.SetString(val);
 		
 		Set(new StkId(ref k), new StkId(ref v));
 	}
@@ -139,8 +139,8 @@ public sealed class LuaTable
 		var k = new TValue();
 		var v = new TValue();
 		
-		k.SetSValue(key);
-		v.SetNValue(val);
+		k.SetString(key);
+		v.SetDouble(val);
 		
 		Set(new StkId(ref k), new StkId(ref v));
 	}
@@ -150,7 +150,7 @@ public sealed class LuaTable
 		if (!TryGetInt(key, out var value))
 		{
 			var k = new TValue();
-			k.SetNValue(key);
+			k.SetDouble(key);
 			var value2 = NewTableKey(new StkId(ref k));
 			value2.Set(val);
 			return;
@@ -165,7 +165,7 @@ public sealed class LuaTable
 	 */
 	private int FindIndex(StkId key)
 	{
-		if (key.V.TtIsNil()) return -1;
+		if (key.V.IsNil()) return -1;
 
 		// Is 'key' inside array part?
 		if (ArrayIndex(key) is {} i and > 0 && i <= _arraySize)
@@ -192,9 +192,9 @@ public sealed class LuaTable
 		// Try first array part
 		for (i++; i < _arraySize; ++i)
 		{
-			if (_arrayPart[i].TtIsNil()) continue;
+			if (_arrayPart[i].IsNil()) continue;
 
-			key.V.SetNValue(i + 1);
+			key.V.SetDouble(i + 1);
 			val.Set(new StkId(ref _arrayPart[i]));
 			return true;
 		}
@@ -202,7 +202,7 @@ public sealed class LuaTable
 		// Then hash part
 		for (i -= _arraySize; i < _hashSize; ++i)
 		{
-			if (_hashPart[i].Val.TtIsNil()) continue;
+			if (_hashPart[i].Val.IsNil()) continue;
 
 			key.Set(_hashPart[i].PtrKey);
 			val.Set(_hashPart[i].PtrVal);
@@ -218,14 +218,14 @@ public sealed class LuaTable
 		get 
 		{
 			var j = (uint)_arraySize;
-			if (j > 0 && _arrayPart[j - 1].TtIsNil()) 
+			if (j > 0 && _arrayPart[j - 1].IsNil()) 
 			{
 				// There is a boundary in the array part: (binary) search for it
 				uint i = 0;
 				while (j - i > 1) 
 				{
 					var m = (i + j) / 2;
-					if (_arrayPart[m - 1].TtIsNil()) j = m;
+					if (_arrayPart[m - 1].IsNil()) j = m;
 					else i = m;
 				}
 				return (int)i;
@@ -257,14 +257,14 @@ public sealed class LuaTable
 			// Re-insert elements from vanishing slice
 			for (var i= naSize; i < oaSize; ++i) 
 			{
-				if (!oldArrayPart[i].TtIsNil()) 
+				if (!oldArrayPart[i].IsNil()) 
 					SetInt(i + 1, new StkId(ref oldArrayPart[i]));
 			}
 			
 			// Shrink array
 			for (var i = naSize; i < oaSize; ++i)
 			{
-				oldArrayPart[i].SetNilValue();
+				oldArrayPart[i].SetNil();
 			}
 		}
 
@@ -272,7 +272,7 @@ public sealed class LuaTable
 		for (var i = oldHashPartSize - 1; i >= 0; i--)
 		{
 			var node = oldHashPart[i];
-			if (!node.Val.TtIsNil())
+			if (!node.Val.IsNil())
 				Set(node.PtrKey, node.PtrVal);
 		}
 	}
@@ -310,7 +310,7 @@ public sealed class LuaTable
 		public DData()
 		{
 			var nil = new TValue();
-			nil.SetNilValue();
+			nil.SetNil();
 
 			DummyArrayPart = [];
 			DummyNode = new HNode { Key = nil, Val = nil, Next = null };
@@ -330,8 +330,8 @@ public sealed class LuaTable
 	private static HNode NewHNode()
 	{
 		var newNode = new HNode();
-		newNode.Key.SetNilValue();
-		newNode.Val.SetNilValue();
+		newNode.Key.SetNil();
+		newNode.Val.SetNil();
 		return newNode;
 	}
 
@@ -343,7 +343,7 @@ public sealed class LuaTable
 	}
 
 	private static bool IsPositiveInteger(StkId v) =>
-		v.V.TtIsNumber() && v.V.NValue > 0 &&
+		v.V.IsNumber() && v.V.NValue > 0 &&
 		v.V.NValue % 1 == 0 &&
 		v.V.NValue <= int.MaxValue; // Fix large number key bug
 
@@ -357,7 +357,7 @@ public sealed class LuaTable
 	private HNode GetHashNode(StkId v)
 	{
 		if (IsPositiveInteger(v)) return GetHashNode((int)v.V.NValue);
-		if (v.V.TtIsString()) return GetHashNode(v.V.SValue().GetHashCode());
+		if (v.V.IsString()) return GetHashNode(v.V.AsString().GetHashCode());
 		return GetHashNode(v.V.GetHashCode());
 	}
 
@@ -370,7 +370,7 @@ public sealed class LuaTable
 
 		var i = _arraySize;
 		for (; i < size; ++i) 
-			_arrayPart[i].SetNilValue();
+			_arrayPart[i].SetNil();
 
 		_arraySize = size;
 	}
@@ -406,7 +406,7 @@ public sealed class LuaTable
 		while (_lastFree > 0) 
 		{
 			var node = _hashPart[--_lastFree];
-			if (node.Key.TtIsNil()) return node;
+			if (node.Key.IsNil()) return node;
 		}
 		return null;
 	}
@@ -465,7 +465,7 @@ public sealed class LuaTable
 			// Count elements in range (2^(lg-1), 2^lg]
 			for (; i <= lim; ++i) 
 			{
-				if (!_arrayPart[i - 1].TtIsNil()) lc++;
+				if (!_arrayPart[i - 1].IsNil()) lc++;
 			}
 			nums[lg] += lc;
 			ause += lc;
@@ -481,7 +481,7 @@ public sealed class LuaTable
 		while (i-- > 0) 
 		{
 			var n = _hashPart[i];
-			if (!n.Val.TtIsNil()) 
+			if (!n.Val.IsNil()) 
 			{
 				ause += CountInt(n.PtrKey, nums);
 				totalUse++;
@@ -550,16 +550,16 @@ public sealed class LuaTable
 	
 	private StkId NewTableKey(StkId k)
 	{
-		if (k.V.TtIsNil()) 
+		if (k.V.IsNil()) 
 			L.G_RunError("Table index is nil");
 
-		if (k.V.TtIsNumber() && double.IsNaN(k.V.NValue)) 
+		if (k.V.IsNumber() && double.IsNaN(k.V.NValue)) 
 			L.G_RunError("Table index is NaN");
 
 		var node = GetHashNode(k);
 
 		// If main position is taken
-		if (!node.Val.TtIsNil() || node == DD.DummyNode)
+		if (!node.Val.IsNil() || node == DD.DummyNode)
 		{
 			var n = GetFreePos();
 			if (n == null) 
@@ -577,7 +577,7 @@ public sealed class LuaTable
 				otherN.Next = n;
 				n.CopyFrom(node);
 				node.Next = null;
-				node.Val.SetNilValue();
+				node.Val.SetNil();
 			}
 			// Colliding node is in its own main position
 			else 
@@ -589,7 +589,7 @@ public sealed class LuaTable
 		}
 
 		node.Key.SetObj(k);
-		Util.Assert(node.Val.TtIsNil());
+		Util.Assert(node.Val.IsNil());
 		return node.PtrVal;
 	}
 
@@ -597,7 +597,7 @@ public sealed class LuaTable
 	{
 		var i = j;
 		j++;
-		while (TryGetInt((int)j, out var v) && !v.V.TtIsNil()) 
+		while (TryGetInt((int)j, out var v) && !v.V.IsNil()) 
 		{
 			i = j;
 			j *= 2;
@@ -607,14 +607,14 @@ public sealed class LuaTable
 
 			// Table was built with bad purposes: resort to linear search
 			i = 1;
-			while (TryGetInt((int)i, out var v2) && !v2.V.TtIsNil()) i++;
+			while (TryGetInt((int)i, out var v2) && !v2.V.IsNil()) i++;
 			return (int)(i - 1);
 		}
 		// Now do a binary search between them
 		while (j - i > 1) 
 		{
 			var m = (i + j) / 2;
-			if (!TryGetInt((int)m, out var v) || v.V.TtIsNil()) j = m;
+			if (!TryGetInt((int)m, out var v) || v.V.IsNil()) j = m;
 			else i = m;
 		}
 		return (int)i;

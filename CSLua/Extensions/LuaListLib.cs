@@ -200,9 +200,9 @@ public static class LuaListLib
         var key = L.Ref[L.TopIndex - 1];
         var index = 0;
 
-        if (key.V.TtIsNil())
+        if (key.V.IsNil())
             index = -1;
-        else if (key.V.TtIsNumber())
+        else if (key.V.IsNumber())
             index = (int)key.V.NValue;
         else
             throw new LuaException("Integer index expected, got: " + key.V);
@@ -210,7 +210,7 @@ public static class LuaListLib
         if (index < list.Count - 1)
         {
             index++;
-            key.V.SetNValue(index);
+            key.V.SetDouble(index);
             var val = list[index];
             L.Top.Set(new StkId(ref val));
             L.ApiIncrTop();

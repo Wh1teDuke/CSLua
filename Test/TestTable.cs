@@ -21,8 +21,8 @@ public sealed class TestTable
         var foo = Assert.NotNull(optTVal1);
         var bar = Assert.NotNull(optTVal2);
 
-        Assert.Equal("foo", foo.SValue());
-        Assert.Equal("bar", bar.SValue());
+        Assert.Equal("foo", foo.AsString());
+        Assert.Equal("bar", bar.AsString());
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class TestTable
         var t = L.PopTable();
         var optTVal1 = t.TryGet("bar");
         var bar = Assert.NotNull(optTVal1);
-        Assert.Equal("bar", bar.SValue());
+        Assert.Equal("bar", bar.AsString());
     }
 
     [Fact]

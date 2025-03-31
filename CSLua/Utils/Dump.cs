@@ -107,14 +107,14 @@ internal sealed class DumpState
 				case (int)LuaType.LUA_TNIL:
 					break;
 				case (int)LuaType.LUA_TBOOLEAN:
-					DumpBool(k.BValue());
+					DumpBool(k.AsBool());
 					break;
 				case (int)LuaType.LUA_TUINT64:
 				case (int)LuaType.LUA_TNUMBER:
 					DumpBlock(BitConverter.GetBytes(k.NValue));
 					break;
 				case (int)LuaType.LUA_TSTRING:
-					DumpString(k.SValue());
+					DumpString(k.AsString());
 					break;
 				default:
 					Util.Assert(false);

@@ -713,21 +713,21 @@ public static class Coder
 	public static int StringK(FuncState fs, string s)
 	{
 		var o = new TValue();
-		o.SetSValue(s);
+		o.SetString(s);
 		return AddK(fs, ref o, ref o);
 	}
 
 	public static int NumberK(FuncState fs, double r)
 	{
 		var o = new TValue();
-		o.SetNValue(r);
+		o.SetDouble(r);
 		return AddK(fs, ref o, ref o);
 	}
 
 	private static int BoolK(FuncState fs, bool b)
 	{
 		var o = new TValue();
-		o.SetBValue(b);
+		o.SetBool(b);
 		return AddK(fs, ref o, ref o);
 	}
 
@@ -740,7 +740,7 @@ public static class Coder
 		// return AddK( fs, k, o );
 
 		var o = new TValue();
-		o.SetNilValue();
+		o.SetNil();
 		return AddK(fs, ref o, ref o);
 	}
 

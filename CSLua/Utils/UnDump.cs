@@ -223,17 +223,17 @@ public sealed class UnDump
 			switch (t)
 			{
 				case (int)LuaType.LUA_TNIL:
-					v.SetNilValue();
+					v.SetNil();
 					proto.K.Add(v);
 					break;
 
 				case (int)LuaType.LUA_TBOOLEAN:
-					v.SetBValue(LoadBoolean());
+					v.SetBool(LoadBoolean());
 					proto.K.Add(v);
 					break;
 
 				case (int)LuaType.LUA_TNUMBER:
-					v.SetNValue(LoadNumber());
+					v.SetDouble(LoadNumber());
 					proto.K.Add(v);
 					break;
 
@@ -241,7 +241,7 @@ public sealed class UnDump
 #if DEBUG_UNDUMP
 					ULDebug.Log("LuaType.LUA_TSTRING");
 #endif
-					v.SetSValue(LoadString());
+					v.SetString(LoadString());
 					proto.K.Add(v);
 					break;
 
