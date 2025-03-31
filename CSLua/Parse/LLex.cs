@@ -66,20 +66,14 @@ public readonly record struct LuaToken(
 	TokenKind Kind, int Val1, double Val2, string? str = null)
 {
 	public TK TokenType => (TK)Val1;
-	public String? Str => str;
+	public string? Str => str;
 	
-	public static LuaToken Literal(int val) => 
-		new LuaToken(TokenKind.Literal, val, 0);
-	public static LuaToken String(string str) => 
-		new LuaToken(TokenKind.String, (int)TK.STRING, 0, str);
-	public static LuaToken LongString(string str) => 
-		new LuaToken(TokenKind.LongString, (int)TK.STRING, 0, str);
-	public static LuaToken Named(string str) => 
-		new LuaToken(TokenKind.Named, (int)TK.NAME, 0, str);
-	public static LuaToken Number(double val) => 
-		new LuaToken(TokenKind.Number, (int)TK.NUMBER, val);
-	public static LuaToken Of(TK kind) => 
-		new LuaToken(TokenKind.Typed, (int)kind, 0);
+	public static LuaToken Literal(int val) => new(TokenKind.Literal, val, 0);
+	public static LuaToken String(string str) => new(TokenKind.String, (int)TK.STRING, 0, str);
+	public static LuaToken LongString(string str) => new(TokenKind.LongString, (int)TK.STRING, 0, str);
+	public static LuaToken Named(string str) => new(TokenKind.Named, (int)TK.NAME, 0, str);
+	public static LuaToken Number(double val) => new(TokenKind.Number, (int)TK.NUMBER, val);
+	public static LuaToken Of(TK kind) => new(TokenKind.Typed, (int)kind, 0);
 
 	public override string ToString()
 	{
@@ -116,8 +110,8 @@ public sealed class LLex
 	private int _savedStart = 0;
 
 	private static readonly FrozenDictionary<string, TK> ReservedWordDict =
-		new Dictionary<string, TK>()
-	{
+		new Dictionary<string, TK>
+		{
 		{ "local", TK.LOCAL },
 		{ "and", TK.AND },
 		{ "do", TK.DO },
@@ -215,8 +209,7 @@ public sealed class LLex
 
 	private string _GetSavedString() => _GetSavedSpan().ToString();
 	
-	private ReadOnlySpan<char> _GetSavedSpan() => 
-		new ReadOnlySpan<char>(_saved, _savedStart, _savedCount);
+	private ReadOnlySpan<char> _GetSavedSpan() => new(_saved, _savedStart, _savedCount);
 
 	private void ClearSaved()
 	{
@@ -338,7 +331,7 @@ public sealed class LLex
 			c[i] = (char)_current;
 			if (!CurrentIsXDigit())
 			{
-				_EscapeError(new string(c.ToArray(), 0, i + 1),
+				_EscapeError(new(c.ToArray(), 0, i + 1),
 					"Hexadecimal digit expected");
 				// error
 			}
@@ -362,7 +355,7 @@ public sealed class LLex
 			_Next();
 		}
 		if (r > byte.MaxValue)
-			_EscapeError(new string(c.ToArray(), 0, i),
+			_EscapeError(new(c.ToArray(), 0, i),
 				"Decimal escape too large");
 		return (byte)r;
 	}
