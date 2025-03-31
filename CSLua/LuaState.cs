@@ -1629,7 +1629,7 @@ public sealed class LuaState : ILuaState
 
 		if (index == LuaDef.LUA_REGISTRYINDEX)
 		{
-			addr = new StkId(ref G.Registry.V);
+			addr = G.Registry;
 			return true;
 		}
 		// upvalues
