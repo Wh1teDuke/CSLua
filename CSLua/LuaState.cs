@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
+using CSLua.Extensions;
 using CSLua.Lib;
 using CSLua.Parse;
 using CSLua.Utils;
@@ -1188,12 +1189,11 @@ public sealed class LuaState : ILuaState
 		switch (addr.V.Type)
 		{
 			case LuaType.LUA_TSTRING:
-				var s = addr.V.AsString();
-				return s == null ? 0 : s.Length;
+				return addr.V.AsString()?.Length ?? 0;
 			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
 			case LuaType.LUA_TTABLE:
-				return addr.V.AsTable().Length;
+				return addr.V.AsTable()?.Length ?? 0;
 			default: return 0;
 		}
 	}
@@ -1338,7 +1338,7 @@ public sealed class LuaState : ILuaState
 			case LuaType.LUA_TTABLE:
 			{
 				var tbl = addr.V.AsTable();
-				mt = tbl.MetaTable;
+				mt = tbl!.MetaTable;
 				break;
 			}
 			case LuaType.LUA_TUSERDATA:
@@ -1392,14 +1392,14 @@ public sealed class LuaState : ILuaState
 
 	public void GetGlobal(string name)
 	{
-		G.Registry.V.AsTable().TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
+		G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 		IncTop().V.SetString(name);
 		V_GetTable(gt, Ref[TopIndex - 1], Ref[TopIndex - 1]);
 	}
 
 	public void SetGlobal(string name)
 	{
-		G.Registry.V.AsTable().TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
+		G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 		IncTop().V.SetString(name);
 		V_SetTable(gt, Ref[TopIndex - 1], Ref[TopIndex - 2]);
 		TopIndex -= 2;
@@ -3260,7 +3260,12 @@ public sealed class LuaState : ILuaState
 
 					if (!ra.V.IsFunction())
 					{
-						if (!T_TryGetTMByObj(ra, TMS.TM_ITER, out var tm)
+						if (ra.V.OValue is List<TValue> && ra.V.IsUserData())
+						{
+							TopIndex = cbi + 1;
+							Ref[TopIndex - 1].V.SetCSClosure(LuaListLib.PairsCl);
+						}
+						else if (!T_TryGetTMByObj(ra, TMS.TM_ITER, out var tm)
 						    || !tm.V.IsFunction())
 						{
 							TopIndex = cbi;
@@ -3447,13 +3452,22 @@ public sealed class LuaState : ILuaState
 
 	private void V_GetTable(StkId t, StkId key, StkId val)
 	{
+		// Index a list?
+		if (t.V.OValue is List<TValue> list && t.V.IsUserData())
+		{
+			if (!key.V.IsNumber()) G_SimpleTypeError(t, "index");
+			var index = (int)key.V.NValue;
+			val.Set(new StkId(ref CollectionsMarshal.AsSpan(list)[index]));
+			return;
+		}
+		
 		for (var loop = 0; loop < MAXTAGLOOP; ++loop) 
 		{
 			StkId tmObj;
 			if (t.V.IsTable()) 
 			{
 				var tbl = t.V.AsTable();
-				tbl.TryGet(key, out var res);
+				tbl!.TryGet(key, out var res);
 				if (!res.V.IsNil()) 
 				{
 					val.V.SetObj(res);
@@ -3470,7 +3484,7 @@ public sealed class LuaState : ILuaState
 			}
 			else 
 			{
-				if (!T_TryGetTMByObj(t, TMS.TM_INDEX, out tmObj) || tmObj.V.IsNil())
+				if (!T_TryGetTMByObj(t, TMS.TM_INDEX, out tmObj) || tmObj.V.IsNil()) 
 					G_SimpleTypeError(t, "index");
 			}
 
@@ -3487,6 +3501,15 @@ public sealed class LuaState : ILuaState
 
 	private void V_SetTable(StkId t, StkId key, StkId val)
 	{
+		// Index a list?
+		if (t.V.OValue is List<TValue> list && t.V.IsUserData())
+		{
+			if (!key.V.IsNumber()) G_SimpleTypeError(t, "index");
+			var index = (int)key.V.NValue;
+			list[index] = val.V;
+			return;
+		}
+		
 		for (var loop = 0; loop < MAXTAGLOOP; ++loop)
 		{
 			StkId tmObj;
@@ -3562,10 +3585,15 @@ public sealed class LuaState : ILuaState
 			return;
 		}
 
-		var rbs = rb.V.AsString();
-		if (rbs != null)
+		if (rb.V.AsString() is {} rbs)
 		{
 			ra.V.SetDouble(rbs.Length);
+			return;
+		}
+		
+		if (rb.V.OValue is List<TValue> list && rb.V.IsUserData())
+		{
+			ra.V.SetDouble(list.Count);
 			return;
 		}
 

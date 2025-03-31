@@ -54,6 +54,7 @@ public struct TValue : IEquatable<TValue>
 	public bool IsTable() => Type == LuaType.LUA_TTABLE;
 	public bool IsFunction() => Type == LuaType.LUA_TFUNCTION;
 	public bool IsThread() => Type == LuaType.LUA_TTHREAD;
+	public bool IsUserData() => Type == LuaType.LUA_TLIGHTUSERDATA;
 
 	public bool IsLuaClosure() => OValue is LuaLClosureValue;
 	public bool IsCsClosure() => OValue is LuaCsClosureValue;

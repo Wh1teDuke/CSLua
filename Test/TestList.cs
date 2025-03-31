@@ -18,11 +18,11 @@ public sealed class TestList
 
                assert(list.contains(list1, 1))
                assert(list.indexof(list1, 1) == 0)
-               assert(list.len(list1) == 5)
+               assert(list.length(list1) == 5)
 
-               list.del(list1, 0)
+               list.remove(list1, 0)
 
-               assert(list.len(list1) == 4)
+               assert(list.length(list1) == 4)
                assert(not list.contains(list1, 1))
                assert(list.indexof(list1, 1) == -1)
 
@@ -46,7 +46,7 @@ public sealed class TestList
                 assert(list.isempty(list1))
                 list.add(list1, 1, 2, 3, 4, 5)
                 assert(not list.isempty(list1))
-                list.del(list1, 2, true)
+                list.remove(list1, 2, true)
                 return list.get(list1, 2)
                """);
         var i = L.PopInteger();
@@ -103,6 +103,30 @@ public sealed class TestList
     }
     
     [Fact]
+    public void TestPairs2()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               local res = 0
+
+               for i, v in list1 do
+                 assert(list.get(list1, i) == v)
+                 res += v
+               end
+
+               return res
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(6, i);
+    }
+    
+    [Fact]
     public void TestAddAll1()
     {
         var L = new LuaState();
@@ -126,5 +150,75 @@ public sealed class TestList
         {
             Assert.Equal(i + 1, list[i].NValue);
         }
+    }
+    
+    [Fact]
+    public void TestGetter1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               return list1[2]
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(3, i);
+    }
+    
+    [Fact]
+    public void TestSetter1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               list1[2] = 7
+               return list1[2]
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(7, i);
+    }
+    
+    [Fact]
+    public void TestLen1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               return #list1
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(3, i);
+    }
+    
+    [Fact]
+    public void TestInsert1()
+    {
+        var L = new LuaState();
+        L.L_OpenLibs();
+        L.Open(LuaListLib.NameFuncPair, false);
+        
+        L.Eval("""
+               local list = require 'list'
+               local list1 = list.new(1, 2, 3)
+               list.insert(list1, 1, 7)
+               return list1[1]
+               """);
+
+        var i = L.PopInteger();
+        Assert.Equal(7, i);
     }
 }

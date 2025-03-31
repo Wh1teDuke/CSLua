@@ -7,20 +7,23 @@ public static class LuaListLib
     public const string LIB_NAME = "list";
 	
     public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
+    
+    internal static readonly LuaCsClosureValue PairsCl = new (ListPairs);
 
     public static int OpenLib(ILuaState lua)
     {
         Span<NameFuncPair> define =
         [
             new("new",          ListNew),
-            new("del",          ListDel),
+            new("remove",       ListDel),
+            new("insert",       ListInsert),
             new("contains",     ListContains),
             new("indexof",      ListIndexOf),
             new("add",          ListAdd),
             new("addall",       ListAddAll),
             new("get",          ListGet),
             new("set",          ListSet),
-            new("len",          ListLength),
+            new("length",       ListLength),
             new("sort",         ListSort),
             new("clear",        ListClear),
             new("isempty",      ListIsEmpty),
@@ -70,7 +73,20 @@ public static class LuaListLib
         L.Push(value);
         return 1;
     }
-    
+
+    private static int ListInsert(ILuaState lua)
+    {
+        var L = (LuaState)lua;
+        var list = CheckList(lua, 1);
+        var index = lua.ToInteger(2);
+
+        if (!L.Index2Addr(3, out var addr))
+            lua.L_Error("Can't access variable");
+
+        list.Insert(index, addr.V);
+        return 0;
+    }
+
     private static int ListIndexOf(ILuaState lua)
     {
         var L = (LuaState)lua;
