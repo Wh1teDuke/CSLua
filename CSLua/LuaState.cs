@@ -303,20 +303,20 @@ public sealed class LuaState : ILuaState
 		val = StkId.Nil;
 		LuaTable? mt;
 
-		switch (o.V.Tt)
+		switch (o.V.Type)
 		{
-			case (int)LuaType.LUA_TTABLE:
+			case LuaType.LUA_TTABLE:
 			{
 				var tbl = o.V.AsTable();
 				mt = tbl.MetaTable;
 				break;
 			}
-			case (int)LuaType.LUA_TUSERDATA:
+			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
 
 			default:
 			{
-				mt = G.MetaTables[o.V.Tt];
+				mt = G.MetaTables[(int)o.V.Type];
 				break;
 			}
 		}
@@ -1096,7 +1096,7 @@ public sealed class LuaState : ILuaState
 	public LuaType Type(int index)
 	{
 		return !Index2Addr(index, out var addr) 
-			? LuaType.LUA_TNONE : (LuaType)addr.V.Tt;
+			? LuaType.LUA_TNONE : (LuaType)addr.V.Type;
 	}
 
 	internal static string TypeName(LuaType t)
@@ -1106,7 +1106,7 @@ public sealed class LuaState : ILuaState
 			LuaType.LUA_TNIL => "nil",
 			LuaType.LUA_TBOOLEAN => "boolean",
 			LuaType.LUA_TLIGHTUSERDATA => "lightuserdata",
-			LuaType.LUA_TUINT64 => "UInt64",
+			LuaType.LUA_TUINT64 => "ulong",
 			LuaType.LUA_TNUMBER => "number",
 			LuaType.LUA_TSTRING => "string",
 			LuaType.LUA_TTABLE => "table",
@@ -1122,7 +1122,7 @@ public sealed class LuaState : ILuaState
 	string ILua.TypeName(LuaType t) => TypeName(t);
 
 	private static string ObjTypeName(StkId v) => 
-		TypeName((LuaType)v.V.Tt);
+		TypeName((LuaType)v.V.Type);
 
 	// For internal use only; will not trigger an error in ApiIncrTop() due to Top exceeding CI.Top
 	private void O_PushString(string s)
@@ -1185,14 +1185,14 @@ public sealed class LuaState : ILuaState
 		if (!Index2Addr(index, out var addr))
 			Util.InvalidIndex();
 
-		switch (addr.V.Tt)
+		switch (addr.V.Type)
 		{
-			case (int)LuaType.LUA_TSTRING:
+			case LuaType.LUA_TSTRING:
 				var s = addr.V.AsString();
 				return s == null ? 0 : s.Length;
-			case (int)LuaType.LUA_TUSERDATA:
+			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
-			case (int)LuaType.LUA_TTABLE:
+			case LuaType.LUA_TTABLE:
 				return addr.V.AsTable().Length;
 			default: return 0;
 		}
@@ -1333,21 +1333,21 @@ public sealed class LuaState : ILuaState
 			Util.InvalidIndex();
 
 		LuaTable? mt;
-		switch (addr.V.Tt)
+		switch (addr.V.Type)
 		{
-			case (int)LuaType.LUA_TTABLE:
+			case LuaType.LUA_TTABLE:
 			{
 				var tbl = addr.V.AsTable();
 				mt = tbl.MetaTable;
 				break;
 			}
-			case (int)LuaType.LUA_TUSERDATA:
+			case LuaType.LUA_TUSERDATA:
 			{
 				throw new NotImplementedException();
 			}
 			default:
 			{
-				mt = G.MetaTables[addr.V.Tt];
+				mt = G.MetaTables[(int)addr.V.Type];
 				break;
 			}
 		}
@@ -1374,16 +1374,16 @@ public sealed class LuaState : ILuaState
 			mt = below.V.AsTable();
 		}
 
-		switch (addr.V.Tt)
+		switch (addr.V.Type)
 		{
-			case (int)LuaType.LUA_TTABLE:
+			case LuaType.LUA_TTABLE:
 				var tbl = addr.V.AsTable();
 				tbl.MetaTable = mt;
 				break;
-			case (int)LuaType.LUA_TUSERDATA:
+			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
 			default:
-				G.MetaTables[addr.V.Tt] = mt;
+				G.MetaTables[(int)addr.V.Type] = mt;
 				break;
 		}
 		--TopIndex;
@@ -1556,7 +1556,7 @@ public sealed class LuaState : ILuaState
 		}
 
 		isNum = true;
-		return addr.V.UInt64Value;
+		return addr.V.AsUInt64;
 	}
 
 	public ulong ToUInt64(int index) =>
@@ -1574,11 +1574,11 @@ public sealed class LuaState : ILuaState
 		if (!Index2Addr(index, out var addr))
 			return null!;
 
-		return addr.V.Tt switch
+		return addr.V.Type switch
 		{
-			(int)LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
-			(int)LuaType.LUA_TLIGHTUSERDATA => addr.V.OValue,
-			(int)LuaType.LUA_TUINT64 => addr.V.UInt64Value,
+			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
+			LuaType.LUA_TLIGHTUSERDATA => addr.V.OValue,
+			LuaType.LUA_TUINT64 => addr.V.AsUInt64,
 			_ => null!
 		};
 	}
@@ -3872,10 +3872,10 @@ public sealed class LuaState : ILuaState
 	}
 
 	internal bool V_RawEqualObj(StkId t1, StkId t2) => 
-		(t1.V.Tt == t2.V.Tt) && V_EqualObject(t1, t2, true);
+		(t1.V.Type == t2.V.Type) && V_EqualObject(t1, t2, true);
 
 	private bool EqualObj(StkId t1, StkId t2, bool rawEq) => 
-		(t1.V.Tt == t2.V.Tt) && V_EqualObject(t1, t2, rawEq);
+		(t1.V.Type == t2.V.Type) && V_EqualObject(t1, t2, rawEq);
 
 	private bool TryGetEqualTM(LuaTable? mt1, LuaTable? mt2, TMS tm, out StkId val)
 	{
@@ -3895,23 +3895,23 @@ public sealed class LuaState : ILuaState
 
 	private bool V_EqualObject(StkId t1, StkId t2, bool rawEq)
 	{
-		Util.Assert(t1.V.Tt == t2.V.Tt);
+		Util.Assert(t1.V.Type == t2.V.Type);
 		var tm = StkId.Nil;
-		switch (t1.V.Tt)
+		switch (t1.V.Type)
 		{
-			case (int)LuaType.LUA_TNIL:
+			case LuaType.LUA_TNIL:
 				return true;
-			case (int)LuaType.LUA_TNUMBER:
+			case LuaType.LUA_TNUMBER:
 				return t1.V.NValue == t2.V.NValue;
-			case (int)LuaType.LUA_TUINT64:
-				return t1.V.UInt64Value == t2.V.UInt64Value;
-			case (int)LuaType.LUA_TBOOLEAN:
+			case LuaType.LUA_TUINT64:
+				return t1.V.AsUInt64 == t2.V.AsUInt64;
+			case LuaType.LUA_TBOOLEAN:
 				return t1.V.AsBool() == t2.V.AsBool();
-			case (int)LuaType.LUA_TSTRING:
+			case LuaType.LUA_TSTRING:
 				return t1.V.AsString() == t2.V.AsString();
-			case (int)LuaType.LUA_TUSERDATA:
+			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
-			case (int)LuaType.LUA_TTABLE:
+			case LuaType.LUA_TTABLE:
 			{
 				var tbl1 = t1.V.AsTable();
 				var tbl2 = t2.V.AsTable();

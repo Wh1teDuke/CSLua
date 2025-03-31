@@ -26,7 +26,7 @@ public sealed class TestParseString
         Valid("_ = {a or 1}");
     }
 
-    private static string Str(string src)
+    private static string? Str(string src)
     {
         var parser = Of(src);
         // Const#1   string   "s1"

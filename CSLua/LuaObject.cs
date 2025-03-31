@@ -1,5 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using CSLua.Parse;
+using CSLua.Utils;
+
 // ReSharper disable InconsistentNaming
 namespace CSLua;
 
@@ -8,11 +10,9 @@ public struct TValue : IEquatable<TValue>
 	private const ulong BOOLEAN_FALSE = 0;
 	private const ulong BOOLEAN_TRUE = 1;
 
-	public object OValue;
+	public object? OValue;
 	public double NValue;
-	public ulong UInt64Value =>
-		BitConverter.DoubleToUInt64Bits(NValue);
-	public int Tt;
+	public LuaType Type;
 
 	public override bool Equals(object? o) => 
 		o is TValue value && Equals(value);
@@ -21,7 +21,7 @@ public struct TValue : IEquatable<TValue>
 	{
 		unchecked
 		{
-			var hashCode = Tt;
+			var hashCode = (int)Type;
 			hashCode = (hashCode * 397) ^ NValue.GetHashCode();
 			hashCode = (hashCode * 397) ^ OValue?.GetHashCode() ?? 0;
 			return hashCode;
@@ -30,15 +30,15 @@ public struct TValue : IEquatable<TValue>
 
 	public bool Equals(TValue o)
 	{
-		if (Tt != o.Tt) return false;
+		if (Type != o.Type) return false;
 
-		return Tt switch
+		return Type switch
 		{
-			(int)LuaType.LUA_TNIL => true,
-			(int)LuaType.LUA_TBOOLEAN => AsBool() == o.AsBool(),
-			(int)LuaType.LUA_TNUMBER => NValue == o.NValue,
-			(int)LuaType.LUA_TUINT64 => UInt64Value == o.UInt64Value,
-			(int)LuaType.LUA_TSTRING => AsString() == o.AsString(),
+			LuaType.LUA_TNIL => true,
+			LuaType.LUA_TBOOLEAN => AsBool() == o.AsBool(),
+			LuaType.LUA_TNUMBER => NValue == o.NValue,
+			LuaType.LUA_TUINT64 => AsUInt64 == o.AsUInt64,
+			LuaType.LUA_TSTRING => AsString() == o.AsString(),
 			_ => ReferenceEquals(OValue, o.OValue)
 		};
 	}
@@ -46,89 +46,92 @@ public struct TValue : IEquatable<TValue>
 	public static bool operator==(TValue lhs, TValue rhs) => lhs.Equals(rhs);
 	public static bool operator!=(TValue lhs, TValue rhs) => !lhs.Equals(rhs);
 
-	public bool IsNil() => Tt == (int)LuaType.LUA_TNIL;
-	public bool IsBoolean() => Tt == (int)LuaType.LUA_TBOOLEAN;
-	public bool IsNumber() => Tt == (int)LuaType.LUA_TNUMBER;
-	public bool IsUInt64() => Tt == (int)LuaType.LUA_TUINT64;
-	public bool IsString() => Tt == (int)LuaType.LUA_TSTRING;
-	public bool IsTable() => Tt == (int)LuaType.LUA_TTABLE;
-	public bool IsFunction() => Tt == (int)LuaType.LUA_TFUNCTION;
-	public bool IsThread() => Tt == (int)LuaType.LUA_TTHREAD;
+	public bool IsNil() => Type == LuaType.LUA_TNIL;
+	public bool IsBoolean() => Type == LuaType.LUA_TBOOLEAN;
+	public bool IsNumber() => Type == LuaType.LUA_TNUMBER;
+	public bool IsUInt64() => Type == LuaType.LUA_TUINT64;
+	public bool IsString() => Type == LuaType.LUA_TSTRING;
+	public bool IsTable() => Type == LuaType.LUA_TTABLE;
+	public bool IsFunction() => Type == LuaType.LUA_TFUNCTION;
+	public bool IsThread() => Type == LuaType.LUA_TTHREAD;
 
 	public bool IsLuaClosure() => OValue is LuaLClosureValue;
 	public bool IsCsClosure() => OValue is LuaCsClosureValue;
-	public bool AsBool() => UInt64Value != BOOLEAN_FALSE;
-	public string AsString() => OValue as string;
-	public LuaTable AsTable() => OValue as LuaTable;
-	public LuaLClosureValue AsLuaClosure() => (LuaLClosureValue)OValue;
-	public LuaCsClosureValue AsCSClosure() => (LuaCsClosureValue)OValue;
-	public ILuaState AsThread() => (ILuaState)OValue;
+	
+	public ulong AsUInt64 =>
+		BitConverter.DoubleToUInt64Bits(NValue);
+	public bool AsBool() => AsUInt64 != BOOLEAN_FALSE;
+	public string? AsString() => OValue as string;
+	public LuaTable? AsTable() => OValue as LuaTable;
+	public LuaLClosureValue? AsLuaClosure() => OValue as LuaLClosureValue;
+	public LuaCsClosureValue? AsCSClosure() => OValue as LuaCsClosureValue;
+	public ILuaState? AsThread() => OValue as ILuaState;
 
 	internal void SetNil() 
 	{
-		Tt = (int)LuaType.LUA_TNIL;
+		Type = LuaType.LUA_TNIL;
 		NValue = 0.0;
 		OValue = null!;
 	}
 	internal void SetBool(bool v) 
 	{
-		Tt = (int)LuaType.LUA_TBOOLEAN;
+		Type = LuaType.LUA_TBOOLEAN;
 		NValue = BitConverter.UInt64BitsToDouble(
 			v ? BOOLEAN_TRUE : BOOLEAN_FALSE);
 		OValue = null!;
 	}
 	internal void SetObj(StkId v) 
 	{
-		Tt = v.V.Tt;
+		Type = v.V.Type;
 		NValue = v.V.NValue;
 		OValue = v.V.OValue;
 	}
 	internal void SetDouble(double v) 
 	{
-		Tt = (int)LuaType.LUA_TNUMBER;
+		Type = LuaType.LUA_TNUMBER;
 		NValue = v;
 		OValue = null!;
 	}
 	internal void SetUInt64(ulong v) 
 	{
-		Tt = (int)LuaType.LUA_TUINT64;
+		Type = LuaType.LUA_TUINT64;
 		NValue = BitConverter.UInt64BitsToDouble(v);
 		OValue = null!;
 	}
 	internal void SetString(string v) 
 	{
-		Tt = (int)LuaType.LUA_TSTRING;
+		Type = LuaType.LUA_TSTRING;
 		NValue = 0.0;
 		OValue = v;
 	}
 	internal void SetTable(LuaTable v) 
 	{
-		Tt = (int)LuaType.LUA_TTABLE;
+		Type = LuaType.LUA_TTABLE;
 		NValue = 0.0;
 		OValue = v;
 	}
 	internal void SetThread(LuaState v) 
 	{
-		Tt = (int)LuaType.LUA_TTHREAD;
+		Type = LuaType.LUA_TTHREAD;
 		NValue = 0.0;
 		OValue = v;
 	}
 	internal void SetUserData(object v) 
 	{
-		Tt = (int)LuaType.LUA_TLIGHTUSERDATA;
+		Type = LuaType.LUA_TLIGHTUSERDATA;
 		NValue = 0.0;
 		OValue = v;
 	}
 	
 	internal void SetLuaClosure(LuaLClosureValue v) 
 	{
-		Tt = (int)LuaType.LUA_TFUNCTION;
+		Type = LuaType.LUA_TFUNCTION;
 		NValue = 0.0;
 		OValue = v;
 	}
 	internal void SetCSClosure(LuaCsClosureValue v) 
 	{
-		Tt = (int)LuaType.LUA_TFUNCTION;
+		Type = LuaType.LUA_TFUNCTION;
 		NValue = 0.0;
 		OValue = v;
 	}
@@ -138,14 +141,14 @@ public struct TValue : IEquatable<TValue>
 		if (IsString()) return $"(string, {AsString()})";
 		if (IsNumber()) return $"(number, {NValue})";
 		if (IsBoolean()) return $"(bool, {AsBool()})";
-		if (IsUInt64()) return $"(uint64, {UInt64Value})";
+		if (IsUInt64()) return $"(uint64, {AsUInt64})";
 		if (IsNil()) return "(nil)";
 		if (IsTable()) return $"(table: {OValue})";
 		if (IsThread()) return $"(thread: {OValue})";
 		if (IsFunction())
-			if (IsLuaClosure()) return $"(Lua function)";
-			else if (IsCsClosure()) return $"(C# function)";
-		return $"(type:{Tt})";
+			if (IsLuaClosure()) return "(Lua function)";
+			else if (IsCsClosure()) return "(C# function)";
+		return $"(type:{Type})";
 	}
 
 	public static TValue Nil()
@@ -169,8 +172,8 @@ public readonly ref struct StkId(ref TValue v)
 	
 	public override string ToString()
 	{
-		var detail = V.IsString() ? V.AsString().Replace("\n", "»") : "...";
-		return $"StkId - {LuaState.TypeName((LuaType)V.Tt)} - {detail}";
+		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";
+		return $"StkId - {LuaState.TypeName(V.Type)} - {detail}";
 	}
 }
 
@@ -216,18 +219,20 @@ public sealed class LuaUpValue
 	public TValue Value;
 	public int StackIndex;
 	public int Index;
-	public readonly LuaState L = null!;
+
+	private readonly LuaState? L;
 	
 
-	public LuaUpValue(LuaState l = null, int stackIndex = -1)
+	public LuaUpValue(LuaState? l = null, int stackIndex = -1)
 	{
+		Util.Assert(stackIndex == -1 || l != null);
 		L = l;
 		StackIndex = stackIndex;
 		Value.SetNil();
 	}
 
 	public StkId StkId => 
-		StackIndex != -1 ? L.Ref[StackIndex] : new StkId(ref Value);
+		StackIndex != -1 ? L!.Ref[StackIndex] : new StkId(ref Value);
 }
 
 public sealed class LuaCsClosureValue

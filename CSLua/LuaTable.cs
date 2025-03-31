@@ -25,11 +25,11 @@ public sealed class LuaTable
 	{
 		value = StkId.Nil;
 		
-		if (key.V.Tt == (int)LuaType.LUA_TNIL) 
+		if (key.V.Type == (int)LuaType.LUA_TNIL) 
 			return false;
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
-		if (key.V.Tt == (int)LuaType.LUA_TSTRING)
+		if (key.V.Type == LuaType.LUA_TSTRING)
 			return TryGetStr(key.V.AsString(), out value);
 
 		var h = key.V.GetHashCode();
@@ -96,11 +96,11 @@ public sealed class LuaTable
 	private bool Get(StkId key, out StkId value)
 	{
 		value = StkId.Nil;
-		if (key.V.Tt == (int)LuaType.LUA_TNIL)
+		if (key.V.Type == (int)LuaType.LUA_TNIL)
 			return false;
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
-		if (key.V.Tt == (int)LuaType.LUA_TSTRING)
+		if (key.V.Type == LuaType.LUA_TSTRING)
 			return TryGetStr(key.V.AsString(), out value);
 
 		var h = key.V.GetHashCode();

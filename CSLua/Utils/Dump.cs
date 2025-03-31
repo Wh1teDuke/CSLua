@@ -1,5 +1,6 @@
 ﻿
 // ReSharper disable InconsistentNaming
+// ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 namespace CSLua.Utils;
 
 public enum DumpStatus { OK, ERROR, }
@@ -100,20 +101,20 @@ internal sealed class DumpState
 	{
 		DumpVector(proto.K, (k) => 
 		{
-			var t = k.Tt;
+			var t = k.Type;
 			DumpByte((byte)t);
 			switch (t)
 			{
-				case (int)LuaType.LUA_TNIL:
+				case LuaType.LUA_TNIL:
 					break;
-				case (int)LuaType.LUA_TBOOLEAN:
+				case LuaType.LUA_TBOOLEAN:
 					DumpBool(k.AsBool());
 					break;
-				case (int)LuaType.LUA_TUINT64:
-				case (int)LuaType.LUA_TNUMBER:
+				case LuaType.LUA_TUINT64:
+				case LuaType.LUA_TNUMBER:
 					DumpBlock(BitConverter.GetBytes(k.NValue));
 					break;
-				case (int)LuaType.LUA_TSTRING:
+				case LuaType.LUA_TSTRING:
 					DumpString(k.AsString());
 					break;
 				default:
