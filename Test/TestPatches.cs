@@ -77,9 +77,9 @@ public sealed class TestPatches
     public void TestContinue2()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
 
-        var r1 = L.L_DoFile(Path.Join("lua", "continue_valid.lua"));
+        var r1 = L.DoFile(Path.Join("lua", "continue_valid.lua"));
         Assert.Equal(ThreadStatus.LUA_OK, r1);
     }
 
@@ -89,7 +89,7 @@ public sealed class TestPatches
         // Self-iterating Objects
         // http://lua-users.org/files/wiki_insecure/power_patches/5.2/jh-lua-iter-5.2.patch
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
 
         L.Eval("""
                 local res = 0

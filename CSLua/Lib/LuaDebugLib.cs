@@ -18,7 +18,7 @@ public static class LuaDebugLib
 			new("setupvalue",   DBG_SetUpvalue),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 	
@@ -32,7 +32,7 @@ public static class LuaDebugLib
 			//new("setupvalue",		DBG_SetUpvalue),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 
@@ -45,8 +45,8 @@ public static class LuaDebugLib
 			lua.PushValue(arg + 1);
 		else
 		{
-			var level = lua.L_OptInt(arg + 2, (lua == L1) ? 1 : 0);
-			lua.L_Traceback(L1, msg, level);
+			var level = lua.OptInt(arg + 2, (lua == L1) ? 1 : 0);
+			lua.Traceback(L1, msg, level);
 		}
 
 		return 1;
@@ -56,7 +56,7 @@ public static class LuaDebugLib
 	{
 		var L = (LuaState)lua;
 		var L1 = lua.GetThread(out var arg);
-		var what = L.L_OptString(arg + 2, "flnStu");
+		var what = L.OptString(arg + 2, "flnStu");
 		var debug = new LuaDebug();
 		
 		if (L.Type(arg + 1) == LuaType.LUA_TNUMBER)
@@ -77,7 +77,7 @@ public static class LuaDebugLib
 			lua.XMove(L1, 1);
 		}
 		else
-			return lua.L_ArgError(arg + 1, "function or level expected");
+			return lua.ArgError(arg + 1, "function or level expected");
 
 		L.GetInfo(debug, what);
 
@@ -98,8 +98,8 @@ public static class LuaDebugLib
 
 	private static int AuxUpvalue(ILuaState lua, int get)
 	{
-		var n = lua.L_CheckInteger(2);
-		lua.L_CheckType(1, LuaType.LUA_TFUNCTION);
+		var n = lua.CheckInteger(2);
+		lua.CheckType(1, LuaType.LUA_TFUNCTION);
 
 		var name = get == 1 ? lua.GetUpValue(1, n) : lua.SetUpValue(1, n);
 		if (name == null) return 0;

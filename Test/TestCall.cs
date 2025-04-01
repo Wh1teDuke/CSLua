@@ -10,7 +10,7 @@ public sealed class TestCall
         var L = new LuaState();
         
         Assert.Equal(0, L.GetTop());
-        var res = L.L_DoString("function add(a, b) return a + b end");
+        var res = L.DoString("function add(a, b) return a + b end");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         Assert.Equal(0, L.GetTop());
 
@@ -31,11 +31,11 @@ public sealed class TestCall
     public void Test2()
     {
         var L = new LuaState();
-        var res = L.L_DoString("function add(a, b) return a + b end");
+        var res = L.DoString("function add(a, b) return a + b end");
         Assert.Equal(ThreadStatus.LUA_OK, res);
 
         L.GetGlobal("add");
-        var r = L.L_Ref(LuaDef.LUA_REGISTRYINDEX);
+        var r = L.RefTo(LuaDef.LUA_REGISTRYINDEX);
         L.Pop(-1);
         L.RawGetI(LuaDef.LUA_REGISTRYINDEX, r);
         L.PushInteger(1);
@@ -44,7 +44,7 @@ public sealed class TestCall
         Assert.Equal(ThreadStatus.LUA_OK, L.Status);
         var i = L.ToInteger(-1);
         L.Pop(1);
-        L.L_Unref(LuaDef.LUA_REGISTRYINDEX, r);
+        L.Unref(LuaDef.LUA_REGISTRYINDEX, r);
         Assert.Equal(3, i);
     }
 
@@ -57,7 +57,7 @@ public sealed class TestCall
         L.SetGlobal("inc");
         Assert.Equal(0, L.GetTop());
 
-        var res = L.L_DoString("return inc(1)");
+        var res = L.DoString("return inc(1)");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         Assert.Equal(LuaType.LUA_TNUMBER, L.Type(-1));
 
@@ -85,7 +85,7 @@ public sealed class TestCall
         L.SetGlobal("inc");
         Assert.Equal(0, L.GetTop());
 
-        var res = L.L_DoString("return inc(1, true)");
+        var res = L.DoString("return inc(1, true)");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         Assert.Equal(LuaType.LUA_TNUMBER, L.Type(-1));
 
@@ -120,7 +120,7 @@ public sealed class TestCall
         L.SetGlobal("MyObj");
         Assert.Equal(0, L.GetTop());
 
-        var res = L.L_DoString("return MyObj.GetID()");
+        var res = L.DoString("return MyObj.GetID()");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         
         var id2 = L.ToInteger(-1);
@@ -149,7 +149,7 @@ public sealed class TestCall
         L.SetGlobal("MyObj");
         Assert.Equal(0, L.GetTop());
 
-        var res = L.L_DoString("return MyObj:GetID()");
+        var res = L.DoString("return MyObj:GetID()");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         
         var id2 = L.ToInteger(-1);

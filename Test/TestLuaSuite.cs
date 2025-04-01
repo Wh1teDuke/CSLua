@@ -26,14 +26,14 @@ public sealed class TestLuaSuite
     private static void Run(string file)
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         
         if (file == "strings.lua")
             L.Eval("_no32 = true");
         else if (file == "nextvar.lua")
             L.Eval("_port = true");
         
-        var r = L.L_DoFile(Path.Join("suite", file));
+        var r = L.DoFile(Path.Join("suite", file));
         if (ThreadStatus.LUA_OK != r) Assert.Fail(L.ToString(1));
     }
 }

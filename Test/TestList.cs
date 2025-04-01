@@ -9,7 +9,7 @@ public sealed class TestList
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
 
         L.Eval("""
@@ -37,7 +37,7 @@ public sealed class TestList
     public void Test2()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
 
         L.Eval("""
@@ -57,7 +57,7 @@ public sealed class TestList
     public void TestNext1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -82,7 +82,7 @@ public sealed class TestList
     public void TestPairs1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -106,7 +106,7 @@ public sealed class TestList
     public void TestPairs2()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -130,7 +130,7 @@ public sealed class TestList
     public void TestAddAll1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -144,7 +144,7 @@ public sealed class TestList
                """);
 
         Assert.True(L.IsList(-1));
-        var list = L.L_CheckList(-1);
+        var list = L.CheckList(-1);
         Assert.Equal(6, list.Count);
         
         for (var i = 0; i < list.Count; i++)
@@ -157,7 +157,7 @@ public sealed class TestList
     public void TestGetter1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -174,7 +174,7 @@ public sealed class TestList
     public void TestSetter1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -192,7 +192,7 @@ public sealed class TestList
     public void TestLen1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""
@@ -209,7 +209,7 @@ public sealed class TestList
     public void TestInsert1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
         L.Eval("""

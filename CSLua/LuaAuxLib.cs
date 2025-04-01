@@ -7,56 +7,56 @@ public readonly record struct NameFuncPair(
 
 public interface ILuaAuxLib
 {
-	void 	L_Where(int level);
-	int 	L_Error(string fmt, params object[] args);
-	void	L_CheckStack(int size, string? msg = null);
-	void 	L_CheckAny(int narg);
-	void 	L_CheckType(int index, LuaType t);
-	double	L_CheckNumber(int narg);
-	long	L_CheckInt64(int narg);
-	int 	L_CheckInteger(int narg);
-	string 	L_CheckString(int narg);
-	uint	L_CheckUnsigned(int narg);
-	object	L_CheckUserData(int narg);
-	List<TValue>	L_CheckList(int narg);
-	LuaLClosureValue	L_CheckLuaFunction(int narg);
-	void 	L_ArgCheck(bool cond, int narg, string extraMsg);
-	int 	L_ArgError( int nArg, string extraMsg );
-	string 	L_TypeName( int index );
+	void 	Where(int level);
+	int 	Error(string fmt, params object[] args);
+	void	CheckStack(int size, string? msg = null);
+	void 	CheckAny(int narg);
+	void 	CheckType(int index, LuaType t);
+	double	CheckNumber(int narg);
+	long	CheckInt64(int narg);
+	int 	CheckInteger(int narg);
+	string 	CheckString(int narg);
+	uint	CheckUnsigned(int narg);
+	object	CheckUserData(int narg);
+	List<TValue>	CheckList(int narg);
+	LuaLClosureValue	CheckLuaFunction(int narg);
+	void 	ArgCheck(bool cond, int narg, string extraMsg);
+	int 	ArgError(int nArg, string extraMsg);
+	string 	TypeName(int index);
 
-	string 	L_ToString( int index );
-	bool 	L_GetMetaField( int index, string method );
-	int 	L_GetSubTable( int index, string fname );
+	string 	ToStringX(int index);
+	bool 	GetMetaField(int index, string method);
+	int 	GetSubTable(int index, string fname);
 
-	void 	L_RequireF( string moduleName, CSharpFunctionDelegate openFunc, bool global);
-	void 	L_OpenLibs();
-	void 	L_NewLibTable(ReadOnlySpan<NameFuncPair> define);
-	void	L_NewLib(ReadOnlySpan<NameFuncPair> define);
-	void 	L_SetFuncs(ReadOnlySpan<NameFuncPair> define, int nup);
+	void 	Require(string moduleName, CSharpFunctionDelegate openFunc, bool global);
+	void 	OpenLibs();
+	void 	NewLibTable(ReadOnlySpan<NameFuncPair> define);
+	void	NewLib(ReadOnlySpan<NameFuncPair> define);
+	void 	SetFuncs(ReadOnlySpan<NameFuncPair> define, int nup);
 		
-	T 		L_Opt<T>(Func<int,T> f, int n, T def);
-	int		L_OptInt(int narg, int def);
-	string 	L_OptString(int narg, string def);
-	bool 	L_CallMeta(int obj, string name);
-	void	L_Traceback(ILuaState otherLua, string? msg = null, int level = 0);
-	int		L_Len(int index);
+	T 		Opt<T>(Func<int,T> f, int n, T def);
+	int		OptInt(int narg, int def);
+	string 	OptString(int narg, string def);
+	bool 	CallMeta(int obj, string name);
+	void	Traceback(ILuaState otherLua, string? msg = null, int level = 0);
+	int		Len(int index);
 
-	ThreadStatus L_LoadBuffer(string s, string name);
-	ThreadStatus L_LoadBufferX(string s, string name, string mode);
-	ThreadStatus L_LoadFile(string filename);
-	ThreadStatus L_LoadFileX(string filename, string mode);
+	ThreadStatus LoadBuffer(string s, string name);
+	ThreadStatus LoadBufferX(string s, string name, string mode);
+	ThreadStatus LoadFile(string? filename);
+	ThreadStatus LoadFileX(string filename, string mode);
 
-	ThreadStatus L_LoadString(string s);
-	ThreadStatus L_LoadBytes(byte[] bytes, string name);
-	ThreadStatus L_DoString(string s);
-	ThreadStatus L_DoFile(string filename);
+	ThreadStatus LoadString(string s);
+	ThreadStatus LoadBytes(byte[] bytes, string name);
+	ThreadStatus DoString(string s);
+	ThreadStatus DoFile(string filename);
 		
 
-	string	L_Gsub( string src, string pattern, string rep );
+	string	Gsub(string src, string pattern, string rep);
 
 	// reference system
-	int		L_Ref(int t);
-	void	L_Unref(int t, int reference);
+	int		RefTo(int t);
+	void	Unref(int t, int reference);
 }
 
 public struct StringLoadInfo(string s) : ILoadInfo

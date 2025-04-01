@@ -9,7 +9,7 @@ public sealed class TestCompile
     public void TestCompile1()
     {
         var L = new LuaState();
-        var r1 = L.L_DoString("foo = 0");
+        var r1 = L.DoString("foo = 0");
         Assert.Equal(ThreadStatus.LUA_OK, r1);
         Assert.Equal(0, L.GetTop());
     
@@ -32,16 +32,16 @@ public sealed class TestCompile
     public void TestCompile2()
     {
         var L = new LuaState();
-        var r1 = L.L_DoString("foo = 0");
+        var r1 = L.DoString("foo = 0");
         Assert.Equal(ThreadStatus.LUA_OK, r1);
         Assert.Equal(0, L.GetTop());
     
-        var r2 = L.L_LoadString("foo = foo + 1");
+        var r2 = L.LoadString("foo = foo + 1");
         Assert.Equal(ThreadStatus.LUA_OK, r2);
         Assert.Equal(1, L.GetTop());
         Assert.Equal(LuaType.LUA_TFUNCTION, L.Type(-1));
 
-        var fun = L.L_CheckLuaFunction(-1);
+        var fun = L.CheckLuaFunction(-1);
         L.Pop(1);
 
         for (var i = 0; i < 10; i++)

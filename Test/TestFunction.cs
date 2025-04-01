@@ -59,11 +59,11 @@ public sealed class TestFunction
     {
         string? error = null;
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.PushCSharpFunction(OnError);
         var eIdx = L.GetTop();
 
-        Assert.Equal(ThreadStatus.LUA_OK, L.L_LoadString("error('FooBar')"));
+        Assert.Equal(ThreadStatus.LUA_OK, L.LoadString("error('FooBar')"));
         var err = L.PCallK(0, 0, eIdx, -1, null);
         Assert.Equal(ThreadStatus.LUA_ERRRUN, err);
         Assert.StartsWith("[source \"error('FooBar')\"]:1: FooBar", error);

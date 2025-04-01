@@ -47,7 +47,7 @@ public static class LuaBaseLib
 		lua.SetField(-2, LIB_NAME);
 
 		// Open lib into global lib
-		lua.L_SetFuncs(define, 0);
+		lua.SetFuncs(define, 0);
 
 		lua.PushString(LuaDef.LUA_VERSION);
 		lua.SetField(-2, "_VERSION");
@@ -90,7 +90,7 @@ public static class LuaBaseLib
 		lua.SetField(-2, LIB_NAME);
 
 		// open lib into global lib
-		lua.L_SetFuncs(define, 0);
+		lua.SetFuncs(define, 0);
 
 		lua.PushString(LuaDef.LUA_VERSION);
 		lua.SetField(-2, "_VERSION");
@@ -101,16 +101,16 @@ public static class LuaBaseLib
 	public static int B_Assert(ILuaState lua)
 	{
 		if (!lua.ToBoolean(1))
-			return lua.L_Error(
+			return lua.Error(
 				"{0}", 
-				lua.L_OptString(2, "assertion failed!"));
+				lua.OptString(2, "assertion failed!"));
 		return lua.GetTop();
 	}
 
 	public static int B_CollectGarbage(ILuaState lua)
 	{
 		// not implement gc
-		var opt = lua.L_OptString(1, "collect");
+		var opt = lua.OptString(1, "collect");
 		switch (opt)
 		{
 			case "count":
@@ -133,9 +133,9 @@ public static class LuaBaseLib
 
 	public static int B_DoFile(ILuaState lua)
 	{
-		var filename = lua.L_OptString(1, null);
+		var filename = lua.OptString(1, null);
 		lua.SetTop(1);
-		if (lua.L_LoadFile(filename) != ThreadStatus.LUA_OK)
+		if (lua.LoadFile(filename) != ThreadStatus.LUA_OK)
 			lua.Error();
 		lua.CallK(0, LuaDef.LUA_MULTRET, 0, DoFileContinuation);
 		return DoFileContinuation(lua);
@@ -143,11 +143,11 @@ public static class LuaBaseLib
 
 	public static int B_Error(ILuaState lua)
 	{
-		var level = lua.L_OptInt(2, 1);
+		var level = lua.OptInt(2, 1);
 		lua.SetTop(1);
 		if (lua.IsString(1) && level > 0)
 		{
-			lua.L_Where(level);
+			lua.Where(level);
 			lua.PushValue(1);
 			lua.Concat(2);
 		}
@@ -176,10 +176,10 @@ public static class LuaBaseLib
 
 	public static int B_LoadFile(ILuaState lua)
 	{
-		var fName = lua.L_OptString(1, null);
-		var mode = lua.L_OptString(2, null);
+		var fName = lua.OptString(1, null);
+		var mode = lua.OptString(2, null);
 		var env = (!lua.IsNone(3) ? 3 : 0); // 'env' index or 0 if no 'env'
-		var status = lua.L_LoadFileX(fName, mode);
+		var status = lua.LoadFileX(fName, mode);
 		return LoadAux(lua, status, env);
 	}
 
@@ -187,17 +187,17 @@ public static class LuaBaseLib
 	{
 		ThreadStatus status;
 		var s = lua.ToString(1);
-		var mode = lua.L_OptString(3, "bt");
+		var mode = lua.OptString(3, "bt");
 		var env = !lua.IsNone(4) ? 4 : 0; // 'env' index or 0 if no 'env'
 		if (s != null)
 		{
-			var chunkName = lua.L_OptString(2, s);
-			status = lua.L_LoadBufferX(s, chunkName, mode);
+			var chunkName = lua.OptString(2, s);
+			status = lua.LoadBufferX(s, chunkName, mode);
 		}
 		else // loading from a reader function
 		{
-			var chunkName = lua.L_OptString(2, "=(load)");
-			lua.L_CheckType(1, LuaType.LUA_TFUNCTION);
+			var chunkName = lua.OptString(2, "=(load)");
+			lua.CheckType(1, LuaType.LUA_TFUNCTION);
 			
 			throw new NotImplementedException(); // TODO
 		}
@@ -231,7 +231,7 @@ public static class LuaBaseLib
 
 	public static int B_PCall(ILuaState lua)
 	{
-		lua.L_CheckAny(1);
+		lua.CheckAny(1);
 		lua.PushNil();
 		lua.Insert(1); // create space for status result
 
@@ -244,7 +244,7 @@ public static class LuaBaseLib
 	public static int B_XPCall(ILuaState lua)
 	{
 		var n = lua.GetTop();
-		lua.L_ArgCheck(n >= 2, 2, "value expected");
+		lua.ArgCheck(n >= 2, 2, "value expected");
 		lua.PushValue(1 ); // exchange function...
 		lua.Copy(2, 1); // ...and error handler
 		lua.Replace(2);
@@ -255,8 +255,8 @@ public static class LuaBaseLib
 
 	public static int B_RawEqual(ILuaState lua)
 	{
-		lua.L_CheckAny(1);
-		lua.L_CheckAny(2);
+		lua.CheckAny(1);
+		lua.CheckAny(2);
 		lua.PushBoolean(lua.RawEqual(1, 2));
 		return 1;
 	}
@@ -264,7 +264,7 @@ public static class LuaBaseLib
 	public static int B_RawLen( ILuaState lua )
 	{
 		var t = lua.Type( 1 );
-		lua.L_ArgCheck( t is LuaType.LUA_TTABLE or LuaType.LUA_TSTRING,
+		lua.ArgCheck( t is LuaType.LUA_TTABLE or LuaType.LUA_TSTRING,
 			1, "table or string expected" );
 		lua.PushInteger( lua.RawLen( 1 ) );
 		return 1;
@@ -272,8 +272,8 @@ public static class LuaBaseLib
 
 	public static int B_RawGet( ILuaState lua )
 	{
-		lua.L_CheckType( 1, LuaType.LUA_TTABLE );
-		lua.L_CheckAny( 2 );
+		lua.CheckType( 1, LuaType.LUA_TTABLE );
+		lua.CheckAny( 2 );
 		lua.SetTop( 2 );
 		lua.RawGet( 1 );
 		return 1;
@@ -281,9 +281,9 @@ public static class LuaBaseLib
 
 	public static int B_RawSet(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
-		lua.L_CheckAny(2);
-		lua.L_CheckAny(3);
+		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckAny(2);
+		lua.CheckAny(3);
 		lua.SetTop(3);
 		lua.RawSet(1);
 		return 1;
@@ -299,33 +299,33 @@ public static class LuaBaseLib
 			return 1;
 		}
 
-		var i = lua.L_CheckInteger( 1 );
+		var i = lua.CheckInteger( 1 );
 		if( i < 0 ) i = n + i;
 		else if( i > n ) i = n;
-		lua.L_ArgCheck( 1 <= i, 1, "index out of range" );
+		lua.ArgCheck( 1 <= i, 1, "index out of range" );
 		return n - i;
 	}
 
 	public static int B_GetMetaTable( ILuaState lua )
 	{
-		lua.L_CheckAny( 1 );
+		lua.CheckAny( 1 );
 		if( !lua.GetMetaTable( 1 ) )
 		{
 			lua.PushNil();
 			return 1; // no metatable
 		}
-		lua.L_GetMetaField( 1, "__metatable" );
+		lua.GetMetaField( 1, "__metatable" );
 		return 1;
 	}
 
 	public static int B_SetMetaTable(ILuaState lua)
 	{
 		var t = lua.Type(2);
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
-		lua.L_ArgCheck(t is LuaType.LUA_TNIL or LuaType.LUA_TTABLE,
+		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.ArgCheck(t is LuaType.LUA_TNIL or LuaType.LUA_TTABLE,
 			2, "nil or table expected" );
-		if (lua.L_GetMetaField(1, "__metatable"))
-			return lua.L_Error("cannot change a protected metatable");
+		if (lua.GetMetaField(1, "__metatable"))
+			return lua.Error("cannot change a protected metatable");
 		lua.SetTop(2);
 		lua.SetMetaTable(1);
 		return 1;
@@ -342,14 +342,14 @@ public static class LuaBaseLib
 				lua.PushNumber(n);
 				return 1;
 			} // else not a number; must be something
-			lua.L_CheckAny(1);
+			lua.CheckAny(1);
 		}
 		else
 		{
-			var s = lua.L_CheckString(1);
-			var numBase = lua.L_CheckInteger(2);
+			var s = lua.CheckString(1);
+			var numBase = lua.CheckInteger(2);
 			var negative = false;
-			lua.L_ArgCheck(numBase is >= 2 and <= 36, 2,
+			lua.ArgCheck(numBase is >= 2 and <= 36, 2,
 				"base out of range");
 			s = s.Trim(' ', '\f', '\n', '\r', '\t', '\v');
 			s += '\0'; // guard
@@ -394,9 +394,9 @@ public static class LuaBaseLib
 	private static int PairsMeta(
 		ILuaState lua, string method, bool isZero, CSharpFunctionDelegate iter)
 	{
-		if (!lua.L_GetMetaField(1, method)) // No metamethod?
+		if (!lua.GetMetaField(1, method)) // No metamethod?
 		{
-			lua.L_CheckType(1, LuaType.LUA_TTABLE);
+			lua.CheckType(1, LuaType.LUA_TTABLE);
 			lua.PushCSharpFunction(iter);
 			lua.PushValue(1);
 			if (isZero)
@@ -453,7 +453,7 @@ public static class LuaBaseLib
 			lua.Call(1, 1);
 			var s = lua.ToString(-1);
 			if (s == null)
-				return lua.L_Error("'tostring' must return a string to 'print'");
+				return lua.Error("'tostring' must return a string to 'print'");
 			if (i > 1) sb.Append('\t');
 			sb.Append(s);
 			lua.Pop(1);
@@ -464,8 +464,8 @@ public static class LuaBaseLib
 
 	private static int B_ToString(ILuaState lua)
 	{
-		lua.L_CheckAny(1);
-		lua.L_ToString(1);
+		lua.CheckAny(1);
+		lua.ToStringX(1);
 		return 1;
 	}
 }

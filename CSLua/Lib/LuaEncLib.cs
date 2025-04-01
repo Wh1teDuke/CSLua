@@ -18,7 +18,7 @@ public static class LuaEncLib
 			new("decode", ENC_Decode),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 
 		lua.PushString(EncUtf8);
 		lua.SetField(-2, "utf8");

@@ -43,7 +43,7 @@ public static class LuaStrLib
 			new("upper", 	Str_Upper),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		CreateMetaTable(lua);
 
 		return 1;
@@ -69,7 +69,7 @@ public static class LuaStrLib
 			new("upper", 	Str_Upper),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		CreateMetaTable(lua);
 
 		return 1;
@@ -96,16 +96,16 @@ public static class LuaStrLib
 
 	private static int Str_Byte(ILuaState lua)
 	{
-		var s = lua.L_CheckString(1);
-		var posi = PosRelative(lua.L_OptInt(2, 1), s.Length);
-		var pose = PosRelative(lua.L_OptInt(3, posi), s.Length);
+		var s = lua.CheckString(1);
+		var posi = PosRelative(lua.OptInt(2, 1), s.Length);
+		var pose = PosRelative(lua.OptInt(3, posi), s.Length);
 		if (posi < 1) posi = 1;
 		if (pose > s.Length) pose = s.Length;
 		if (posi > pose) return 0; // empty interval; return no values
 		var n = pose - posi + 1;
 		if (posi + n <= pose) // overflow?
-			return lua.L_Error("String slice too long");
-		lua.L_CheckStack(n, "String slice too long");
+			return lua.Error("String slice too long");
+		lua.CheckStack(n, "String slice too long");
 		for (var i = 0; i < n; ++i)
 			lua.PushInteger((byte)s[posi + i - 1]);
 		return n;
@@ -117,8 +117,8 @@ public static class LuaStrLib
 		var sb = new StringBuilder();
 		for (var i = 1; i <= n; ++i)
 		{
-			var c = lua.L_CheckInteger(i);
-			lua.L_ArgCheck((char)c == c, i, "value out of range");
+			var c = lua.CheckInteger(i);
+			lua.ArgCheck((char)c == c, i, "value out of range");
 			sb.Append((char)c);
 		}
 		lua.PushString(sb.ToString());
@@ -127,12 +127,12 @@ public static class LuaStrLib
 
 	private static int Str_Dump(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TFUNCTION);
+		lua.CheckType(1, LuaType.LUA_TFUNCTION);
 		lua.SetTop(1);
 		var bsb = new ByteStringBuilder();
 
 		if (lua.Dump(WriteFunc) != DumpStatus.OK)
-			return lua.L_Error( "Unable to dump given function" );
+			return lua.Error( "Unable to dump given function" );
 		lua.PushString(bsb.ToString());
 		return 1;
 
@@ -180,7 +180,7 @@ public static class LuaStrLib
 			case L_ESC:
 			{
 				if (p == ms.PatternEnd)
-					lua.L_Error( "malformed pattern (ends with '%')" );
+					lua.Error( "malformed pattern (ends with '%')" );
 				return p+1;
 			}
 			case '[':
@@ -188,7 +188,7 @@ public static class LuaStrLib
 				if (ms.Pattern[p] == '^') p++;
 				do {
 					if (p == ms.PatternEnd)
-						lua.L_Error( "malformed pattern (missing ']')" );
+						lua.Error( "malformed pattern (missing ']')" );
 					if (ms.Pattern[p++] == L_ESC && p < ms.PatternEnd)
 						p++; // skip escapes (e.g. `%]')
 				} while (ms.Pattern[p] != ']');
@@ -273,7 +273,7 @@ public static class LuaStrLib
 	{
 		var lua = ms.Lua;
 		if (p >= ms.PatternEnd - 1)
-			lua.L_Error("malformed pattern (missing arguments to '%b')");
+			lua.Error("malformed pattern (missing arguments to '%b')");
 		if (ms.Src[s] != ms.Pattern[p]) return -1;
 		var b = ms.Pattern[p];
 		var e = ms.Pattern[p + 1];
@@ -326,7 +326,7 @@ public static class LuaStrLib
 			if( ms.Capture[level].Len == CAP_UNFINISHED )
 				return level;
 		}
-		return lua.L_Error( "invalid pattern capture" );
+		return lua.Error( "invalid pattern capture" );
 	}
 
 	private static int StartCapture( MatchState ms, int s, int p, int what )
@@ -334,7 +334,7 @@ public static class LuaStrLib
 		var lua = ms.Lua;
 		var level = ms.Level;
 		if( level >= LUA_MAXCAPTURES )
-			lua.L_Error( "too many captures" );
+			lua.Error( "too many captures" );
 		ms.Capture[level].Init = s;
 		ms.Capture[level].Len = what;
 		ms.Level = level + 1;
@@ -359,7 +359,7 @@ public static class LuaStrLib
 		var lua = ms.Lua;
 		var i = l - '1';
 		if( i < 0 || i >= ms.Level || ms.Capture[i].Len == CAP_UNFINISHED )
-			return lua.L_Error( "invalid capture index %d", i+1 );
+			return lua.Error( "invalid capture index %d", i+1 );
 		return i;
 	}
 
@@ -411,7 +411,7 @@ public static class LuaStrLib
 					{
 						p += 2;
 						if( ms.Pattern[p] != '[' )
-							lua.L_Error( "missing '[' after '%f' in pattern" );
+							lua.Error( "missing '[' after '%f' in pattern" );
 						var ep = ClassEnd( ms, p ); //points to what is next
 						var previous = (s == ms.SrcInit) ? '\0' : ms.Src[s-1];
 						if( MatchBreaketClass(ms, previous, p, ep-1) ||
@@ -486,13 +486,13 @@ public static class LuaStrLib
 			if( i == 0 ) // ms.Level == 0, too
 				lua.PushString( ms.Src.Substring( start, end-start ) );
 			else
-				lua.L_Error( "invalid capture index" );
+				lua.Error( "invalid capture index" );
 		}
 		else
 		{
 			var l = ms.Capture[i].Len;
 			if( l == CAP_UNFINISHED )
-				lua.L_Error( "unfinished capture" );
+				lua.Error( "unfinished capture" );
 			if( l == CAP_POSITION )
 				lua.PushInteger( ms.Capture[i].Init - ms.SrcInit + 1 );
 			else
@@ -503,7 +503,7 @@ public static class LuaStrLib
 	private static int PushCaptures(ILuaState lua, MatchState ms, int spos, int epos )
 	{
 		var nLevels = (ms.Level == 0 && spos >= 0) ? 1 : ms.Level;
-		lua.L_CheckStack(nLevels, "too many captures");
+		lua.CheckStack(nLevels, "too many captures");
 		for( var i=0; i<nLevels; ++i )
 			PushOneCapture( ms, i, spos, epos );
 		return nLevels; // number of strings pushed
@@ -514,9 +514,9 @@ public static class LuaStrLib
 
 	private static int StrFindAux(ILuaState lua, bool find)
 	{
-		var s = lua.L_CheckString(1);
-		var p = lua.L_CheckString(2);
-		var init = PosRelative(lua.L_OptInt(3, 1), s.Length);
+		var s = lua.CheckString(1);
+		var p = lua.CheckString(2);
+		var init = PosRelative(lua.OptInt(3, 1), s.Length);
 		if (init < 1) init = 1;
 		else if (init > s.Length + 1) // start after string's end?
 		{
@@ -580,7 +580,7 @@ public static class LuaStrLib
 		while (p < format.Length && format[p] != '\0' && FLAGS.Contains(format[p]))
 			p++;
 		if (p - s > FLAGS.Length)
-			lua.L_Error("invalid format (repeat flags)");
+			lua.Error("invalid format (repeat flags)");
 		if (char.IsDigit(format[p])) p++; // Skip width
 		if (char.IsDigit(format[p])) p++; // (2 digits at most)
 		if (format[p] == '.' )
@@ -590,7 +590,7 @@ public static class LuaStrLib
 			if (char.IsDigit(format[p])) p++; // (2 digits at most)
 		}
 		if (char.IsDigit(format[p]))
-			lua.L_Error("invalid format (width of precision too long)");
+			lua.Error("invalid format (width of precision too long)");
 		return p;
 	}
 
@@ -599,7 +599,7 @@ public static class LuaStrLib
 		var top = lua.GetTop();
 		var sb = new StringBuilder();
 		var arg = 1;
-		var format = lua.L_CheckString(arg);
+		var format = lua.CheckString(arg);
 		var s = 0;
 		var e = format.Length;
 		while (s < e)
@@ -618,42 +618,42 @@ public static class LuaStrLib
 
 			// else format item
 			if (++arg > top)
-				lua.L_ArgError(arg, "no value");
+				lua.ArgError(arg, "no value");
 
 			s = ScanFormat(lua, format, s);
 			switch (format[s++]) // TODO: properly handle form
 			{
 				case 'c':
 				{
-					sb.Append((char)lua.L_CheckInteger(arg));
+					sb.Append((char)lua.CheckInteger(arg));
 					break;
 				}
 				case 'd': case 'i':
 				{
-					var n = lua.L_CheckInteger(arg);
+					var n = lua.CheckInteger(arg);
 					sb.Append(n);
 					break;
 				}
 				case 'u':
 				{
-					var n = lua.L_CheckInteger(arg);
-					lua.L_ArgCheck(n >= 0, arg,
+					var n = lua.CheckInteger(arg);
+					lua.ArgCheck(n >= 0, arg,
 						"not a non-negative number is proper range");
 					sb.Append(n);
 					break;
 				}
 				case 'o':
 				{
-					var n = lua.L_CheckInteger(arg);
-					lua.L_ArgCheck(n >= 0, arg,
+					var n = lua.CheckInteger(arg);
+					lua.ArgCheck(n >= 0, arg,
 						"not a non-negative number is proper range");
 					sb.Append(Convert.ToString(n, 8));
 					break;
 				}
 				case 'x':
 				{
-					var n = lua.L_CheckInteger(arg);
-					lua.L_ArgCheck(n >= 0, arg,
+					var n = lua.CheckInteger(arg);
+					lua.ArgCheck(n >= 0, arg,
 						"not a non-negative number is proper range" );
 					// sb.Append( string.Format("{0:x}", n) );
 					sb.Append($"{n:x}");
@@ -661,8 +661,8 @@ public static class LuaStrLib
 				}
 				case 'X':
 				{
-					var n = lua.L_CheckInteger(arg);
-					lua.L_ArgCheck(n >= 0, arg,
+					var n = lua.CheckInteger(arg);
+					lua.ArgCheck(n >= 0, arg,
 						"not a non-negative number is proper range");
 					// sb.Append( string.Format("{0:X}", n) );
 					sb.Append($"{n:X}");
@@ -670,12 +670,12 @@ public static class LuaStrLib
 				}
 				case 'e':  case 'E':
 				{
-					sb.Append($"{lua.L_CheckNumber(arg):E}");
+					sb.Append($"{lua.CheckNumber(arg):E}");
 					break;
 				}
 				case 'f':
 				{
-					sb.Append($"{lua.L_CheckNumber(arg):F}");
+					sb.Append($"{lua.CheckNumber(arg):F}");
 					break;
 				}
 #if LUA_USE_AFORMAT
@@ -683,7 +683,7 @@ public static class LuaStrLib
 #endif
 				case 'g': case 'G':
 				{
-					sb.Append($"{lua.L_CheckNumber(arg):G}");
+					sb.Append($"{lua.CheckNumber(arg):G}");
 					break;
 				}
 				case 'q':
@@ -693,12 +693,12 @@ public static class LuaStrLib
 				}
 				case 's':
 				{
-					sb.Append(lua.L_ToString(arg));
+					sb.Append(lua.ToStringX(arg));
 					break;
 				}
 				default: // also treat cases `pnLlh'
 				{
-					return lua.L_Error("invalid option '{0}' to 'format'",
+					return lua.Error("invalid option '{0}' to 'format'",
 						format[s - 1]);
 				}
 			}
@@ -709,7 +709,7 @@ public static class LuaStrLib
 
 	private static void AddQuoted(ILuaState lua, StringBuilder sb, int arg)
 	{
-		var s = lua.L_CheckString(arg);
+		var s = lua.CheckString(arg);
 		sb.Append('"');
 		for(var i = 0; i < s.Length; ++i) 
 		{
@@ -759,8 +759,8 @@ public static class LuaStrLib
 
 	private static int Str_Gmatch(ILuaState lua)
 	{
-		lua.L_CheckString(1);
-		lua.L_CheckString(2);
+		lua.CheckString(1);
+		lua.CheckString(2);
 		lua.SetTop(2);
 		lua.PushInteger(0);
 		lua.PushCSharpClosure(GmatchAux, 3);
@@ -818,18 +818,18 @@ public static class LuaStrLib
 			b.Append(ms.Src.AsSpan(s, (e - s)));  /* keep original text */
 		}
 		else if (!lua.IsString(-1))
-			lua.L_Error("invalid replacement value (a %s)", lua.L_TypeName(-1));
+			lua.Error("invalid replacement value (a %s)", lua.TypeName(-1));
 		else
 			b.Append(lua.ToString(-1));
 	}
 
 	private static int Str_Gsub(ILuaState lua)
 	{
-		var src = lua.L_CheckString(1);
+		var src = lua.CheckString(1);
 		var srcl = src.Length;
-		var p = lua.L_CheckString(2);
+		var p = lua.CheckString(2);
 		var tr = lua.Type(3);
-		var maxS = lua.L_OptInt(4, srcl + 1);
+		var maxS = lua.OptInt(4, srcl + 1);
 		var anchor = 0;
 		if (p[0] == '^')
 		{
@@ -837,7 +837,7 @@ public static class LuaStrLib
 			anchor = 1;
 		}
 		var b = new StringBuilder(srcl);
-		lua.L_ArgCheck(
+		lua.ArgCheck(
 			tr is LuaType.LUA_TNUMBER or LuaType.LUA_TSTRING or
 				LuaType.LUA_TFUNCTION or LuaType.LUA_TTABLE, 3,
 			"string/function/table expected");
@@ -876,14 +876,14 @@ public static class LuaStrLib
 
 	private static int Str_Len(ILuaState lua)
 	{
-		var s = lua.L_CheckString(1);
+		var s = lua.CheckString(1);
 		lua.PushInteger(s.Length);
 		return 1;
 	}
 
 	private static int Str_Lower(ILuaState lua)
 	{
-		var s = lua.L_CheckString(1);
+		var s = lua.CheckString(1);
 		lua.PushString(s.ToLower());
 		return 1;
 	}
@@ -918,7 +918,7 @@ public static class LuaStrLib
 
 	private static int Str_Reverse(ILuaState lua)
 	{
-		var s = lua.L_CheckString(1);
+		var s = lua.CheckString(1);
 		var sb = new StringBuilder(s.Length);
 		for (var i = s.Length - 1; i >= 0; --i)
 			sb.Append(s[i]);
@@ -928,9 +928,9 @@ public static class LuaStrLib
 
 	private static int Str_Sub( ILuaState lua )
 	{
-		var s = lua.L_CheckString(1);
-		var start = PosRelative( lua.L_CheckInteger(2), s.Length );
-		var end = PosRelative( lua.L_OptInt(3, -1), s.Length );
+		var s = lua.CheckString(1);
+		var start = PosRelative( lua.CheckInteger(2), s.Length );
+		var end = PosRelative( lua.OptInt(3, -1), s.Length );
 		if( start < 1 ) start = 1;
 		if( end > s.Length ) end = s.Length;
 		if( start <= end )
@@ -942,7 +942,7 @@ public static class LuaStrLib
 
 	private static int Str_Upper( ILuaState lua )
 	{
-		var s = lua.L_CheckString(1);
+		var s = lua.CheckString(1);
 		lua.PushString( s.ToUpper() );
 		return 1;
 	}

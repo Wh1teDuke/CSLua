@@ -9,7 +9,7 @@ public sealed class TestUpvalue
     public void Test1()
     {
         var L = new LuaState();
-        L.L_DoString("""
+        L.DoString("""
                      local foo = 123
                      function bar() foo = 456 end
                      bar()
@@ -23,7 +23,7 @@ public sealed class TestUpvalue
     public void Test2()
     {
         var L = new LuaState();
-        L.L_DoString("""
+        L.DoString("""
                      local foo = 123
                      function bar()
                         function baz() foo = 456 end 
@@ -40,7 +40,7 @@ public sealed class TestUpvalue
     public void Test3()
     {
         var L = new LuaState();
-        L.L_DoString("""
+        L.DoString("""
                      local foo = 0
                      function bar()
                         function baz() foo = foo + 1 end 

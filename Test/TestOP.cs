@@ -203,12 +203,12 @@ public sealed class TestOP
             if (v is int vInt)
             {
                 Assert.True(k.IsNumber());
-                Assert.Equal(LuaType.LUA_TNUMBER, (LuaType)k.Type);
+                Assert.Equal(LuaType.LUA_TNUMBER, k.Type);
                 Assert.Equal(vInt, k.NValue);
             }
             else
             {
-                Assert.Equal(LuaType.LUA_TSTRING, (LuaType)k.Type);
+                Assert.Equal(LuaType.LUA_TSTRING, k.Type);
                 Assert.Equal(v, k.OValue);
             }
         }

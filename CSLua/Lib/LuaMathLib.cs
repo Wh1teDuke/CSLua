@@ -54,7 +54,7 @@ public static class LuaMathLib
 			new("type",         Math_Type),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 
 		SetField(lua, "pi", Math.PI);
 		SetField(lua, "huge", double.MaxValue);
@@ -78,82 +78,82 @@ public static class LuaMathLib
 
 	private static int Math_Abs(ILuaState lua)
 	{
-		lua.PushNumber(Math.Abs(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Abs(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Acos(ILuaState lua)
 	{
-		lua.PushNumber(Math.Acos(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Acos(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Asin(ILuaState lua)
 	{
-		lua.PushNumber(Math.Asin(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Asin(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Atan2(ILuaState lua)
 	{
-		lua.PushNumber(Math.Atan2(lua.L_CheckNumber(1),
-			lua.L_CheckNumber(2)));
+		lua.PushNumber(Math.Atan2(lua.CheckNumber(1),
+			lua.CheckNumber(2)));
 		return 1;
 	}
 
 	private static int Math_Atan(ILuaState lua)
 	{
-		lua.PushNumber(Math.Atan(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Atan(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Ceil(ILuaState lua)
 	{
-		lua.PushNumber(Math.Ceiling(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Ceiling(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Cosh(ILuaState lua)
 	{
-		lua.PushNumber(Math.Cosh(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Cosh(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Cos(ILuaState lua)
 	{
-		lua.PushNumber(Math.Cos(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Cos(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Deg(ILuaState lua)
 	{
-		lua.PushNumber(lua.L_CheckNumber(1) / RADIANS_PER_DEGREE);
+		lua.PushNumber(lua.CheckNumber(1) / RADIANS_PER_DEGREE);
 		return 1;
 	}
 
 	private static int Math_Exp(ILuaState lua)
 	{
-		lua.PushNumber(Math.Exp(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Exp(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Floor(ILuaState lua)
 	{
-		lua.PushNumber(Math.Floor(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Floor(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Fmod(ILuaState lua)
 	{
 		lua.PushNumber(Math.IEEERemainder(
-			lua.L_CheckNumber(1),
-			lua.L_CheckNumber(2)));
+			lua.CheckNumber(1),
+			lua.CheckNumber(2)));
 		return 1;
 	}
 
 	private static int Math_Frexp(ILuaState lua)
 	{
-		var d = lua.L_CheckNumber(1);
+		var d = lua.CheckNumber(1);
 
 		// Translate the double into sign, exponent and mantissa.
 		var bits = BitConverter.DoubleToInt64Bits(d);
@@ -210,25 +210,25 @@ public static class LuaMathLib
 
 	private static int Math_Ldexp(ILuaState lua)
 	{
-		lua.PushNumber(lua.L_CheckNumber(1) * Math.Pow(2, lua.L_CheckNumber(2)));
+		lua.PushNumber(lua.CheckNumber(1) * Math.Pow(2, lua.CheckNumber(2)));
 		return 1;
 	}
 
 	private static int Math_Log10(ILuaState lua)
 	{
-		lua.PushNumber(Math.Log10(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Log10(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Log(ILuaState lua)
 	{
-		var x = lua.L_CheckNumber(1);
+		var x = lua.CheckNumber(1);
 		double res;
 		if (lua.IsNoneOrNil(2))
 			res = Math.Log(x);
 		else
 		{
-			var logBase = (int)lua.L_CheckNumber(2);
+			var logBase = (int)lua.CheckNumber(2);
 			res = logBase == 10 ? Math.Log10(x) : Math.Log(x, logBase);
 		}
 		lua.PushNumber(res);
@@ -238,10 +238,10 @@ public static class LuaMathLib
 	private static int Math_Max(ILuaState lua)
 	{
 		var n = lua.GetTop();
-		var dmax = lua.L_CheckNumber(1);
+		var dmax = lua.CheckNumber(1);
 		for (var i = 2; i <= n; ++i)
 		{
-			var d = lua.L_CheckNumber(i);
+			var d = lua.CheckNumber(i);
 			if (d > dmax) dmax = d;
 		}
 		lua.PushNumber(dmax);
@@ -251,10 +251,10 @@ public static class LuaMathLib
 	private static int Math_Min(ILuaState lua)
 	{
 		var n = lua.GetTop();
-		var dmin = lua.L_CheckNumber(1);
+		var dmin = lua.CheckNumber(1);
 		for (var i = 2; i <= n; ++i)
 		{
-			var d = lua.L_CheckNumber(i);
+			var d = lua.CheckNumber(i);
 			if (d < dmin) dmin = d;
 		}
 		lua.PushNumber(dmin);
@@ -263,7 +263,7 @@ public static class LuaMathLib
 
 	private static int Math_Modf(ILuaState lua)
 	{
-		var d = lua.L_CheckNumber(1);
+		var d = lua.CheckNumber(1);
 		var c = Math.Floor(d);
 		lua.PushNumber(c);
 		lua.PushNumber(d - c);
@@ -273,14 +273,14 @@ public static class LuaMathLib
 	private static int Math_Pow(ILuaState lua)
 	{
 		lua.PushNumber(
-			Math.Pow(lua.L_CheckNumber(1),
-			lua.L_CheckNumber(2)));
+			Math.Pow(lua.CheckNumber(1),
+			lua.CheckNumber(2)));
 		return 1;
 	}
 
 	private static int Math_Rad(ILuaState lua)
 	{
-		lua.PushNumber(lua.L_CheckNumber(1) * RADIANS_PER_DEGREE);
+		lua.PushNumber(lua.CheckNumber(1) * RADIANS_PER_DEGREE);
 		return 1;
 	}
 
@@ -294,58 +294,58 @@ public static class LuaMathLib
 				break;
 			case 1:
 			{
-				var u = lua.L_CheckNumber(1);
-				lua.L_ArgCheck(1.0 <= u, 1, "interval is empty");
+				var u = lua.CheckNumber(1);
+				lua.ArgCheck(1.0 <= u, 1, "interval is empty");
 				lua.PushNumber(Math.Floor(r * u) + 1.0); // int in [1, u]
 				break;
 			}
 			case 2:
 			{
-				var l = lua.L_CheckNumber(1);
-				var u = lua.L_CheckNumber(2);
-				lua.L_ArgCheck(l <= u, 2, "Interval is empty");
+				var l = lua.CheckNumber(1);
+				var u = lua.CheckNumber(2);
+				lua.ArgCheck(l <= u, 2, "Interval is empty");
 				lua.PushNumber(Math.Floor(r * (u - l + 1)) + l); // int in [l, u]
 				break;
 			}
-			default: return lua.L_Error("Wrong number of arguments");
+			default: return lua.Error("Wrong number of arguments");
 		}
 		return 1;
 	}
 
 	private static int Math_RandomSeed(ILuaState lua)
 	{
-		_randObj.Value = new Random((int)lua.L_CheckUnsigned(1));
+		_randObj.Value = new Random((int)lua.CheckUnsigned(1));
 		_randObj.Value!.Next();
 		return 0;
 	}
 
 	private static int Math_Sinh(ILuaState lua)
 	{
-		lua.PushNumber(Math.Sinh(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Sinh(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Sin(ILuaState lua)
 	{
-		lua.PushNumber(Math.Sin(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Sin(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Sqrt(ILuaState lua)
 	{
-		lua.PushNumber(Math.Sqrt(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Sqrt(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Tanh(ILuaState lua)
 	{
-		lua.PushNumber(Math.Tanh(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Tanh(lua.CheckNumber(1)));
 		return 1;
 	}
 
 	private static int Math_Tan(ILuaState lua)
 	{
-		lua.PushNumber(Math.Tan(lua.L_CheckNumber(1)));
+		lua.PushNumber(Math.Tan(lua.CheckNumber(1)));
 		return 1;
 	}
 
@@ -356,7 +356,7 @@ public static class LuaMathLib
 			lua.PushInt64(n);
 		else
 		{
-			lua.L_CheckAny(1);
+			lua.CheckAny(1);
 			lua.PushNil();
 		}
 		return 1;
@@ -367,7 +367,7 @@ public static class LuaMathLib
 		var t = lua.Type(1);
 		if (t == LuaType.LUA_TINT64) lua.PushString("integer");
 		if (t == LuaType.LUA_TNUMBER) lua.PushString("float");
-		lua.L_CheckAny(1);
+		lua.CheckAny(1);
 		lua.PushNil();
 		return 1;
 	}

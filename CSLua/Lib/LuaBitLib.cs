@@ -27,7 +27,7 @@ public static class LuaBitLib
 			new("rshift", 	B_RightShift),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 
@@ -55,15 +55,15 @@ public static class LuaBitLib
 	}
 
 	private static int B_LeftShift(ILuaState lua) => 
-		B_Shift(lua, lua.L_CheckUnsigned(1), lua.L_CheckInteger(2));
+		B_Shift(lua, lua.CheckUnsigned(1), lua.CheckInteger(2));
 
 	private static int B_RightShift(ILuaState lua) => 
-		B_Shift(lua, lua.L_CheckUnsigned(1), -lua.L_CheckInteger(2));
+		B_Shift(lua, lua.CheckUnsigned(1), -lua.CheckInteger(2));
 
 	private static int B_ArithShift(ILuaState lua)
 	{
-		var r = lua.L_CheckUnsigned(1);
-		var i = lua.L_CheckInteger(2);
+		var r = lua.CheckUnsigned(1);
+		var i = lua.CheckInteger(2);
 		if (i < 0 || ((r & ((uint)1 << (LUA_NBITS-1))) == 0))
 			return B_Shift( lua, r, -i );
 		// Arithmetic shift for 'negative' number
@@ -80,7 +80,7 @@ public static class LuaBitLib
 		var n = lua.GetTop();
 		var r = ~(uint)0;
 		for (var i = 1; i <= n; ++i) 
-			r &= lua.L_CheckUnsigned(i);
+			r &= lua.CheckUnsigned(i);
 		return Trim(r);
 	}
 
@@ -93,7 +93,7 @@ public static class LuaBitLib
 
 	private static int B_Not(ILuaState lua)
 	{
-		var r = ~lua.L_CheckUnsigned(1);
+		var r = ~lua.CheckUnsigned(1);
 		lua.PushUnsigned(Trim(r));
 		return 1;
 	}
@@ -103,7 +103,7 @@ public static class LuaBitLib
 		var n = lua.GetTop();
 		uint r = 0;
 		for (var i = 1; i <= n; ++i) 
-			r |= lua.L_CheckUnsigned(i);
+			r |= lua.CheckUnsigned(i);
 		lua.PushUnsigned(Trim(r));
 		return 1;
 	}
@@ -113,7 +113,7 @@ public static class LuaBitLib
 		var n = lua.GetTop();
 		uint r = 0;
 		for (var i = 1; i <= n; ++i) 
-			r ^= lua.L_CheckUnsigned(i);
+			r ^= lua.CheckUnsigned(i);
 		lua.PushUnsigned(Trim(r));
 		return 1;
 	}
@@ -127,19 +127,19 @@ public static class LuaBitLib
 
 	private static int FieldArgs( ILuaState lua, int farg, out int width )
 	{
-		var f = lua.L_CheckInteger(farg);
-		var w = lua.L_OptInt(farg + 1, 1);
-		lua.L_ArgCheck(0 <= f, farg, "Field cannot be negative");
-		lua.L_ArgCheck(0 < w, farg+1, "Width must be positive");
+		var f = lua.CheckInteger(farg);
+		var w = lua.OptInt(farg + 1, 1);
+		lua.ArgCheck(0 <= f, farg, "Field cannot be negative");
+		lua.ArgCheck(0 < w, farg+1, "Width must be positive");
 		if (f + w > LUA_NBITS)
-			lua.L_Error("Trying to access non-existent bits");
+			lua.Error("Trying to access non-existent bits");
 		width = w;
 		return f;
 	}
 
 	private static int B_Extract(ILuaState lua)
 	{
-		var r = lua.L_CheckUnsigned(1);
+		var r = lua.CheckUnsigned(1);
 		var f = FieldArgs(lua, 2, out var w);
 		r = (r >> f) & Mask(w);
 		lua.PushUnsigned(r);
@@ -148,7 +148,7 @@ public static class LuaBitLib
 
 	private static int B_Rotate(ILuaState lua, int i)
 	{
-		var r = lua.L_CheckUnsigned(1);
+		var r = lua.CheckUnsigned(1);
 		i &= (LUA_NBITS-1); // i = i % NBITS
 		r = Trim(r);
 		r = (r << i) | (r >> (LUA_NBITS - i));
@@ -157,15 +157,15 @@ public static class LuaBitLib
 	}
 
 	private static int B_LeftRotate(ILuaState lua) => 
-		B_Rotate(lua, lua.L_CheckInteger(2));
+		B_Rotate(lua, lua.CheckInteger(2));
 
 	private static int B_RightRotate(ILuaState lua) => 
-		B_Rotate(lua, -lua.L_CheckInteger(2));
+		B_Rotate(lua, -lua.CheckInteger(2));
 
 	private static int B_Replace(ILuaState lua)
 	{
-		var r = lua.L_CheckUnsigned(1);
-		var v = lua.L_CheckUnsigned(2);
+		var r = lua.CheckUnsigned(1);
+		var v = lua.CheckUnsigned(2);
 		var f = FieldArgs(lua, 3, out var w);
 		var m = Mask(w);
 		v &= m; // Erase bits outside given width

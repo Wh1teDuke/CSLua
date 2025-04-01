@@ -175,12 +175,12 @@ public sealed class LuaTable
 		// Check whether 'key' is somewhere in the chain
 		for (;;) 
 		{
-			if (L.V_RawEqualObj(n!.PtrKey, key))
+			if (L.RawEqualObj(n!.PtrKey, key))
 				return _arraySize + n.Index;
 			n = n.Next;
 
 			// key not found
-			if (n == null) L.G_RunError("Invalid key to 'next'");
+			if (n == null) L.RunError("Invalid key to 'next'");
 		}
 	}
 
@@ -386,7 +386,7 @@ public sealed class LuaTable
 		}
 
 		var lsize = CeilLog2(size);
-		if (lsize > MAXBITS) L.G_RunError("Table overflow");
+		if (lsize > MAXBITS) L.RunError("Table overflow");
 
 		size = (1 << lsize);
 
@@ -551,10 +551,10 @@ public sealed class LuaTable
 	private StkId NewTableKey(StkId k)
 	{
 		if (k.V.IsNil()) 
-			L.G_RunError("Table index is nil");
+			L.RunError("Table index is nil");
 
 		if (k.V.IsNumber() && double.IsNaN(k.V.NValue)) 
-			L.G_RunError("Table index is NaN");
+			L.RunError("Table index is NaN");
 
 		var node = GetHashNode(k);
 

@@ -25,7 +25,7 @@ internal static class LuaTableLib
 			new("length",   TBL_Length),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 
 #if LUA_COMPAT_UNPACK
 		// _G.unpack = table.unpack
@@ -38,19 +38,19 @@ internal static class LuaTableLib
 
 	private static int TBL_Concat(ILuaState lua)
 	{
-		var sep = lua.L_OptString(2, "");
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
-		var i = lua.L_OptInt(3, 1);
-		var last = lua.L_Opt(lua.L_CheckInteger, 4, lua.L_Len(1));
+		var sep = lua.OptString(2, "");
+		lua.CheckType(1, LuaType.LUA_TTABLE);
+		var i = lua.OptInt(3, 1);
+		var last = lua.Opt(lua.CheckInteger, 4, ((ILuaAuxLib)lua).Len(1));
 
 		var sb = new StringBuilder();
 		for (; i < last; ++i)
 		{
 			lua.RawGetI(1, i);
 			if (!lua.IsString(-1))
-				lua.L_Error(
+				lua.Error(
 					"Invalid value ({0}) at index {1} in table for 'concat'",
-					lua.L_TypeName(-1), i);
+					lua.TypeName(-1), i);
 			sb.Append(lua.ToString(-1));
 			sb.Append(sep);
 			lua.Pop(1);
@@ -59,9 +59,9 @@ internal static class LuaTableLib
 		{
 			lua.RawGetI(1, i);
 			if (!lua.IsString(-1))
-				lua.L_Error(
+				lua.Error(
 					"Invalid value ({0}) at index {1} in table for 'concat'",
-					lua.L_TypeName(-1), i);
+					lua.TypeName(-1), i);
 			sb.Append(lua.ToString(-1));
 			lua.Pop(1);
 		}
@@ -73,7 +73,7 @@ internal static class LuaTableLib
 	private static int TBL_MaxN(ILuaState lua)
 	{
 		var max = 0.0;
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, LuaType.LUA_TTABLE);
 		lua.PushNil(); // first key
 
 		while(lua.Next(1))
@@ -91,8 +91,8 @@ internal static class LuaTableLib
 
 	private static int AuxGetN(ILuaState lua, int n)
 	{
-		lua.L_CheckType(n, LuaType.LUA_TTABLE);
-		return lua.L_Len(n);
+		lua.CheckType(n, LuaType.LUA_TTABLE);
+		return ((ILuaAuxLib)lua).Len(n);
 	}
 
 	private static int TBL_Insert(ILuaState lua)
@@ -108,7 +108,7 @@ internal static class LuaTableLib
 			}
 			case 3:
 			{
-				pos = lua.L_CheckInteger(2); // 2nd argument is the position
+				pos = lua.CheckInteger(2); // 2nd argument is the position
 				if (pos > e) e = pos; // 'grow' array if necessary
 				for (var i = e; i > pos; --i) // move up elements
 				{
@@ -119,7 +119,7 @@ internal static class LuaTableLib
 			}
 			default:
 			{
-				return lua.L_Error("Wrong number of arguments to 'insert'");
+				return lua.Error("Wrong number of arguments to 'insert'");
 			}
 		}
 		lua.RawSetI(1, pos); // t[pos] = v
@@ -129,7 +129,7 @@ internal static class LuaTableLib
 	private static int TBL_Remove(ILuaState lua)
 	{
 		var e = AuxGetN(lua, 1);
-		var pos = lua.L_OptInt(2, e);
+		var pos = lua.OptInt(2, e);
 		if (!(1 <= pos && pos <= e)) // Position is outside bounds?
 			return 0; // Nothing to remove
 		lua.RawGetI(1, pos); /* result = t[pos] */
@@ -161,13 +161,13 @@ internal static class LuaTableLib
 
 	private static int TBL_Unpack(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
-		var i = lua.L_OptInt(2, 1);
-		var e = lua.L_OptInt(3, lua.L_Len(1));
+		lua.CheckType(1, LuaType.LUA_TTABLE);
+		var i = lua.OptInt(2, 1);
+		var e = lua.OptInt(3, ((ILuaAuxLib)lua).Len(1));
 		if (i > e) return 0; // empty range
 		var n = e - i + 1; // number of elements
 		if (n <= 0 || !lua.CheckStack(n)) // n <= 0 means arith. overflow
-			return lua.L_Error("too many results to unpack");
+			return lua.Error("too many results to unpack");
 		lua.RawGetI(1, i); // push arg[i] (avoiding overflow problems
 		while (i++ < e) // push arg[i + 1...e]
 			lua.RawGetI(1, i);
@@ -239,7 +239,7 @@ internal static class LuaTableLib
 				lua.RawGetI(1, ++i);
 				while (SortComp(lua, -1, -2))
 				{
-					if (i >= u) lua.L_Error("invalid order function for sorting");
+					if (i >= u) lua.Error("invalid order function for sorting");
 					lua.Pop(1);  /* remove a[i] */
 					lua.RawGetI(1, ++i);
 				}
@@ -247,7 +247,7 @@ internal static class LuaTableLib
 				lua.RawGetI(1, --j);
 				while (SortComp(lua, -3, -1))
 				{
-					if (j <= l) lua.L_Error("invalid order function for sorting");
+					if (j <= l) lua.Error("invalid order function for sorting");
 					lua.Pop(1);  /* remove a[j] */
 					lua.RawGetI(1, --j);
 				}
@@ -278,9 +278,9 @@ internal static class LuaTableLib
 	private static int TBL_Sort(ILuaState lua)
 	{
 		var n = AuxGetN(lua, 1);
-		lua.L_CheckStack(40, "");  /* assume array is smaller than 2^40 */
+		lua.CheckStack(40, "");  /* assume array is smaller than 2^40 */
 		if (!lua.IsNoneOrNil(2))  /* is there a 2nd argument? */
-			lua.L_CheckType(2, LuaType.LUA_TFUNCTION);
+			lua.CheckType(2, LuaType.LUA_TFUNCTION);
 		lua.SetTop(2);  /* make sure there is two arguments */
 		AuxSort(lua, 1, n);
 		return 0;
@@ -288,7 +288,7 @@ internal static class LuaTableLib
 
 	private static int TBL_Length(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, LuaType.LUA_TTABLE);
 		lua.PushNil();
 		var count = 0;
 		while (lua.Next(1))

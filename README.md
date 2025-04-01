@@ -3,15 +3,15 @@
 ## Example
 
 ```cs
-public void Test1()
+public void Test()
 {
     var L = new LuaState();
-    L.L_OpenLibs();
+    L.OpenLibs();
     
     L.PushCSharpFunction(FromCS);
     L.SetGlobal("FromCS");
     
-    L.L_DoString(
+    L.DoString(
         """
         local a, b = 1, 2
         return FromCS(a, b);

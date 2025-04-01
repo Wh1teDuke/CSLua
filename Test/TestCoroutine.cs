@@ -9,7 +9,7 @@ public sealed class TestCoroutine
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                function producer()
                    for i = 1, 5 do coroutine.yield(i) end

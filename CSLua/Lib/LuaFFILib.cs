@@ -42,7 +42,7 @@ public static class LuaFFILib
 			// new NameFuncPair("call_constructor", FFI_CallConstructor),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 

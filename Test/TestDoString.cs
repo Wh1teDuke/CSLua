@@ -9,8 +9,8 @@ public sealed class TestDoString
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
-        L.L_DoString(
+        L.OpenLibs();
+        L.DoString(
             """
             function foo(bar) print(bar) end
             local bar = "bar"

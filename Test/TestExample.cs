@@ -9,12 +9,12 @@ public sealed class TestExample
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         
         L.PushCSharpFunction(FromCS);
         L.SetGlobal("FromCS");
         
-        L.L_DoString(
+        L.DoString(
             """
             local a, b = 1, 2
             return FromCS(a, b);

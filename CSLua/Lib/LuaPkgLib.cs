@@ -44,7 +44,7 @@ public static class LuaPkgLib
 			new("searchpath",	PKG_SearchPath),
 			new("seeall", 		PKG_SeeAll),
 		];
-		lua.L_NewLib(pkg_define);
+		lua.NewLib(pkg_define);
 
 		CreateSearchersTable(lua);
 #if LUA_COMPAT_LOADERS
@@ -63,11 +63,11 @@ public static class LuaPkgLib
 		lua.SetField(-2, "config");
 
 		// Set field 'loaded'
-		lua.L_GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_LOADED");
+		lua.GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_LOADED");
 		lua.SetField(-2, "loaded");
 
 		// Set field 'preload'
-		lua.L_GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_PRELOAD");
+		lua.GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_PRELOAD");
 		lua.SetField(-2, "preload");
 
 		lua.PushGlobalTable();
@@ -78,7 +78,7 @@ public static class LuaPkgLib
 			new("module",  LL_Module),
 			new("require", LL_Require),
 		];
-		lua.L_SetFuncs(loadLibFuncs, 1); // open lib into global table
+		lua.SetFuncs(loadLibFuncs, 1); // open lib into global table
 		lua.Pop(1); // pop global table
 
 		return 1; // return `package' table
@@ -110,7 +110,7 @@ public static class LuaPkgLib
 
 	private static int SearcherPreload(ILuaState lua)
 	{
-		var name = lua.L_CheckString(1);
+		var name = lua.CheckString(1);
 		lua.GetField(LuaDef.LUA_REGISTRYINDEX, "_PRELOAD");
 		lua.GetField(-1, name);
 		if (lua.IsNil(-1)) // Not found?
@@ -170,7 +170,7 @@ public static class LuaPkgLib
 		lua.GetField(lua.UpValueIndex(1), pname);
 		var path = lua.ToString(-1);
 		if (path == null)
-			lua.L_Error("'package.{0}' must be a string", pname);
+			lua.Error("'package.{0}' must be a string", pname);
 		return SearchPath(lua, name, path!, ".", dirsep);
 	}
 
@@ -183,18 +183,18 @@ public static class LuaPkgLib
 			return 2; // return open function and file name
 		}
 
-		return lua.L_Error(
+		return lua.Error(
 			"Error loading module '{0}' from file '{1}':\n\t{2}",
 			lua.ToString(1), filename, lua.ToString(-1));
 	}
 
 	private static int SearcherLua(ILuaState lua)
 	{
-		var name = lua.L_CheckString(1);
+		var name = lua.CheckString(1);
 		var filename = FindFile(lua, name, "path", LUA_LSUBSEP);
 		if (filename == null) return 1;
 		return CheckLoad(lua,
-			(lua.L_LoadFile(filename) == ThreadStatus.LUA_OK),
+			(lua.LoadFile(filename) == ThreadStatus.LUA_OK),
 			filename);
 	}
 
@@ -209,7 +209,7 @@ public static class LuaPkgLib
 		// will be at index 3
 		lua.GetField(lua.UpValueIndex(1), "searchers");
 		if(!lua.IsTable(3))
-			lua.L_Error("'package.searchers' must be a table");
+			lua.Error("'package.searchers' must be a table");
 
 		var sb = new StringBuilder();
 		// iterator over available searchers to find a loader
@@ -220,7 +220,7 @@ public static class LuaPkgLib
 			{
 				lua.Pop(1); // remove nil
 				lua.PushString(sb.ToString());
-				lua.L_Error("Module '{0}' not found:{1}",
+				lua.Error("Module '{0}' not found:{1}",
 					name, lua.ToString(-1));
 				return;
 			}
@@ -241,7 +241,7 @@ public static class LuaPkgLib
 
 	private static int LL_Require(ILuaState lua)
 	{
-		var name = lua.L_CheckString(1);
+		var name = lua.CheckString(1);
 		lua.SetTop(1);
 		// _LOADED table will be at index 2
 		lua.GetField(LuaDef.LUA_REGISTRYINDEX, "_LOADED");

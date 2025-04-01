@@ -8,18 +8,18 @@ public sealed class TestInt64
     public void TestInt1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         
         L.Eval("""
                local i1 = math.tointeger(5)
                local i2 = math.tointeger(6)
                return i1 + i2, i1 - i2, i1 * i2, i1 / i2, -i1
                """);
-        var iAdd = L.L_CheckInt64(-5);
-        var iSub = L.L_CheckInt64(-4);
-        var iMul = L.L_CheckInt64(-3);
-        var iDiv = L.L_CheckInt64(-2);
-        var iNeg = L.L_CheckInt64(-1);
+        var iAdd = L.CheckInt64(-5);
+        var iSub = L.CheckInt64(-4);
+        var iMul = L.CheckInt64(-3);
+        var iDiv = L.CheckInt64(-2);
+        var iNeg = L.CheckInt64(-1);
         
         Assert.Equal(11, iAdd);
         Assert.Equal(-1, iSub);
@@ -32,17 +32,17 @@ public sealed class TestInt64
     public void TestInt64Double()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         
         L.Eval("""
                local i1 = math.tointeger(5)
                local i2 = 6
                return i1 + i2, i1 - i2, i1 * i2, i1 / i2
                """);
-        var iAdd = L.L_CheckNumber(-4);
-        var iSub = L.L_CheckNumber(-3);
-        var iMul = L.L_CheckNumber(-2);
-        var iDiv = L.L_CheckNumber(-1);
+        var iAdd = L.CheckNumber(-4);
+        var iSub = L.CheckNumber(-3);
+        var iMul = L.CheckNumber(-2);
+        var iDiv = L.CheckNumber(-1);
         
         Assert.Equal(11, iAdd);
         Assert.Equal(-1, iSub);

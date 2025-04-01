@@ -232,7 +232,7 @@ public static class Util
 	public static string Traceback(
 		LuaState L, string? msg = null, int level = 0)
 	{
-		var result = L.L_DoTraceback(L, msg, level);
+		var result = L.DoTraceback(L, msg, level);
 		L.Pop(1);
 		return result;
 	}

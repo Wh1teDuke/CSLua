@@ -115,7 +115,7 @@ public static class LuaExtensions
     
     public static string PopErrorMsg(this ILuaState L)
     {
-        var err = L.L_ToString(-1);
+        var err = L.ToStringX(-1);
         L.Pop(-1);
         return err;
     }

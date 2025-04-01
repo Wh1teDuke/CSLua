@@ -26,7 +26,7 @@ public static class  LuaIOLib
 			new("write", 		IO_Write),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 

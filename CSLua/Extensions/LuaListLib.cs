@@ -31,7 +31,7 @@ public static class LuaListLib
             new("pairs", 	    ListPairs),
         ];
 
-        lua.L_NewLib(define);
+        lua.NewLib(define);
         return 1;
     }
 
@@ -54,7 +54,7 @@ public static class LuaListLib
     private static int ListDel(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var index = lua.ToInteger(2);
         var value = list[index];
 
@@ -75,7 +75,7 @@ public static class LuaListLib
     private static int ListInsert(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var index = lua.ToInteger(2);
 
         GetValue(L, 3, out var addr);
@@ -86,7 +86,7 @@ public static class LuaListLib
     private static int ListIndexOf(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
 
         GetValue(L, 2, out var addr);
         var value1 = addr.V;
@@ -106,7 +106,7 @@ public static class LuaListLib
     private static int ListContains(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
 
         GetValue(L, 2, out var addr);
         var value1 = addr.V;
@@ -125,7 +125,7 @@ public static class LuaListLib
     private static int ListAdd(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var top = lua.GetTop();
 
         for (var i = 2; i <= top; i++)
@@ -139,12 +139,12 @@ public static class LuaListLib
     
     private static int ListAddAll(ILuaState lua)
     {
-        var list1 = lua.L_CheckList(1);
+        var list1 = lua.CheckList(1);
         var top = lua.GetTop();
 
         for (var i = 2; i <= top; i++)
         {
-            var list2 = lua.L_CheckList(i);
+            var list2 = lua.CheckList(i);
             foreach (var t in list2)
                 list1.Add(t);
         }
@@ -155,7 +155,7 @@ public static class LuaListLib
     private static int ListGet(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var index = lua.ToInteger(2);
         var value = list[index];
         L.Push(value);
@@ -165,7 +165,7 @@ public static class LuaListLib
     private static int ListSet(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var index = lua.ToInteger(2);
 
         GetValue(L, 3, out var addr);
@@ -176,28 +176,28 @@ public static class LuaListLib
 
     private static int ListLength(ILuaState lua)
     {
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         lua.PushInteger(list.Count);
         return 1;
     }
 
     private static int ListSort(ILuaState lua)
     {
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         list.Sort();
         return 0;
     }
     
     private static int ListClear(ILuaState lua)
     {
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         list.Clear();
         return 0;
     }
     
     private static int ListIsEmpty(ILuaState lua)
     {
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         lua.PushBoolean(list.Count == 0);
         return 1;
     }
@@ -207,7 +207,7 @@ public static class LuaListLib
         var L = (LuaState)lua;
         lua.SetTop(2);
 
-        var list = lua.L_CheckList(1);
+        var list = lua.CheckList(1);
         var key = L.Ref[L.TopIndex - 1];
         var index = 0;
 
@@ -235,7 +235,7 @@ public static class LuaListLib
     
     private static int ListPairs(ILuaState lua)
     {
-        lua.L_CheckList(1);
+        lua.CheckList(1);
         lua.PushCSharpFunction(ListNext);
         lua.PushValue(1);
         lua.PushNil();
@@ -246,6 +246,6 @@ public static class LuaListLib
     private static void GetValue(LuaState L, int index, out StkId id)
     {
         if (!L.Index2Addr(index, out id))
-            L.L_Error("Can't access variable");
+            L.Error("Can't access variable");
     }
 }

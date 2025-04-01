@@ -10,12 +10,12 @@ public sealed class TestLoad
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
 
-        var r1 = L.L_DoFile(Path.Join("lua", "Test1.lua"));
+        var r1 = L.DoFile(Path.Join("lua", "Test1.lua"));
         Assert.Equal(ThreadStatus.LUA_OK, r1);
 
-        var r2 = L.L_DoString("return tFoo + tBar");
+        var r2 = L.DoString("return tFoo + tBar");
         Assert.Equal(ThreadStatus.LUA_OK, r2);
 
         var ret = L.ToInteger(-1);
@@ -27,7 +27,7 @@ public sealed class TestLoad
     {
         const string foo = "foo";
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.PushInteger(0);
         L.SetGlobal(foo);
 
@@ -45,7 +45,7 @@ public sealed class TestLoad
     {
         var L = new LuaState();
         var proto = Parser.Read("foo = 1").Proto;
-        var res = L.L_DoProto(proto, "Test");
+        var res = L.DoProto(proto, "Test");
         Assert.Equal(ThreadStatus.LUA_OK, res);
         
         L.GetGlobal("foo");

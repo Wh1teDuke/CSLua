@@ -23,7 +23,7 @@ public static class LuaOSLib
 			new("setlocale",	OS_SetLocale),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 	
@@ -39,7 +39,7 @@ public static class LuaOSLib
 			//new("exit",		OS_Exit),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 	
@@ -66,8 +66,8 @@ public static class LuaOSLib
 	
 	private static int OS_Rename(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TSTRING);
-		lua.L_CheckType(2, LuaType.LUA_TSTRING);
+		lua.CheckType(1, LuaType.LUA_TSTRING);
+		lua.CheckType(2, LuaType.LUA_TSTRING);
 		var oldName = lua.ToString(1);
 		var newName = lua.ToString(2);
 
@@ -87,7 +87,7 @@ public static class LuaOSLib
 	
 	private static int OS_Remove(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TSTRING);
+		lua.CheckType(1, LuaType.LUA_TSTRING);
 		var fileName = lua.ToString(1);
 
 		try

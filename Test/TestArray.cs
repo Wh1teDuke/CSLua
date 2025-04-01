@@ -9,7 +9,7 @@ public sealed class TestArray
     public void Test1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {}
                len1 = #arr
@@ -34,7 +34,7 @@ public sealed class TestArray
     public void Test2()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {}
                len1 = #arr
@@ -56,7 +56,7 @@ public sealed class TestArray
     public void Test3()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {}
                for i = 1, 10 do table.insert(arr, i) end
@@ -72,7 +72,7 @@ public sealed class TestArray
         // Undefined https://www.lua.org/manual/5.2/manual.html#3.4.6
         // "[...]the length of a table t is only defined if the table is a sequence"
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
                arr[5] = nil
@@ -85,7 +85,7 @@ public sealed class TestArray
     public void Test5()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
                arr[5] = nil
@@ -99,7 +99,7 @@ public sealed class TestArray
     public void Test6()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
                arr[1] = nil
@@ -114,7 +114,7 @@ public sealed class TestArray
     public void TestBigArray1()
     {
         var L = new LuaState();
-        L.L_OpenLibs();
+        L.OpenLibs();
         L.Eval("""
                 local t = {};
                 for i = 1, 10_000 do

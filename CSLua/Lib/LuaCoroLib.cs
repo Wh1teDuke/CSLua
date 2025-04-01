@@ -19,13 +19,13 @@ public static class LuaCoroLib
 			new("yield", 	CO_Yield),
 		];
 
-		lua.L_NewLib(define);
+		lua.NewLib(define);
 		return 1;
 	}
 
 	private static int CO_Create(ILuaState lua)
 	{
-		lua.L_CheckType(1, LuaType.LUA_TFUNCTION);
+		lua.CheckType(1, LuaType.LUA_TFUNCTION);
 		ILuaState newLua = lua.NewThread();
 		lua.PushValue(1); // Move function to top
 		lua.XMove(newLua, 1); // Move function from lua to newLua
@@ -66,7 +66,7 @@ public static class LuaCoroLib
 	private static int CO_Resume(ILuaState lua)
 	{
 		var co = lua.ToThread(1);
-		lua.L_ArgCheck(co != null, 1, "coroutine expected");
+		lua.ArgCheck(co != null, 1, "coroutine expected");
 		var r = AuxResume(lua, co!, lua.GetTop() - 1);
 		if (r < 0)
 		{
@@ -90,7 +90,7 @@ public static class LuaCoroLib
 	private static int CO_Status(ILuaState lua)
 	{
 		var co = (LuaState)lua.ToThread(1);
-		lua.L_ArgCheck(co != null, 1, "coroutine expected");
+		lua.ArgCheck(co != null, 1, "coroutine expected");
 		if ((LuaState)lua == co!)
 			lua.PushString("running");
 		// ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -125,7 +125,7 @@ public static class LuaCoroLib
 		{
 			if (lua.IsString(-1)) // Error object is a string?
 			{
-				lua.L_Where(1); // Add extra info
+				lua.Where(1); // Add extra info
 				lua.Insert(-2);
 				lua.Concat(2);
 			}
