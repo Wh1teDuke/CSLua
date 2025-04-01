@@ -203,7 +203,7 @@ public static class LuaFFILib
 
 	private static int FFI_GetField(ILuaState lua)
 	{
-		var t = (Type)lua.ToUserData(1);
+		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
 		var fInfo = t.GetField(name,
 			BindingFlags.Instance |
@@ -216,19 +216,19 @@ public static class LuaFFILib
 
 	private static int FFI_GetFieldValue(ILuaState lua)
 	{
-		var fInfo = (FieldInfo)lua.ToUserData(1);
+		var fInfo = (FieldInfo)lua.ToUserData(1)!;
 		var inst = lua.ToUserData(2);
-		var returnType = (Type)lua.ToUserData(3);
-		var value = fInfo.GetValue(inst);
+		var returnType = (Type)lua.ToUserData(3)!;
+		var value = fInfo.GetValue(inst)!;
 		LuaStackUtil.PushRawValue(lua, value, returnType);
 		return 1;
 	}
 
 	private static int FFI_SetFieldValue(ILuaState lua)
 	{
-		var finfo = (FieldInfo)lua.ToUserData(1);
-		var inst = lua.ToUserData(2);
-		var t = (Type)lua.ToUserData(4);
+		var finfo = (FieldInfo)lua.ToUserData(1)!;
+		var inst = lua.ToUserData(2)!;
+		var t = (Type)lua.ToUserData(4)!;
 		var value = LuaStackUtil.ToRawValue(lua, 3, t);
 		finfo.SetValue(inst, value);
 		return 0;
@@ -236,7 +236,7 @@ public static class LuaFFILib
 
 	private static int FFI_GetProp(ILuaState lua)
 	{
-		var t = (Type)lua.ToUserData(1);
+		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
 		var pInfo = t.GetProperty(name,
 			BindingFlags.Instance |
@@ -249,7 +249,7 @@ public static class LuaFFILib
 
 	private static int FFI_GetStaticProp(ILuaState lua)
 	{
-		var t = (Type)lua.ToUserData(1);
+		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
 		var pinfo = t.GetProperty(name,
 			BindingFlags.Static |
@@ -262,11 +262,11 @@ public static class LuaFFILib
 
 	private static int FFI_GetPropValue(ILuaState lua)
 	{
-		var pinfo = (PropertyInfo)lua.ToUserData(1);
+		var pinfo = (PropertyInfo)lua.ToUserData(1)!;
 		var inst = lua.ToUserData(2);
-		var returnType = (Type)lua.ToUserData(3);
-		var value = pinfo.GetValue(inst, null);
-		LuaStackUtil.PushRawValue(lua, value!, returnType);
+		var returnType = (Type)lua.ToUserData(3)!;
+		var value = pinfo.GetValue(inst, null)!;
+		LuaStackUtil.PushRawValue(lua, value, returnType);
 		return 1;
 	}
 
@@ -354,10 +354,11 @@ public static class LuaFFILib
 					return 1;
 
 				case "System.Int64": 
-					throw new NotImplementedException();
+					lua.PushInt64((long)o);
+					return 1;
 
 				case "System.UInt64": 
-					lua.PushUInt64((ulong)o);
+					lua.PushInt64((long)o);
 					return 1;
 
 				case "System.Single": 

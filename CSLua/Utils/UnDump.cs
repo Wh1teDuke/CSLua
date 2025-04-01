@@ -47,7 +47,17 @@ public sealed class BinaryBytesReader(ILoadInfo loadinfo)
 		var bytes = ReadBytes(4);
 		var ret = BitConverter.ToUInt32(bytes, 0);
 #if DEBUG_BINARY_READER
-			ULDebug.Log( "ReadUInt: " + ret );
+		ULDebug.Log("ReadUInt: " + ret);
+#endif
+		return ret;
+	}
+	
+	public long ReadInt64()
+	{
+		var bytes = ReadBytes(8);
+		var ret = BitConverter.ToInt64(bytes, 0);
+#if DEBUG_BINARY_READER
+		ULDebug.Log("ReadInt64: " + ret);
 #endif
 		return ret;
 	}
@@ -90,7 +100,7 @@ public sealed class BinaryBytesReader(ILoadInfo loadinfo)
 		if (c == -1)
 			throw new UnDumpException("Truncated");
 #if DEBUG_BINARY_READER
-			ULDebug.Log( "ReadBytes: " + c );
+		ULDebug.Log("ReadBytes: " + c);
 #endif
 		return (byte)c;
 	}
@@ -147,6 +157,7 @@ public sealed class UnDump
 	private bool LoadBoolean() => LoadByte() != 0;
 
 	private double LoadNumber() => _reader.ReadDouble();
+	private long LoadInt64() => _reader.ReadInt64();
 
 	private void LoadHeader()
 	{
@@ -234,6 +245,11 @@ public sealed class UnDump
 
 				case (int)LuaType.LUA_TNUMBER:
 					v.SetDouble(LoadNumber());
+					proto.K.Add(v);
+					break;
+				
+				case (int)LuaType.LUA_TINT64:
+					v.SetInt64(LoadInt64());
 					proto.K.Add(v);
 					break;
 

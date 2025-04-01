@@ -28,10 +28,10 @@ public sealed class TestPushPop
         var L = new LuaState();
         Assert.Equal(0, L.GetTop());
         
-        const ulong n1 = 1;
-        L.PushUInt64(n1);
+        const long n1 = 1;
+        L.PushInt64(n1);
         Assert.Equal(1, L.GetTop());
-        var n2 = L.ToUInt64(-1);
+        var n2 = L.ToInt64(-1);
         
         Assert.Equal(1, L.GetTop());
         Assert.Equal(n1, n2);
@@ -103,19 +103,19 @@ public sealed class TestPushPop
         var L = new LuaState();
         Assert.Equal(0, L.GetTop());
 
-        var i1 = 1;
-        var i2 = 1.0;
+        var i1 = 6;
+        var i2 = 7.0;
         var i3 = true;
         var i4 = "foobar";
         var i5 = new object();
-        var i6 = 7u;
+        var i6 = 8L;
 
         L.PushInteger(i1);
         L.PushNumber(i2);
         L.PushBoolean(i3);
         L.PushString(i4);
         L.PushLightUserData(i5);
-        L.PushUInt64(i6);
+        L.PushInt64(i6);
         Assert.Equal(6, L.GetTop());
         
         var n1 = L.ToInteger(1);
@@ -123,7 +123,7 @@ public sealed class TestPushPop
         var n3 = L.ToBoolean(3);
         var n4 = L.ToString(4);
         var n5 = L.ToUserData(5);
-        var n6 = L.ToUInt64(6);
+        var n6 = L.ToInt64(6);
         
         Assert.Equal(6, L.GetTop());
         Assert.Equal(i1, n1);
@@ -140,10 +140,10 @@ public sealed class TestPushPop
         var L = new LuaState();
         Assert.Equal(0, L.GetTop());
         
-        const ulong n1 = 1;
-        L.PushUInt64(n1);
+        const long n1 = 1;
+        L.PushInt64(n1);
         Assert.Equal(1, L.GetTop());
-        var n2 = L.PopUInt64();
+        var n2 = L.PopInt64();
         
         Assert.Equal(0, L.GetTop());
         Assert.Equal(n1, n2);

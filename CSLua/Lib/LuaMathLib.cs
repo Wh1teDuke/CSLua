@@ -51,17 +51,29 @@ public static class LuaMathLib
 			new("tanh",   		Math_Tanh),
 			new("tan",   		Math_Tan),
 			new("tointeger",    Math_ToInt),
+			new("type",         Math_Type),
 		];
 
 		lua.L_NewLib(define);
 
-		lua.PushNumber(Math.PI);
-		lua.SetField(-2, "pi");
-
-		lua.PushNumber(double.MaxValue);
-		lua.SetField(-2, "huge");
+		SetField(lua, "pi", Math.PI);
+		SetField(lua, "huge", double.MaxValue);
+		SetField(lua, "maxinteger", long.MaxValue);
+		SetField(lua, "mininteger", long.MinValue);
 
 		return 1;
+	}
+
+	private static void SetField(ILuaState L, string key, double value)
+	{
+		L.PushNumber(value);
+		L.SetField(-2, key);
+	}
+	
+	private static void SetField(ILuaState L, string key, long value)
+	{
+		L.PushInt64(value);
+		L.SetField(-2, key);
 	}
 
 	private static int Math_Abs(ILuaState lua)
@@ -152,7 +164,7 @@ public static class LuaMathLib
 
 		// Subnormal numbers; exponent is effectively one higher,
 		// but there's no extra normalisation bit in the mantissa
-		if (exponent==0)
+		if (exponent == 0)
 		{
 			exponent++;
 		}
@@ -313,21 +325,21 @@ public static class LuaMathLib
 		return 1;
 	}
 
-	private static int Math_Sin( ILuaState lua )
+	private static int Math_Sin(ILuaState lua)
 	{
-		lua.PushNumber( Math.Sin( lua.L_CheckNumber(1) ) );
+		lua.PushNumber(Math.Sin(lua.L_CheckNumber(1)));
 		return 1;
 	}
 
-	private static int Math_Sqrt( ILuaState lua )
+	private static int Math_Sqrt(ILuaState lua)
 	{
-		lua.PushNumber( Math.Sqrt( lua.L_CheckNumber(1) ) );
+		lua.PushNumber(Math.Sqrt(lua.L_CheckNumber(1)));
 		return 1;
 	}
 
-	private static int Math_Tanh( ILuaState lua )
+	private static int Math_Tanh(ILuaState lua)
 	{
-		lua.PushNumber( Math.Tanh( lua.L_CheckNumber(1) ) );
+		lua.PushNumber(Math.Tanh(lua.L_CheckNumber(1)));
 		return 1;
 	}
 
@@ -341,12 +353,22 @@ public static class LuaMathLib
 	{
 		var n = lua.ToIntegerX(1, out var valid);
 		if (valid) 
-			lua.PushInteger(n);
+			lua.PushInt64(n);
 		else
 		{
 			lua.L_CheckAny(1);
 			lua.PushNil();
 		}
+		return 1;
+	}
+
+	private static int Math_Type(ILuaState lua)
+	{
+		var t = lua.Type(1);
+		if (t == LuaType.LUA_TINT64) lua.PushString("integer");
+		if (t == LuaType.LUA_TNUMBER) lua.PushString("float");
+		lua.L_CheckAny(1);
+		lua.PushNil();
 		return 1;
 	}
 }

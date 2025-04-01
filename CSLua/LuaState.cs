@@ -2,6 +2,7 @@
 // #define DEBUG_RECORD_INS
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using CSLua.Extensions;
@@ -1013,8 +1014,8 @@ public sealed class LuaState : ILuaState
 		var tbl = addr.V.AsTable();
 		var below = Ref[TopIndex - 1];
 
-		tbl.TryGet(below, out var value);
-		below.V.SetObj(value);
+		tbl!.TryGet(below, out var value);
+		below.Set(value);
 	}
 
 	void ILua.RawSetI(int index, int n)
@@ -1024,7 +1025,7 @@ public sealed class LuaState : ILuaState
 			Util.InvalidIndex();
 		Util.ApiCheck(addr.V.IsTable(), "Table expected");
 		var tbl = addr.V.AsTable();
-		tbl.SetInt(n, Ref[--TopIndex]);
+		tbl!.SetInt(n, Ref[--TopIndex]);
 	}
 
 	void ILua.RawSet(int index)
@@ -1034,7 +1035,7 @@ public sealed class LuaState : ILuaState
 			Util.InvalidIndex();
 		Util.ApiCheck(addr.V.IsTable(), "Table expected");
 		var tbl = addr.V.AsTable();
-		tbl.Set(Ref[TopIndex - 2], Ref[TopIndex - 1]);
+		tbl!.Set(Ref[TopIndex - 2], Ref[TopIndex - 1]);
 		TopIndex -= 2;
 	}
 
@@ -1107,7 +1108,7 @@ public sealed class LuaState : ILuaState
 			LuaType.LUA_TNIL => "nil",
 			LuaType.LUA_TBOOLEAN => "boolean",
 			LuaType.LUA_TLIGHTUSERDATA => "lightuserdata",
-			LuaType.LUA_TUINT64 => "ulong",
+			LuaType.LUA_TINT64 => "long",
 			LuaType.LUA_TNUMBER => "number",
 			LuaType.LUA_TSTRING => "string",
 			LuaType.LUA_TTABLE => "table",
@@ -1316,9 +1317,9 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
-	public void PushUInt64(ulong o)
+	public void PushInt64(long o)
 	{
-		Top.V.SetUInt64(o);
+		Top.V.SetInt64(o);
 		ApiIncrTop();
 	}
 
@@ -1421,19 +1422,19 @@ public sealed class LuaState : ILuaState
 		return this;
 	}
 
-	public string ToString(int index)
+	public string? ToString(int index)
 	{
 		if (!Index2Addr(index, out var addr))
-			return null!;
+			return null;
 
 		if (addr.V.IsString())
 			return addr.V.AsString();
 
 		if (!V_ToString(ref addr.V))
-			return null!;
+			return null;
 
 		if (!Index2Addr(index, out addr))
-			return null!;
+			return null;
 
 		Util.Assert(addr.V.IsString());
 		return addr.V.AsString();
@@ -1451,6 +1452,12 @@ public sealed class LuaState : ILuaState
 		{
 			isNum = true;
 			return addr.V.NValue;
+		}
+		
+		if (addr.V.IsInt64()) 
+		{
+			isNum = true;
+			return addr.V.AsInt64();
 		}
 
 		if (addr.V.IsString()) 
@@ -1481,6 +1488,12 @@ public sealed class LuaState : ILuaState
 		{
 			isNum = true;
 			return (int)addr.V.NValue;
+		}
+		
+		if (addr.V.IsInt64()) 
+		{
+			isNum = true;
+			return (int)addr.V.AsInt64();
 		}
 
 		if (addr.V.IsString()) 
@@ -1518,6 +1531,12 @@ public sealed class LuaState : ILuaState
 			isNum = true;
 			return (uint)addr.V.NValue;
 		}
+		
+		if (addr.V.IsInt64())
+		{
+			isNum = true;
+			return (uint)addr.V.AsInt64();
+		}
 
 		if (addr.V.IsString())
 		{
@@ -1545,7 +1564,7 @@ public sealed class LuaState : ILuaState
 	public bool IsThread(int index) =>
 		Index2Addr(index, out var addr) && addr.V.IsThread();
 
-	ulong ILua.ToUInt64X(int index, out bool isNum)
+	long ILua.ToInt64X(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr)) 
 		{
@@ -1553,18 +1572,18 @@ public sealed class LuaState : ILuaState
 			return 0;
 		}
 
-		if (!addr.V.IsUInt64()) 
+		if (!addr.V.IsInt64()) 
 		{
 			isNum = false;
 			return 0;
 		}
 
 		isNum = true;
-		return addr.V.AsUInt64;
+		return addr.V.AsInt64();
 	}
 
-	public ulong ToUInt64(int index) =>
-		API.ToUInt64X(index, out _);
+	public long ToInt64(int index) =>
+		API.ToInt64X(index, out _);
 
 	public object? ToObject(int index)
 	{
@@ -1582,7 +1601,6 @@ public sealed class LuaState : ILuaState
 		{
 			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
 			LuaType.LUA_TLIGHTUSERDATA => addr.V.OValue,
-			LuaType.LUA_TUINT64 => addr.V.AsUInt64,
 			_ => null
 		};
 	}
@@ -1592,7 +1610,7 @@ public sealed class LuaState : ILuaState
 		if (!Index2Addr(index, out var addr))
 			return null;
 
-		if (addr.V.AsList() is { } list)
+		if (addr.V.AsList() is {} list)
 			return list;
 		
 		return null;
@@ -1618,7 +1636,7 @@ public sealed class LuaState : ILuaState
 	
 	internal bool Index2Addr(int index, out StkId addr)
 	{
-		addr = new StkId();
+		addr = StkId.Nil;
 		var ci = CI;
 		if (index > 0)
 		{
@@ -1658,7 +1676,7 @@ public sealed class LuaState : ILuaState
 		Util.Assert(func.V.IsFunction());
 		Util.Assert(func.V.IsCsClosure());
 
-		var clcs = func.V.AsCSClosure();
+		var clcs = func.V.AsCSClosure()!;
 		if (index > clcs.Upvals.Length)
 			return false;
 
@@ -1852,7 +1870,7 @@ public sealed class LuaState : ILuaState
 
 			D_CheckStack(p.MaxStackSize + p.NumParams);
 
-				// Complete the parameters
+			// Complete the parameters
 			var n = (TopIndex - funcIndex) - 1;
 			for (; n < p.NumParams; ++n)
 			{
@@ -1924,7 +1942,7 @@ public sealed class LuaState : ILuaState
 			ULDebug.Log("[D] ==== PosCall assign lhs res:" + res);
 			ULDebug.Log("[D] ==== PosCall assign rhs firstResult:" + firstResult);
 #endif
-			Ref[resIndex++].V.SetObj(Ref[firstResultIndex++]);
+			Ref[resIndex++].Set(Ref[firstResultIndex++]);
 		}
 		while (i-- > 0)
 		{
@@ -1981,7 +1999,7 @@ public sealed class LuaState : ILuaState
 		var stackBase = TopIndex;		// final position of first argument
 		for (var i = stackBase; i < stackBase + NumFixArgs; ++i)
 		{
-			Ref[i].V.SetObj(Ref[fixedArg]);
+			Ref[i].Set(Ref[fixedArg]);
 			Ref[fixedArg++].V.SetNil();
 		}
 		TopIndex = stackBase + NumFixArgs;
@@ -2085,15 +2103,12 @@ public sealed class LuaState : ILuaState
 		return API.Error();
 	}
 
-	public void L_CheckStack(int size, string msg)
+	public void L_CheckStack(int size, string? msg = null)
 	{
 		// Keep some extra space to run error routines, if needed
-		if (!API.CheckStack(size + LuaDef.LUA_MINSTACK)) 
+		if (!API.CheckStack(size + LuaDef.LUA_MINSTACK))
 		{
-			if (msg != null)
-				L_Error($"stack overflow ({msg})");
-			else
-				L_Error("stack overflow");
+			L_Error(msg != null ? $"stack overflow ({msg})" : "stack overflow");
 		}
 	}
 
@@ -2110,18 +2125,18 @@ public sealed class LuaState : ILuaState
 		return d;
 	}
 
-	public ulong L_CheckUInt64(int nArg)
-	{
-		var v = API.ToUInt64X(nArg, out var isNum);
-		if (!isNum) TagError(nArg, LuaType.LUA_TUINT64);
-		return v;
-	}
-
 	public int L_CheckInteger(int nArg)
 	{
 		var d = API.ToIntegerX(nArg, out var isNum);
 		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
 		return d;
+	}
+
+	public long L_CheckInt64(int nArg)
+	{
+		var v = API.ToInt64X(nArg, out var isNum);
+		if (!isNum) TagError(nArg, LuaType.LUA_TINT64);
+		return v;
 	}
 
 	public string L_CheckString(int nArg)
@@ -2162,25 +2177,21 @@ public sealed class LuaState : ILuaState
 	public T L_Opt<T>(Func<int,T> f, int n, T def)
 	{
 		var t = API.Type(n);
-		if (t is LuaType.LUA_TNONE or LuaType.LUA_TNIL)
-			return def;
-		return f(n);
+		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ? def : f(n);
 	}
 
 	public int L_OptInt(int nArg, int def)
 	{
 		var t = API.Type(nArg);
-		if (t is LuaType.LUA_TNONE or LuaType.LUA_TNIL)
-			return def;
-		return L_CheckInteger(nArg);
+		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+			def : L_CheckInteger(nArg);
 	}
 
 	public string L_OptString(int nArg, string def)
 	{
 		var t = API.Type(nArg);
-		if (t is LuaType.LUA_TNONE or LuaType.LUA_TNIL)
-			return def;
-		return L_CheckString(nArg);
+		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+			def : L_CheckString(nArg);
 	}
 
 	private int TypeError(int index, string typeName)
@@ -2217,7 +2228,7 @@ public sealed class LuaState : ILuaState
 				return L_Error("Calling '{0}' on bad self", ar.Name);
 		}
 		if (ar.Name == null)
-			ar.Name = PushGlobalFuncName(ar) ? API.ToString(-1) : "?";
+			ar.Name = PushGlobalFuncName(ar) ? API.ToString(-1)! : "?";
 		return L_Error("Bad argument {0} to '{1}' ({2})",
 			nArg, ar.Name, extraMsg);
 	}
@@ -2295,10 +2306,8 @@ public sealed class LuaState : ILuaState
 	}
 
 	public void L_Traceback(
-		ILuaState otherLua, string? msg = null, int level = 0)
-	{
+		ILuaState otherLua, string? msg = null, int level = 0) =>
 		L_DoTraceback(otherLua, msg, level);
-	}
 
 	public string L_DoTraceback(
 		ILuaState otherLua, string? msg = null, int level = 0)
@@ -2331,7 +2340,7 @@ public sealed class LuaState : ILuaState
 			}
 		}
 		API.Concat(API.GetTop() - top);
-		return ToString(-1);
+		return ToString(-1)!;
 	}
 
 	public int L_Len(int index)
@@ -2380,7 +2389,7 @@ public sealed class LuaState : ILuaState
 		{
 			using var loadInfo = LuaFile.OpenFile(BaseFolder, filename);
 			loadInfo.SkipComment();
-			status = API.Load(loadInfo, API.ToString(-1), mode);
+			status = API.Load(loadInfo, API.ToString(-1)!, mode);
 		}
 		catch (LuaRuntimeException e)
 		{
@@ -2392,7 +2401,8 @@ public sealed class LuaState : ILuaState
 		return status;
 	}
 
-	public ThreadStatus L_LoadString(string s) => L_LoadBuffer(s, "???");
+	public ThreadStatus L_LoadString(string s) =>
+		L_LoadBuffer(s, "???");
 
 	public ThreadStatus L_DoString(string s)
 	{
@@ -2407,7 +2417,7 @@ public sealed class LuaState : ILuaState
 		var status = L_DoString(s);
 		if (status == ThreadStatus.LUA_OK) return;
 
-		var msg = ToString(-1);
+		var msg = ToString(-1)!;
 		Pop(1);
 		throw new LuaRuntimeException(status, msg);
 	}
@@ -2451,7 +2461,7 @@ public sealed class LuaState : ILuaState
 	public string L_ToString(int index)
 	{
 		if (L_CallMeta(index, "__tostring")) 
-			return ToString(-1); // No metafield?
+			return ToString(-1)!; // No metafield?
 
 		switch (Type(index))
 		{
@@ -2472,7 +2482,8 @@ public sealed class LuaState : ILuaState
 				API.PushString($"{L_TypeName(index)}: {ToObject(index).GetHashCode():X}");
 				break;
 		}
-		return ToString(-1);
+
+		return ToString(-1)!;
 	}
 
 	public void L_OpenLibs()
@@ -2943,6 +2954,8 @@ public sealed class LuaState : ILuaState
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
 						ra.V.SetDouble(rkb.V.NValue + rkc.V.NValue);
+					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
+						ra.V.SetInt64(rkb.V.AsInt64() + rkc.V.AsInt64());
 					else
 						V_Arith(ra, rkb, rkc, TMS.TM_ADD);
 
@@ -2956,6 +2969,8 @@ public sealed class LuaState : ILuaState
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
 						ra.V.SetDouble(rkb.V.NValue - rkc.V.NValue);
+					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
+						ra.V.SetInt64(rkb.V.AsInt64() - rkc.V.AsInt64());
 					else
 						V_Arith(ra, rkb, rkc, TMS.TM_SUB);
 					env.Base = ci.BaseIndex;
@@ -2968,6 +2983,8 @@ public sealed class LuaState : ILuaState
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
 						ra.V.SetDouble(rkb.V.NValue * rkc.V.NValue);
+					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
+						ra.V.SetInt64(rkb.V.AsInt64() * rkc.V.AsInt64());
 					else
 						V_Arith(ra, rkb, rkc, TMS.TM_MUL);
 					env.Base = ci.BaseIndex;
@@ -2980,6 +2997,8 @@ public sealed class LuaState : ILuaState
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
 						ra.V.SetDouble(rkb.V.NValue / rkc.V.NValue);
+					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
+						ra.V.SetInt64(rkb.V.AsInt64() / rkc.V.AsInt64());
 					else
 						V_Arith(ra, rkb, rkc, TMS.TM_DIV);
 					env.Base = ci.BaseIndex;
@@ -3009,6 +3028,8 @@ public sealed class LuaState : ILuaState
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
 						ra.V.SetDouble(Math.Pow(rkb.V.NValue, rkc.V.NValue));
+					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
+						ra.V.SetInt64((long)Math.Pow(rkb.V.AsInt64(), rkc.V.AsInt64()));
 					else
 						V_Arith(ra, rkb, rkc, TMS.TM_POW);
 					env.Base = ci.BaseIndex;
@@ -3020,6 +3041,8 @@ public sealed class LuaState : ILuaState
 					var rb = env.RB;
 					if (rb.V.IsNumber())
 						ra.V.SetDouble(-rb.V.NValue);
+					else if (rb.V.IsInt64())
+						ra.V.SetInt64(-rb.V.AsInt64());
 					else
 					{
 						V_Arith(ra, rb, rb, TMS.TM_UNM);
@@ -3186,8 +3209,8 @@ public sealed class LuaState : ILuaState
 						var oci = BaseCI[CI.Index - 1]; // caller frame
 						var nfunc = Ref[nci.FuncIndex];// called function
 						var ofunc = Ref[oci.FuncIndex];// caller function
-						var ncl = nfunc.V.AsLuaClosure();
-						var ocl = ofunc.V.AsLuaClosure();
+						var ncl = nfunc.V.AsLuaClosure()!;
+						var ocl = ofunc.V.AsLuaClosure()!;
 
 						// Last stack slot filled by 'precall'
 						var lim = nci.BaseIndex + ncl.Proto.NumParams;
@@ -3207,7 +3230,7 @@ public sealed class LuaState : ILuaState
 						oci.CallStatus |= CallStatus.CIST_TAIL;
 						ci = CI = oci;
 
-						ocl = ofunc.V.AsLuaClosure();
+						ocl = ofunc.V.AsLuaClosure()!;
 						Util.Assert(TopIndex == oci.BaseIndex + ocl.Proto.MaxStackSize);
 
 						goto newFrame;
@@ -3274,8 +3297,8 @@ public sealed class LuaState : ILuaState
 						G_RunError("'for' step must be a number");
 
 					// Replace values in case they were strings initially
-					ra1.V.SetObj(new StkId(ref limit));
-					ra2.V.SetObj(new StkId(ref step));
+					ra1.Set(new StkId(ref limit));
+					ra2.Set(new StkId(ref step));
 					
 					ra.V.SetDouble(init.NValue - step.NValue);
 					ci.SavedPc.Index += i.GETARG_sBx();
@@ -3696,10 +3719,16 @@ public sealed class LuaState : ILuaState
 			return true;
 		}
 
+		if (obj.V.IsInt64())
+		{
+			n.V.SetDouble(obj.V.AsInt64());
+			return true;
+		}
+
 		if (obj.V.IsString()) 
 		{
 			if (Util.Str2Decimal(
-				    obj.V.AsString().AsSpan(), out var val)) 
+				    obj.V.AsString().AsSpan(), out var val))
 			{
 				n.V.SetDouble(val);
 				return true;
@@ -3713,7 +3742,8 @@ public sealed class LuaState : ILuaState
 	{
 		if (!v.IsNumber()) return false;
 
-		v.SetString(v.NValue.ToString());
+		v.SetString(v.NValue.ToString(
+			CultureInfo.InvariantCulture));
 		return true;
 	}
 
@@ -3769,10 +3799,12 @@ public sealed class LuaState : ILuaState
 
 	private void V_Arith(StkId ra, StkId rb, StkId rc, TMS op)
 	{
-		var nb = new TValue();
-		var nc = new TValue();
-		if (V_ToNumber(rb, new StkId(ref nb))
-		    && V_ToNumber(rc, new StkId(ref nc)))
+		var nb = TValue.Nil();
+		var nc = TValue.Nil();
+		var rNb = new StkId(ref nb);
+		var rNc = new StkId(ref nc);
+		
+		if (V_ToNumber(rb, rNb) && V_ToNumber(rc, rNc))
 		{
 			var res = O_Arith(TMS2OP(op), nb.NValue, nc.NValue);
 			ra.V.SetDouble(res);
@@ -3800,6 +3832,9 @@ public sealed class LuaState : ILuaState
 		// Compare number
 		if (lhs.V.IsNumber() && rhs.V.IsNumber())
 			return lhs.V.NValue < rhs.V.NValue;
+		
+		if (lhs.V.IsInt64() && rhs.V.IsInt64())
+			return lhs.V.AsInt64() < rhs.V.AsInt64();
 
 		// Compare string
 		if (lhs.V.IsString() && rhs.V.IsString())
@@ -3819,6 +3854,9 @@ public sealed class LuaState : ILuaState
 		// Compare number
 		if (lhs.V.IsNumber() && rhs.V.IsNumber())
 			return lhs.V.NValue <= rhs.V.NValue;
+		
+		if (lhs.V.IsInt64() && rhs.V.IsInt64())
+			return lhs.V.AsInt64() <= rhs.V.AsInt64();
 
 		// Compare string
 		if (lhs.V.IsString() && rhs.V.IsString())
@@ -3852,7 +3890,7 @@ public sealed class LuaState : ILuaState
 			case OpCode.OP_SELF:
 			{
 				var tmp = Ref[stackBase + i.GETARG_A()];
-				tmp.V.SetObj(Ref[--TopIndex]);
+				tmp.Set(Ref[--TopIndex]);
 				break;
 			}
 
@@ -3885,7 +3923,7 @@ public sealed class LuaState : ILuaState
 				var b = i.GETARG_B(); // First element to concatenate
 				var total = TopIndex - 1 - (stackBase + b); // Yet to concatenate
 				var tmp = Ref[TopIndex - 2];
-				tmp.V.SetObj(top); // Put TM result in proper position
+				tmp.Set(top); // Put TM result in proper position
 				if (total > 1) // Are there elements to concat?
 				{
 					--TopIndex;
@@ -3894,7 +3932,7 @@ public sealed class LuaState : ILuaState
 				// Move final result to final position
 				var ci = BaseCI[ciIndex];
 				var tmp2 = Ref[ci.BaseIndex + i.GETARG_A()];
-				tmp2.V.SetObj(Ref[TopIndex - 1]);
+				tmp2.Set(Ref[TopIndex - 1]);
 				TopIndex = ci.TopIndex;
 				break;
 			}
@@ -3959,9 +3997,10 @@ public sealed class LuaState : ILuaState
 			case LuaType.LUA_TNIL:
 				return true;
 			case LuaType.LUA_TNUMBER:
+				// ReSharper disable once CompareOfFloatsByEqualityOperator
 				return t1.V.NValue == t2.V.NValue;
-			case LuaType.LUA_TUINT64:
-				return t1.V.AsUInt64 == t2.V.AsUInt64;
+			case LuaType.LUA_TINT64:
+				return t1.V.AsInt64() == t2.V.AsInt64();
 			case LuaType.LUA_TBOOLEAN:
 				return t1.V.AsBool() == t2.V.AsBool();
 			case LuaType.LUA_TSTRING:
@@ -4329,7 +4368,7 @@ public sealed class LuaState : ILuaState
 		var func = Ref[ci.FuncIndex];
 		Util.Assert(func.V.IsFunction() && func.V.IsLuaClosure());
 
-		var lcl = func.V.AsLuaClosure();
+		var lcl = func.V.AsLuaClosure()!;
 		var oIdx = Index(o);
 		for (var i = 0; i < lcl.Length; ++i) 
 		{
@@ -4385,20 +4424,18 @@ public sealed class LuaState : ILuaState
 					break;
 				}
 
-				case OpCode.OP_TFORCALL: {
-					// effect all regs above its base
+				case OpCode.OP_TFORCALL: 
+				// effect all regs above its base
 					if (reg >= a + 2)
 						setReg = pc;
 					break;
-				}
 
 				case OpCode.OP_CALL:
-				case OpCode.OP_TAILCALL: {
-					// effect all registers above base
+				case OpCode.OP_TAILCALL: 
+				// effect all registers above base
 					if (reg >= a)
 						setReg = pc;
 					break;
-				}
 					
 				case OpCode.OP_JMP: {
 					var b = ins.GETARG_sBx();
@@ -4415,9 +4452,7 @@ public sealed class LuaState : ILuaState
 					break;
 
 				default: // any instruction that set A
-					if (Coder.TestAMode(op) && reg == a) {
-						setReg = pc;
-					}
+					if (Coder.TestAMode(op) && reg == a) setReg = pc;
 					break;
 			}
 		}
@@ -4496,7 +4531,9 @@ public sealed class LuaState : ILuaState
 		unsafe
 		{
 			var oIdx = o.PtrIndex;
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 			fixed (TValue* arr = &Stack[0])
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 			{
 				var value = arr;
 				for (var p = ci.BaseIndex; p < ci.TopIndex; p++, value++)
@@ -4523,7 +4560,7 @@ public sealed class LuaState : ILuaState
 			kind = GetUpvalName(ci, o, out name);
 			if (kind != null && IsInStack(ci, o))
 			{
-				var lcl = Ref[ci.FuncIndex].V.AsLuaClosure();
+				var lcl = Ref[ci.FuncIndex].V.AsLuaClosure()!;
 				kind = GetObjName(lcl.Proto, ci.CurrentPc,
 					(Index(o) - ci.BaseIndex), out name);
 			}

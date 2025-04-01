@@ -7,8 +7,8 @@ namespace CSLua;
 
 public struct TValue : IEquatable<TValue>
 {
-	private const ulong BOOLEAN_FALSE = 0;
-	private const ulong BOOLEAN_TRUE = 1;
+	private const long BOOLEAN_FALSE = 0;
+	private const long BOOLEAN_TRUE = 1;
 
 	public object? OValue;
 	public double NValue;
@@ -36,38 +36,59 @@ public struct TValue : IEquatable<TValue>
 		{
 			LuaType.LUA_TNIL => true,
 			LuaType.LUA_TBOOLEAN => AsBool() == o.AsBool(),
+			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			LuaType.LUA_TNUMBER => NValue == o.NValue,
-			LuaType.LUA_TUINT64 => AsUInt64 == o.AsUInt64,
+			LuaType.LUA_TINT64 => AsInt64() == o.AsInt64(),
 			LuaType.LUA_TSTRING => AsString() == o.AsString(),
 			_ => ReferenceEquals(OValue, o.OValue)
 		};
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator==(TValue lhs, TValue rhs) => lhs.Equals(rhs);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator!=(TValue lhs, TValue rhs) => !lhs.Equals(rhs);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsNil() => Type == LuaType.LUA_TNIL;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsBoolean() => Type == LuaType.LUA_TBOOLEAN;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsNumber() => Type == LuaType.LUA_TNUMBER;
-	public bool IsUInt64() => Type == LuaType.LUA_TUINT64;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool IsInt64() => Type == LuaType.LUA_TINT64;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsString() => Type == LuaType.LUA_TSTRING;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsTable() => Type == LuaType.LUA_TTABLE;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsFunction() => Type == LuaType.LUA_TFUNCTION;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsThread() => Type == LuaType.LUA_TTHREAD;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsUserData() => Type == LuaType.LUA_TLIGHTUSERDATA;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsList() => Type == LuaType.LUA_TLIST;
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsLuaClosure() => OValue is LuaLClosureValue;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsCsClosure() => OValue is LuaCsClosureValue;
-	
-	public ulong AsUInt64 =>
-		BitConverter.DoubleToUInt64Bits(NValue);
-	public bool AsBool() => AsUInt64 != BOOLEAN_FALSE;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public long AsInt64() =>
+		BitConverter.DoubleToInt64Bits(NValue);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool AsBool() => AsInt64() != BOOLEAN_FALSE;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public string? AsString() => OValue as string;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaTable? AsTable() => OValue as LuaTable;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaLClosureValue? AsLuaClosure() => OValue as LuaLClosureValue;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaCsClosureValue? AsCSClosure() => OValue as LuaCsClosureValue;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ILuaState? AsThread() => OValue as ILuaState;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public List<TValue>? AsList() => OValue as List<TValue>;
 
 	internal void SetNil() 
@@ -79,7 +100,7 @@ public struct TValue : IEquatable<TValue>
 	internal void SetBool(bool v) 
 	{
 		Type = LuaType.LUA_TBOOLEAN;
-		NValue = BitConverter.UInt64BitsToDouble(
+		NValue = BitConverter.Int64BitsToDouble(
 			v ? BOOLEAN_TRUE : BOOLEAN_FALSE);
 		OValue = null!;
 	}
@@ -103,10 +124,10 @@ public struct TValue : IEquatable<TValue>
 		NValue = v;
 		OValue = null!;
 	}
-	internal void SetUInt64(ulong v) 
+	internal void SetInt64(long v) 
 	{
-		Type = LuaType.LUA_TUINT64;
-		NValue = BitConverter.UInt64BitsToDouble(v);
+		Type = LuaType.LUA_TINT64;
+		NValue = BitConverter.Int64BitsToDouble(v);
 		OValue = null!;
 	}
 	internal void SetString(string v) 
@@ -152,7 +173,7 @@ public struct TValue : IEquatable<TValue>
 		if (IsString()) return $"(string, {AsString()})";
 		if (IsNumber()) return $"(number, {NValue})";
 		if (IsBoolean()) return $"(bool, {AsBool()})";
-		if (IsUInt64()) return $"(uint64, {AsUInt64})";
+		if (IsInt64()) return $"(long, {AsInt64()})";
 		if (IsNil()) return "(nil)";
 		if (IsTable()) return $"(table: {OValue})";
 		if (IsThread()) return $"(thread: {OValue})";
@@ -180,8 +201,10 @@ public readonly ref struct StkId(ref TValue v)
 	
 	public void Set(StkId other) => V.SetObj(other);
 
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 	internal unsafe TValue* PtrIndex => (TValue*)Unsafe.AsPointer(ref V);
-	
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+
 	public override string ToString()
 	{
 		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";

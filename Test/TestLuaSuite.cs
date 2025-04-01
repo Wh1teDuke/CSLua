@@ -6,28 +6,20 @@ public sealed class TestLuaSuite
 {
     [Fact]
     public void TestMath() => Run("math.lua");
-
     [Fact]
     public void TestStrings() => Run("strings.lua");
-    
     [Fact]
     public void TestConstructs() => Run("constructs.lua");
-    
     [Fact]
     public void TestNextVar() => Run("nextvar.lua");
-    
     [Fact]
     public void TestCoroutine() => Run("coroutine.lua");
-    
     [Fact]
     public void TestGoTo() => Run("goto.lua");
-    
     [Fact]
     public void TestVararg() => Run("vararg.lua");
-    
     [Fact]
     public void TestCalls() => Run("calls.lua");
-    
     [Fact]
     public void TestLocals() => Run("locals.lua");
 
@@ -41,9 +33,7 @@ public sealed class TestLuaSuite
         else if (file == "nextvar.lua")
             L.Eval("_port = true");
         
-        var r1 = L.L_DoFile(Path.Join("suite", file));
-
-        if (ThreadStatus.LUA_OK != r1) 
-            Assert.Fail(L.ToString(1));
+        var r = L.L_DoFile(Path.Join("suite", file));
+        if (ThreadStatus.LUA_OK != r) Assert.Fail(L.ToString(1));
     }
 }

@@ -110,7 +110,7 @@ internal sealed class DumpState
 				case LuaType.LUA_TBOOLEAN:
 					DumpBool(k.AsBool());
 					break;
-				case LuaType.LUA_TUINT64:
+				case LuaType.LUA_TINT64:
 				case LuaType.LUA_TNUMBER:
 					DumpBlock(BitConverter.GetBytes(k.NValue));
 					break;

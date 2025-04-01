@@ -75,7 +75,7 @@ public enum LuaType
 	LUA_TUSERDATA = 7,
 	LUA_TTHREAD = 8,
 
-	LUA_TUINT64 = 9,
+	LUA_TINT64 = 9,
 	LUA_TLIST = 10,
 
 	LUA_NUMTAGS = 11,

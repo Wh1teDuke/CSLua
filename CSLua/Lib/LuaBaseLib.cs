@@ -370,7 +370,8 @@ public static class LuaBaseLib
 						break; // invalid numeral; force a fail
 					n = n * numBase + digit;
 					pos++;
-				} while(char.IsLetterOrDigit(s, pos));
+				}
+				while(char.IsLetterOrDigit(s, pos));
 				if (pos == s.Length - 1) // except guard, no invalid trailing characters?
 				{
 					lua.PushNumber(negative ? -n : n);

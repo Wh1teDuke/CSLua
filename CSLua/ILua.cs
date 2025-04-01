@@ -14,7 +14,7 @@ public interface ILoadInfo
 
 public sealed class LuaDebug
 {
-	public string 		Name;
+	public string? 		Name;
 	public string 		NameWhat;
 	public int 			ActiveCIIndex;
 	public int			CurrentLine;
@@ -111,7 +111,7 @@ public interface ILua
 	void PushValue(int index);
 	void PushGlobalTable();
 	void PushLightUserData(object o);
-	void PushUInt64(ulong o);
+	void PushInt64(long o);
 	bool PushThread();
 	void PushLuaFunction(LuaLClosureValue f);
 	void PushTable(LuaTable table);
@@ -139,7 +139,7 @@ public interface ILua
 
 	ILuaState GetThread(out int arg);
 
-	string	ToString(int index);
+	string?	ToString(int index);
 	double 	ToNumberX(int index, out bool isNum);
 	double 	ToNumber(int index);
 	int		ToIntegerX(int index, out bool isNum);
@@ -147,8 +147,8 @@ public interface ILua
 	uint	ToUnsignedX(int index, out bool isNum);
 	uint	ToUnsigned(int index);
 	bool   	ToBoolean(int index);
-	ulong	ToUInt64(int index);
-	ulong	ToUInt64X(int index, out bool isNum);
+	long	ToInt64(int index);
+	long	ToInt64X(int index, out bool isNum);
 	object?	ToObject(int index);
 	object? ToUserData(int index);
 	List<TValue>? ToList(int index);

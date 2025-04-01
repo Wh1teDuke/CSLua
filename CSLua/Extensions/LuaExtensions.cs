@@ -9,9 +9,9 @@ public static class LuaExtensions
         return i;
     }
 	
-    public static ulong PopUInt64(this ILuaState L)
+    public static long PopInt64(this ILuaState L)
     {
-        var i = L.ToUInt64(-1);
+        var i = L.ToInt64(-1);
         L.Pop(1);
         return i;
     }

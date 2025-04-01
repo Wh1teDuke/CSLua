@@ -9,11 +9,11 @@ public interface ILuaAuxLib
 {
 	void 	L_Where(int level);
 	int 	L_Error(string fmt, params object[] args);
-	void	L_CheckStack(int size, string msg);
+	void	L_CheckStack(int size, string? msg = null);
 	void 	L_CheckAny(int narg);
 	void 	L_CheckType(int index, LuaType t);
 	double	L_CheckNumber(int narg);
-	ulong	L_CheckUInt64(int narg);
+	long	L_CheckInt64(int narg);
 	int 	L_CheckInteger(int narg);
 	string 	L_CheckString(int narg);
 	uint	L_CheckUnsigned(int narg);
