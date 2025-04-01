@@ -41,7 +41,7 @@ public sealed class TestCompile
         Assert.Equal(1, L.GetTop());
         Assert.Equal(LuaType.LUA_TFUNCTION, L.Type(-1));
 
-        var fun = L.ToLuaFunction(-1);
+        var fun = L.L_CheckLuaFunction(-1);
         L.Pop(1);
 
         for (var i = 0; i < 10; i++)

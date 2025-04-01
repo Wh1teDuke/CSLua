@@ -143,7 +143,8 @@ public sealed class TestList
                return list1
                """);
 
-        var list = (List<TValue>)L.PopUserData()!;
+        Assert.True(L.IsList(-1));
+        var list = L.L_CheckList(-1);
         Assert.Equal(6, list.Count);
         
         for (var i = 0; i < list.Count; i++)

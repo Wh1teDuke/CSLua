@@ -44,7 +44,7 @@ public sealed class TestParallel
                      end
                      """);
 
-        var test = L.ToLuaFunction(-1);
+        var test = L.L_CheckLuaFunction(-1);
         L.Pop(1);
         var res = 0;
         for (var i = 0; i < 100; i++)

@@ -308,7 +308,7 @@ public sealed class LuaState : ILuaState
 		{
 			case LuaType.LUA_TTABLE:
 			{
-				var tbl = o.V.AsTable();
+				var tbl = o.V.AsTable()!;
 				mt = tbl.MetaTable;
 				break;
 			}
@@ -1097,7 +1097,7 @@ public sealed class LuaState : ILuaState
 	public LuaType Type(int index)
 	{
 		return !Index2Addr(index, out var addr) 
-			? LuaType.LUA_TNONE : (LuaType)addr.V.Type;
+			? LuaType.LUA_TNONE : addr.V.Type;
 	}
 
 	internal static string TypeName(LuaType t)
@@ -1111,6 +1111,7 @@ public sealed class LuaState : ILuaState
 			LuaType.LUA_TNUMBER => "number",
 			LuaType.LUA_TSTRING => "string",
 			LuaType.LUA_TTABLE => "table",
+			LuaType.LUA_TLIST => "list",
 			LuaType.LUA_TFUNCTION => "function",
 			LuaType.LUA_TUSERDATA => "userdata",
 			LuaType.LUA_TTHREAD => "thread",
@@ -1123,7 +1124,7 @@ public sealed class LuaState : ILuaState
 	string ILua.TypeName(LuaType t) => TypeName(t);
 
 	private static string ObjTypeName(StkId v) => 
-		TypeName((LuaType)v.V.Type);
+		TypeName(v.V.Type);
 
 	// For internal use only; will not trigger an error in ApiIncrTop() due to Top exceeding CI.Top
 	private void O_PushString(string s)
@@ -1149,9 +1150,8 @@ public sealed class LuaState : ILuaState
 	}
 
 	public bool IsTable(int index) => API.Type(index) == LuaType.LUA_TTABLE;
-
-	public bool IsFunction(int index) => 
-		API.Type(index) == LuaType.LUA_TFUNCTION;
+	public bool IsList(int index) => API.Type(index) == LuaType.LUA_TLIST;
+	public bool IsFunction(int index) => API.Type(index) == LuaType.LUA_TFUNCTION;
 
 	bool ILua.Compare(int index1, int index2, LuaEq op)
 	{
@@ -1186,16 +1186,14 @@ public sealed class LuaState : ILuaState
 		if (!Index2Addr(index, out var addr))
 			Util.InvalidIndex();
 
-		switch (addr.V.Type)
+		return addr.V.Type switch
 		{
-			case LuaType.LUA_TSTRING:
-				return addr.V.AsString()?.Length ?? 0;
-			case LuaType.LUA_TUSERDATA:
-				throw new NotImplementedException();
-			case LuaType.LUA_TTABLE:
-				return addr.V.AsTable()?.Length ?? 0;
-			default: return 0;
-		}
+			LuaType.LUA_TSTRING => addr.V.AsString()?.Length ?? 0,
+			LuaType.LUA_TTABLE => addr.V.AsTable()?.Length ?? 0,
+			LuaType.LUA_TLIST => addr.V.AsList()?.Count ?? 0,
+			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
+			_ => 0
+		};
 	}
 
 	void ILua.Len(int index)
@@ -1262,6 +1260,12 @@ public sealed class LuaState : ILuaState
 	public void PushTable(LuaTable table)
 	{
 		Top.V.SetTable(table);
+		ApiIncrTop();
+	}
+
+	public void PushList(List<TValue> list)
+	{
+		Top.V.SetList(list);
 		ApiIncrTop();
 	}
 
@@ -1377,7 +1381,7 @@ public sealed class LuaState : ILuaState
 		switch (addr.V.Type)
 		{
 			case LuaType.LUA_TTABLE:
-				var tbl = addr.V.AsTable();
+				var tbl = addr.V.AsTable()!;
 				tbl.MetaTable = mt;
 				break;
 			case LuaType.LUA_TUSERDATA:
@@ -1562,36 +1566,47 @@ public sealed class LuaState : ILuaState
 	public ulong ToUInt64(int index) =>
 		API.ToUInt64X(index, out _);
 
-	public object ToObject(int index)
+	public object? ToObject(int index)
 	{
 		if (!Index2Addr(index, out var addr))
-			return null!;
+			return null;
 		return addr.V.OValue;
 	}
 
-	public object ToUserData(int index)
+	public object? ToUserData(int index)
 	{
 		if (!Index2Addr(index, out var addr))
-			return null!;
+			return null;
 
 		return addr.V.Type switch
 		{
 			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
 			LuaType.LUA_TLIGHTUSERDATA => addr.V.OValue,
 			LuaType.LUA_TUINT64 => addr.V.AsUInt64,
-			_ => null!
+			_ => null
 		};
 	}
-	
-	public LuaLClosureValue ToLuaFunction(int index)
+
+	public List<TValue>? ToList(int index)
 	{
 		if (!Index2Addr(index, out var addr))
-			return null!;
+			return null;
 
-		if (addr.V.IsFunction() && addr.V.IsLuaClosure())//addr.V.UInt64Value == TValue.CLOSURE_LUA)
+		if (addr.V.AsList() is { } list)
+			return list;
+		
+		return null;
+	}
+
+	public LuaLClosureValue? ToLuaFunction(int index)
+	{
+		if (!Index2Addr(index, out var addr))
+			return null;
+
+		if (addr.V.IsFunction() && addr.V.IsLuaClosure())
 			return addr.V.AsLuaClosure();
 
-		return null!;
+		return null;
 	}
 
 	public ILuaState ToThread(int index)
@@ -2084,7 +2099,7 @@ public sealed class LuaState : ILuaState
 
 	public void L_CheckAny(int nArg)
 	{
-		if (API.Type(nArg) == LuaType.LUA_TNONE)
+		if (Type(nArg) == LuaType.LUA_TNONE)
 			L_ArgError(nArg, "Value expected");
 	}
 
@@ -2127,7 +2142,21 @@ public sealed class LuaState : ILuaState
 	{
 		var o = API.ToUserData(nArg);
 		if (o == null) TagError(nArg, LuaType.LUA_TUSERDATA);
-		return o;
+		return o!;
+	}
+
+	public List<TValue> L_CheckList(int narg)
+	{
+		var o = ToList(narg);
+		if (o == null) TagError(narg, LuaType.LUA_TLIST);
+		return o!;
+	}
+
+	public LuaLClosureValue L_CheckLuaFunction(int narg)
+	{
+		var o = ToLuaFunction(narg);
+		if (o == null) TagError(narg, LuaType.LUA_TFUNCTION);
+		return o!;
 	}
 
 	public T L_Opt<T>(Func<int,T> f, int n, T def)
@@ -3260,7 +3289,7 @@ public sealed class LuaState : ILuaState
 
 					if (!ra.V.IsFunction())
 					{
-						if (ra.V.OValue is List<TValue> && ra.V.IsUserData())
+						if (ra.V.IsList())
 						{
 							TopIndex = cbi + 1;
 							Ref[TopIndex - 1].V.SetCSClosure(LuaListLib.PairsCl);
@@ -3453,7 +3482,7 @@ public sealed class LuaState : ILuaState
 	private void V_GetTable(StkId t, StkId key, StkId val)
 	{
 		// Index a list?
-		if (t.V.OValue is List<TValue> list && t.V.IsUserData())
+		if (t.V.AsList() is {} list)
 		{
 			if (!key.V.IsNumber()) G_SimpleTypeError(t, "index");
 			var index = (int)key.V.NValue;
@@ -3502,7 +3531,7 @@ public sealed class LuaState : ILuaState
 	private void V_SetTable(StkId t, StkId key, StkId val)
 	{
 		// Index a list?
-		if (t.V.OValue is List<TValue> list && t.V.IsUserData())
+		if (t.V.AsList() is {} list)
 		{
 			if (!key.V.IsNumber()) G_SimpleTypeError(t, "index");
 			var index = (int)key.V.NValue;
@@ -3591,7 +3620,7 @@ public sealed class LuaState : ILuaState
 			return;
 		}
 		
-		if (rb.V.OValue is List<TValue> list && rb.V.IsUserData())
+		if (rb.V.AsList() is {} list)
 		{
 			ra.V.SetDouble(list.Count);
 			return;
@@ -3939,10 +3968,28 @@ public sealed class LuaState : ILuaState
 				return t1.V.AsString() == t2.V.AsString();
 			case LuaType.LUA_TUSERDATA:
 				throw new NotImplementedException();
+			case LuaType.LUA_TLIST:
+			{
+				var l1 = t1.V.AsList()!;
+				var l2 = t2.V.AsList()!;
+				if (ReferenceEquals(l1, l2)) return true;
+				if (rawEq) return false;
+				if (l1.Count != l2.Count) return false;
+
+				var sl1 = CollectionsMarshal.AsSpan(l1);
+				var sl2 = CollectionsMarshal.AsSpan(l2);
+				for (var i = 0; i < l1.Count; ++i)
+				{
+					if (!V_EqualObject(new StkId(ref sl1[i]), new StkId(ref sl2[i]), rawEq))
+						return false;
+				}
+
+				return true;
+			}
 			case LuaType.LUA_TTABLE:
 			{
-				var tbl1 = t1.V.AsTable();
-				var tbl2 = t2.V.AsTable();
+				var tbl1 = t1.V.AsTable()!;
+				var tbl2 = t2.V.AsTable()!;
 				if (ReferenceEquals(tbl1, tbl2))
 					return true;
 				if (rawEq)

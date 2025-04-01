@@ -55,6 +55,7 @@ public struct TValue : IEquatable<TValue>
 	public bool IsFunction() => Type == LuaType.LUA_TFUNCTION;
 	public bool IsThread() => Type == LuaType.LUA_TTHREAD;
 	public bool IsUserData() => Type == LuaType.LUA_TLIGHTUSERDATA;
+	public bool IsList() => Type == LuaType.LUA_TLIST;
 
 	public bool IsLuaClosure() => OValue is LuaLClosureValue;
 	public bool IsCsClosure() => OValue is LuaCsClosureValue;
@@ -67,6 +68,7 @@ public struct TValue : IEquatable<TValue>
 	public LuaLClosureValue? AsLuaClosure() => OValue as LuaLClosureValue;
 	public LuaCsClosureValue? AsCSClosure() => OValue as LuaCsClosureValue;
 	public ILuaState? AsThread() => OValue as ILuaState;
+	public List<TValue>? AsList() => OValue as List<TValue>;
 
 	internal void SetNil() 
 	{
@@ -87,6 +89,14 @@ public struct TValue : IEquatable<TValue>
 		NValue = v.V.NValue;
 		OValue = v.V.OValue;
 	}
+	
+	internal void SetList(List<TValue> v) 
+	{
+		Type = LuaType.LUA_TLIST;
+		NValue = 0;
+		OValue = v;
+	}
+	
 	internal void SetDouble(double v) 
 	{
 		Type = LuaType.LUA_TNUMBER;
@@ -146,6 +156,7 @@ public struct TValue : IEquatable<TValue>
 		if (IsNil()) return "(nil)";
 		if (IsTable()) return $"(table: {OValue})";
 		if (IsThread()) return $"(thread: {OValue})";
+		if (IsList()) return $"(list: {OValue})";
 		if (IsFunction())
 			if (IsLuaClosure()) return "(Lua function)";
 			else if (IsCsClosure()) return "(C# function)";

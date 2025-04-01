@@ -115,6 +115,7 @@ public interface ILua
 	bool PushThread();
 	void PushLuaFunction(LuaLClosureValue f);
 	void PushTable(LuaTable table);
+	void PushList(List<TValue> list);
 
 	void Pop(int n);
 
@@ -148,10 +149,11 @@ public interface ILua
 	bool   	ToBoolean(int index);
 	ulong	ToUInt64(int index);
 	ulong	ToUInt64X(int index, out bool isNum);
-	object 	ToObject(int index);
-	object  ToUserData(int index);
+	object?	ToObject(int index);
+	object? ToUserData(int index);
+	List<TValue>? ToList(int index);
 	ILuaState	ToThread(int index);
-	public LuaLClosureValue ToLuaFunction(int index);
+	public LuaLClosureValue? ToLuaFunction(int index);
 
 	ThreadStatus Status { get; }
 
