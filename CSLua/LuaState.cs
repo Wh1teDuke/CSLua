@@ -3209,11 +3209,12 @@ public sealed class LuaState : ILuaState
 						var nfunc = Ref[nci.FuncIndex];// called function
 						var ofunc = Ref[oci.FuncIndex];// caller function
 						var ncl = nfunc.V.AsLuaClosure()!;
-						var ocl = ofunc.V.AsLuaClosure()!;
+						//var ocl = ofunc.V.AsLuaClosure()!;
 
 						// Last stack slot filled by 'precall'
 						var lim = nci.BaseIndex + ncl.Proto.NumParams;
 
+						// close all upvalues from previous call
 						if (cl.Proto.P.Count > 0) Close(env.Base);
 
 						// Move new frame into old one
@@ -3222,17 +3223,17 @@ public sealed class LuaState : ILuaState
 						while (nIndex < lim) 
 							Stack[oIndex++].SetObj(Ref[nIndex++]);
 
-						oci.BaseIndex = oIndex + (nci.BaseIndex - nIndex);
-						oci.TopIndex = oIndex + (TopIndex - nIndex);
+						oci.BaseIndex = oIndex + (nci.BaseIndex - nIndex); // correct base
+						oci.TopIndex = oIndex + (TopIndex - nIndex); // correct top
 						TopIndex = oci.TopIndex;
 						oci.SavedPc = nci.SavedPc;
-						oci.CallStatus |= CallStatus.CIST_TAIL;
-						ci = CI = oci;
+						oci.CallStatus |= CallStatus.CIST_TAIL; // function was tail called
+						ci = CI = oci; // remove new frame
 
-						ocl = ofunc.V.AsLuaClosure()!;
+						var ocl = ofunc.V.AsLuaClosure()!;
 						Util.Assert(TopIndex == oci.BaseIndex + ocl.Proto.MaxStackSize);
 
-						goto newFrame;
+						goto newFrame; // restart luaV_execute over new Lua function
 					}
 
 					break;

@@ -30,7 +30,7 @@ public sealed class LuaTable
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
 		if (key.V.Type == LuaType.LUA_TSTRING)
-			return TryGetStr(key.V.AsString(), out value);
+			return TryGetStr(key.V.AsString()!, out value);
 
 		var h = key.V.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
@@ -101,7 +101,7 @@ public sealed class LuaTable
 		if (IsPositiveInteger(key))
 			return TryGetInt((int)key.V.NValue, out value);
 		if (key.V.Type == LuaType.LUA_TSTRING)
-			return TryGetStr(key.V.AsString(), out value);
+			return TryGetStr(key.V.AsString()!, out value);
 
 		var h = key.V.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
@@ -357,7 +357,7 @@ public sealed class LuaTable
 	private HNode GetHashNode(StkId v)
 	{
 		if (IsPositiveInteger(v)) return GetHashNode((int)v.V.NValue);
-		if (v.V.IsString()) return GetHashNode(v.V.AsString().GetHashCode());
+		if (v.V.IsString()) return GetHashNode(v.V.AsString()!.GetHashCode());
 		return GetHashNode(v.V.GetHashCode());
 	}
 
