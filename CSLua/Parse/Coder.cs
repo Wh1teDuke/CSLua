@@ -1,6 +1,4 @@
-﻿
-using System.Diagnostics.CodeAnalysis;
-using CSLua.Utils;
+﻿using CSLua.Utils;
 using NotImplementedException = System.NotImplementedException;
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 // ReSharper disable InconsistentNaming

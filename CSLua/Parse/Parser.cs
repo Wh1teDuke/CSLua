@@ -133,9 +133,11 @@ public sealed class LHSAssign
 
 public sealed class Parser
 {
-	public static Parser Read(ILoadInfo loadInfo, string name)
+	public static Parser Read(
+		ILoadInfo loadInfo, string name, int numCSharpCalls)
 	{
 		var parser = new Parser { _lexer = new LLex(loadInfo, name) };
+		parser._NumCSharpCalls += numCSharpCalls;
 		var topFuncState = new FuncState();
 		parser.MainFunc(topFuncState);
 		parser.Proto = topFuncState.Proto;
@@ -144,7 +146,7 @@ public sealed class Parser
 	}
 
 	public static Parser Read(string code, string name = "???") =>
-		Read(new StringLoadInfo(code), name);
+		Read(new StringLoadInfo(code), name, 0);
 
 	private const int 		MAXVARS = 200;
 

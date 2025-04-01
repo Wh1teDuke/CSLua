@@ -369,7 +369,8 @@ public sealed class LuaState : ILuaState
 		else
 		{
 			L.CheckMode(param.Mode, "text");
-			var parser = Parser.Read(param.LoadInfo, param.Name);
+			var parser = Parser.Read(
+				param.LoadInfo, param.Name, L.NumCSharpCalls);
 			proto = parser.Proto;
 		}
 
