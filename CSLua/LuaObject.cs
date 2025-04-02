@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using CSLua.Parse;
-using CSLua.Utils;
+using CSLua.Util;
 
 // ReSharper disable InconsistentNaming
 namespace CSLua;
@@ -70,10 +70,18 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsList() => Type == LuaType.LUA_TLIST;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsLuaClosure() => OValue is LuaLClosureValue;
+	public bool IsLuaClosure() => OValue is LuaClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsCsClosure() => OValue is LuaCsClosureValue;
+	public bool IsCsClosure() => OValue is CsClosure;
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+	public ClosureType? GetClosureType()
+	{
+		if (!IsLuaClosure()) return null;
+		return IsLuaClosure()? ClosureType.LUA : ClosureType.CSHARP;
+	}
+	
 	public long AsInt64() =>
 		BitConverter.DoubleToInt64Bits(NValue);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,89 +91,87 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaTable? AsTable() => OValue as LuaTable;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public LuaLClosureValue? AsLuaClosure() => OValue as LuaLClosureValue;
+	public LuaClosure? AsLuaClosure() => OValue as LuaClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public LuaCsClosureValue? AsCSClosure() => OValue as LuaCsClosureValue;
+	public CsClosure? AsCSClosure() => OValue as CsClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ILuaState? AsThread() => OValue as ILuaState;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public List<TValue>? AsList() => OValue as List<TValue>;
 
-	internal void SetNil() 
+	public void SetNil() 
 	{
 		Type = LuaType.LUA_TNIL;
-		NValue = 0.0;
-		OValue = null!;
+		NValue = 0.0; OValue = null!;
 	}
-	internal void SetBool(bool v) 
+
+	public void SetBool(bool v) 
 	{
 		Type = LuaType.LUA_TBOOLEAN;
 		NValue = BitConverter.Int64BitsToDouble(
 			v ? BOOLEAN_TRUE : BOOLEAN_FALSE);
 		OValue = null!;
 	}
-	internal void SetObj(StkId v) 
+
+	public void SetObj(StkId v) 
 	{
 		Type = v.V.Type;
-		NValue = v.V.NValue;
-		OValue = v.V.OValue;
+		NValue = v.V.NValue; OValue = v.V.OValue;
 	}
 	
-	internal void SetList(List<TValue> v) 
+	public void SetList(List<TValue> v) 
 	{
 		Type = LuaType.LUA_TLIST;
-		NValue = 0;
-		OValue = v;
+		NValue = 0; OValue = v;
 	}
 	
-	internal void SetDouble(double v) 
+	public void SetDouble(double v) 
 	{
 		Type = LuaType.LUA_TNUMBER;
-		NValue = v;
-		OValue = null!;
+		NValue = v; OValue = null!;
 	}
-	internal void SetInt64(long v) 
+
+	public void SetInt64(long v) 
 	{
 		Type = LuaType.LUA_TINT64;
 		NValue = BitConverter.Int64BitsToDouble(v);
 		OValue = null!;
 	}
-	internal void SetString(string v) 
+
+	public void SetString(string v) 
 	{
 		Type = LuaType.LUA_TSTRING;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
-	internal void SetTable(LuaTable v) 
+
+	public void SetTable(LuaTable v) 
 	{
 		Type = LuaType.LUA_TTABLE;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
-	internal void SetThread(LuaState v) 
+
+	public void SetThread(LuaState v) 
 	{
 		Type = LuaType.LUA_TTHREAD;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
-	internal void SetUserData(object v) 
+
+	public void SetUserData(object v) 
 	{
 		Type = LuaType.LUA_TLIGHTUSERDATA;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
 	
-	internal void SetLuaClosure(LuaLClosureValue v) 
+	public void SetLuaClosure(LuaClosure v) 
 	{
 		Type = LuaType.LUA_TFUNCTION;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
-	internal void SetCSClosure(LuaCsClosureValue v) 
+
+	public void SetCSClosure(CsClosure v) 
 	{
 		Type = LuaType.LUA_TFUNCTION;
-		NValue = 0.0;
-		OValue = v;
+		NValue = 0.0; OValue = v;
 	}
 
 	public override string ToString()
@@ -196,9 +202,9 @@ public readonly ref struct StkId(ref TValue v)
 {
 	private static TValue _nil = TValue.Nil();
 	public static StkId Nil => new (ref _nil);
-	
+
 	public readonly ref TValue V = ref v;
-	
+
 	public void Set(StkId other) => V.SetObj(other);
 
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
@@ -210,13 +216,6 @@ public readonly ref struct StkId(ref TValue v)
 		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";
 		return $"StkId - {LuaState.TypeName(V.Type)} - {detail}";
 	}
-}
-
-public sealed class LuaLClosureValue(LuaProto p)
-{
-	public readonly LuaProto 	 Proto = p;
-	public readonly LuaUpValue[] Upvals = new LuaUpValue[p.Upvalues.Count];
-	public int Length => Upvals.Length;
 }
 
 public record struct LocVar(string VarName, int StartPc, int EndPc);
@@ -231,6 +230,8 @@ public sealed class LuaProto
 	public readonly List<int>			LineInfo = [];
 	public readonly List<LocVar>		LocVars = [];
 
+	public LuaProto? Prev;
+
 	public int	LineDefined;
 	public int	LastLineDefined;
 
@@ -239,13 +240,14 @@ public sealed class LuaProto
 	public byte	MaxStackSize;
 
 	public string Source = "";
+	public string? Name = null;
 
-	private LuaLClosureValue? _pure;
+	private LuaClosure? _pure;
 
 	public int GetFuncLine(int pc) => 
 		(0 <= pc && pc < LineInfo.Count) ? LineInfo[pc] : 0;
 
-	public LuaLClosureValue Pure => _pure ??= new LuaLClosureValue(this);
+	public LuaClosure Pure => _pure ??= new LuaClosure(this);
 }
 	
 public sealed class LuaUpValue
@@ -256,11 +258,10 @@ public sealed class LuaUpValue
 	public int Index;
 
 	private readonly LuaState? L;
-	
 
 	public LuaUpValue(LuaState? l = null, int stackIndex = -1)
 	{
-		Util.Assert(stackIndex == -1 || l != null);
+		LuaUtil.Assert(stackIndex == -1 || l != null);
 		L = l;
 		StackIndex = stackIndex;
 		Value.SetNil();
@@ -270,24 +271,33 @@ public sealed class LuaUpValue
 		StackIndex != -1 ? L!.Ref[StackIndex] : new StkId(ref Value);
 }
 
-public sealed class LuaCsClosureValue
-{
-	public readonly CSharpFunctionDelegate F;
-	public readonly TValue[]	Upvals;
+public interface BaseClosure;
 
-	public LuaCsClosureValue(CSharpFunctionDelegate f)
+public sealed class LuaClosure(LuaProto p): BaseClosure
+{
+	public readonly LuaProto 	 Proto = p;
+	public readonly LuaUpValue[] Upvals = new LuaUpValue[p.Upvalues.Count];
+	public int Length => Upvals.Length;
+}
+
+public sealed class CsClosure: BaseClosure
+{
+	public readonly CSharpFunctionDelegate Fun;
+	public readonly TValue[] Upvals;
+
+	public CsClosure(CSharpFunctionDelegate fun)
 	{
-		F = f;
+		Fun = fun;
 		Upvals = [];
 	}
 
-	public LuaCsClosureValue(CSharpFunctionDelegate f, int len)
+	public CsClosure(CSharpFunctionDelegate fun, int len)
 	{
-		F = f;
+		Fun = fun;
 		Upvals = new TValue[len];
 		for (var i = 0; i < len; ++i) 
 			Upvals[i].SetNil();
 	}
-	
+
 	public StkId Ref(int index) => new (ref Upvals[index]);
 }

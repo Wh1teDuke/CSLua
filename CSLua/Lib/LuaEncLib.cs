@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using CSLua.Utils;
+using CSLua.Util;
 
 namespace CSLua.Lib;
 

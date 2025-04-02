@@ -1,5 +1,6 @@
 ﻿
-using CSLua.Utils;
+using CSLua.Util;
+
 // ReSharper disable InconsistentNaming
 
 namespace CSLua.Lib;

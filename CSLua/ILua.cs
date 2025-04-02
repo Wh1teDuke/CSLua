@@ -2,7 +2,7 @@
 
 // #define DEBUG_RECORD_INS
 
-using CSLua.Utils;
+using CSLua.Util;
 
 namespace CSLua;
 
@@ -30,6 +30,7 @@ public sealed class LuaDebug
 }
 
 public delegate int CSharpFunctionDelegate(ILuaState state);
+
 public interface ILua
 {
 	public static ILua New() => new LuaState();
@@ -113,7 +114,8 @@ public interface ILua
 	void PushLightUserData(object o);
 	void PushInt64(long o);
 	bool PushThread();
-	void PushLuaFunction(LuaLClosureValue f);
+	void PushLuaFunction(LuaClosure f);
+	void PushCsFunction(CsClosure f);
 	void PushTable(LuaTable table);
 	void PushList(List<TValue> list);
 
@@ -153,7 +155,7 @@ public interface ILua
 	object? ToUserData(int index);
 	List<TValue>? ToList(int index);
 	ILuaState	ToThread(int index);
-	public LuaLClosureValue? ToLuaFunction(int index);
+	public LuaClosure? ToLuaFunction(int index);
 
 	ThreadStatus Status { get; }
 

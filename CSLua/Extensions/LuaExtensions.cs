@@ -1,3 +1,7 @@
+using CSLua.Util;
+
+// ReSharper disable InconsistentNaming
+
 namespace CSLua.Extensions;
 
 public static class LuaExtensions
@@ -51,9 +55,16 @@ public static class LuaExtensions
         return i;
     }
     
-    public static ILuaState? PopThread(this ILuaState L, int index)
+    public static ILuaState? PopThread(this ILuaState L)
     {
-        var t = L.ToThread(index);
+        var t = L.ToThread(-1);
+        if (t != null) L.Pop(1);
+        return t;
+    }
+    
+    public static LuaClosure? PopLuaClosure(this ILuaState L)
+    {
+        var t = L.ToLuaFunction(-1);
         if (t != null) L.Pop(1);
         return t;
     }
@@ -158,5 +169,45 @@ public static class LuaExtensions
         L.PushNil();
         L.SetField(-2, field);
         L.Pop(-1);
+    }
+    
+    
+    private static void EvalX(
+        this ILuaState L, string s, BaseClosure? errorHandler = null)
+    {
+        ThreadStatus status;
+		
+        if (errorHandler == null)
+            status = L.DoString(s);
+
+        else
+        {
+            L.PushClosure(errorHandler);
+            var errIndex = L.GetTop();
+            status = L.LoadString(s);
+
+            if (status == ThreadStatus.LUA_OK) 
+                status = L.PCall(0, LuaDef.LUA_MULTRET, errIndex);
+        }
+		
+        if (status == ThreadStatus.LUA_OK) return;
+
+        var msg = L.ToString(-1)!;
+        L.Pop(1);
+        throw new LuaRuntimeException(status, msg);
+    }
+    
+    public static void Eval(
+            this ILuaState L, string s, BaseClosure? onError = null) =>
+        L.EvalX(s, onError);
+	
+    public static void Eval(
+            this ILuaState L, string s, CSharpFunctionDelegate onError) =>
+        L.EvalX(s, new CsClosure(onError));
+    
+    private static void PushClosure(this ILuaState L, BaseClosure c)
+    {
+        if (c is LuaClosure closure) L.PushLuaFunction(closure);
+        else L.PushCsFunction((CsClosure)c);
     }
 }

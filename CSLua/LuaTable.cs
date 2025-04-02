@@ -1,4 +1,5 @@
-﻿using CSLua.Utils;
+﻿using CSLua.Util;
+
 // ReSharper disable InconsistentNaming
 
 namespace CSLua;
@@ -363,7 +364,7 @@ public sealed class LuaTable
 
 	private void SetArrayVector(int size)
 	{
-		Util.Assert(size >= _arraySize);
+		LuaUtil.Assert(size >= _arraySize);
 
 		if (size > _arrayPart.Length) 
 			Array.Resize(ref _arrayPart, size);
@@ -432,7 +433,7 @@ public sealed class LuaTable
 
 	private static int CeilLog2(int x)
 	{
-		Util.Assert(x > 0);
+		LuaUtil.Assert(x > 0);
 		var l = 0;
 		x--;
 		while (x >= 256) { l += 8; x >>= 8; }
@@ -510,7 +511,7 @@ public sealed class LuaTable
 			if (a == naSize) break; // All elements already counted
 		}
 		naSize = n;
-		Util.Assert(naSize / 2 <= na && na <= naSize);
+		LuaUtil.Assert(naSize / 2 <= na && na <= naSize);
 		return na;
 	}
 
@@ -568,7 +569,7 @@ public sealed class LuaTable
 				return !Get(k, out var cell) ? NewTableKey(k) : cell;
 			}
 
-			Util.Assert(n != DD.DummyNode);
+			LuaUtil.Assert(n != DD.DummyNode);
 			var otherN = GetHashNode(node.PtrKey);
 			// Is colliding node out of its main position?
 			if (otherN != node) 
@@ -589,7 +590,7 @@ public sealed class LuaTable
 		}
 
 		node.Key.SetObj(k);
-		Util.Assert(node.Val.IsNil());
+		LuaUtil.Assert(node.Val.IsNil());
 		return node.PtrVal;
 	}
 

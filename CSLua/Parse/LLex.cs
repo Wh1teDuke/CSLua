@@ -1,7 +1,7 @@
 ﻿using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using CSLua.Utils;
+using CSLua.Util;
 using NumberStyles = System.Globalization.NumberStyles;
 // ReSharper disable InconsistentNaming
 
@@ -93,21 +93,20 @@ public readonly record struct LuaToken(
 public sealed class LLex
 {
 	private const char EOZ = char.MaxValue;
-	
-	public readonly string Name;
 
 	public LuaToken Token;
 	public int LineNumber;
 	public int ColumnNumber;
 	public int LastLine;
 
+	private readonly string? _name;
 	private readonly ILoadInfo _loadInfo;
 	private LuaToken? _lookAhead;
 	private int _current;
 
 	private char[] _saved = new char[64];
-	private int _savedCount = 0;
-	private int _savedStart = 0;
+	private int _savedCount;
+	private int _savedStart;
 
 	private static readonly FrozenDictionary<string, TK> ReservedWordDict =
 		new Dictionary<string, TK>
@@ -141,10 +140,10 @@ public sealed class LLex
 		.AlternateLookup<ReadOnlySpan<char>> AltRWD = 
 			ReservedWordDict.GetAlternateLookup<ReadOnlySpan<char>>(); 
 
-	public LLex(ILoadInfo loadInfo, string name)
+	public LLex(ILoadInfo loadInfo, string? name)
 	{
 		_loadInfo = loadInfo;
-		Name = name;
+		_name = name;
 		LineNumber = 1;
 		LastLine = 1;
 		Token = LuaToken.Literal('.');
@@ -156,7 +155,7 @@ public sealed class LLex
 	public string Source()
 	{
 		if (_loadInfo is StringLoadInfo sli) return sli.Source;
-		return Name;
+		return _name ?? "???";
 	}
 
 	public void Next()
@@ -175,7 +174,7 @@ public sealed class LLex
 
 	public LuaToken GetLookAhead()
 	{
-		Util.Assert(_lookAhead == null);
+		LuaUtil.Assert(_lookAhead == null);
 		_lookAhead = _Lex(false);
 		return _lookAhead.Value;
 	}
@@ -442,7 +441,7 @@ public sealed class LLex
 	{
 		Span<char> expo = ['E', 'e'];
 		Span<char> expoB = ['P', 'p'];
-		Util.Assert(CurrentIsDigit());
+		LuaUtil.Assert(CurrentIsDigit());
 		var first = _current;
 		SaveAndNext();
 		if (first == '0' && _current is 'X' or 'x')
@@ -468,7 +467,7 @@ public sealed class LLex
 		}
 
 		var str = _GetSavedSpan();
-		if (Util.Str2Decimal(str, out var ret))
+		if (LuaUtil.Str2Decimal(str, out var ret))
 			return ret;
 
 		_Error("Malformed number: " + _GetSavedString());
@@ -478,8 +477,8 @@ public sealed class LLex
 	[DoesNotReturn]
 	private void _Error(string error)
 	{
-		var src = Name;
-		if (_loadInfo is StringLoadInfo sli && src == "???")
+		var src = _name;
+		if (_loadInfo is StringLoadInfo sli && src == null)
 		{
 			src = "[string \"" + sli.Source;
 			if (src.Length > LuaDef.LUA_IDSIZE)
@@ -696,7 +695,7 @@ public sealed class LLex
 						while (_CurrentIsAlpha() || CurrentIsDigit() ||
 						    _current == '_');
 
-						Util.Assert(_savedCount > 0);
+						LuaUtil.Assert(_savedCount > 0);
 						var identifier = _GetSavedSpan();
 						return IsReserved(identifier, out var type) 
 							? LuaToken.Of(type) 

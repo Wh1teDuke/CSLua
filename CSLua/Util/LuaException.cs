@@ -1,4 +1,4 @@
-namespace CSLua.Utils;
+namespace CSLua.Util;
 
 
 public class LuaException(string msg) : Exception(msg);

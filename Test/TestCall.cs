@@ -1,4 +1,6 @@
 using CSLua;
+using CSLua.Extensions;
+using CSLua.Util;
 
 namespace Test;
 
@@ -173,5 +175,29 @@ public sealed class TestCall
         function foo() return 1 end
         foo()
         """);
+    }
+
+    [Fact]
+    public void TestPCallCBWithTraceback()
+    {
+        var L = new LuaState();
+        
+        L.PushCsFunction(LuaUtil.TracebackErrHandler);
+        var errFunc = L.GetTop();
+        
+        L.DoString("function foo(arg) return bar(arg) end", "TestPCallCBWithTraceback");
+        L.GetGlobal("foo");
+        var foo = L.PopLuaClosure()!;
+
+        L.PushLuaFunction(foo);
+        L.PushNumber(1);
+        var res = L.PCall(1, 0, errFunc);
+
+        Assert.Equal(ThreadStatus.LUA_ERRRUN, res);
+        Assert.True(L.IsString(-1));
+        var msg = L.PopString();
+        Assert.Equal(
+            "TestPCallCBWithTraceback:1: Attempt to call a nil value\nstack traceback:\n\t[source \"function foo(arg) return bar(arg) end\"]:1: in function 'foo'",
+            msg);
     }
 }

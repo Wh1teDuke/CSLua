@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-using CSLua.Utils;
+using CSLua.Util;
+
 // ReSharper disable InconsistentNaming
 
 namespace CSLua.Parse;
@@ -134,13 +135,14 @@ public sealed class LHSAssign
 public sealed class Parser
 {
 	public static Parser Read(
-		ILoadInfo loadInfo, string name, int numCSharpCalls)
+		ILoadInfo loadInfo, string? name, int numCSharpCalls)
 	{
 		var parser = new Parser { _lexer = new LLex(loadInfo, name) };
 		parser._NumCSharpCalls += numCSharpCalls;
 		var topFuncState = new FuncState();
 		parser.MainFunc(topFuncState);
 		parser.Proto = topFuncState.Proto;
+		parser.Proto.Name = name;
 
 		return parser;
 	}
@@ -192,6 +194,9 @@ public sealed class Parser
 	{
 		fs.Lexer = _lexer;
 		fs.Prev = _curFunc;
+		
+		if (_curFunc != null)
+			fs.Proto.Prev = _curFunc.Proto;
 
 		_curFunc = fs;
 
@@ -338,7 +343,7 @@ public sealed class Parser
 	private ref LocVar GetLocalVar(FuncState fs, int i)
 	{
 		var idx = _actVars[fs.FirstLocal + i].Index;
-		Util.Assert(idx < fs.Proto.LocVars.Count);
+		LuaUtil.Assert(idx < fs.Proto.LocVars.Count);
 		var span = CollectionsMarshal.AsSpan(fs.Proto.LocVars);
 		return ref span[idx];
 	}
@@ -368,7 +373,7 @@ public sealed class Parser
 	private void CloseGoto(int g, LabelDesc label)
 	{
 		var gt = _pendingGotos[g];
-		Util.Assert(gt.Name == label.Name);
+		LuaUtil.Assert(gt.Name == label.Name);
 		if (gt.NumActVar < label.NumActVar)
 		{
 			var v = GetLocalVar(_curFunc, gt.NumActVar);
@@ -478,7 +483,7 @@ public sealed class Parser
 		block.HasUpValue 	= false;
 		block.Previous 		= fs.Block;
 		fs.Block 			= block;
-		Util.Assert(fs.FreeReg == fs.NumActVar);
+		LuaUtil.Assert(fs.FreeReg == fs.NumActVar);
 	}
 
 	private void LeaveBlock(FuncState fs)
@@ -499,7 +504,7 @@ public sealed class Parser
 		// But we don't need it anyway
 		fs.Block = block.Previous!;
 		RemoveVars(fs, block.NumActVar);
-		Util.Assert(block.NumActVar == fs.NumActVar);
+		LuaUtil.Assert(block.NumActVar == fs.NumActVar);
 		fs.FreeReg =  fs.NumActVar; // free registers
 		_activeLabels.RemoveRange(block.FirstLabel,
 			_activeLabels.Count - block.FirstLabel);
@@ -750,7 +755,7 @@ public sealed class Parser
 		var e = new ExpDesc();
 		Expr(e);
 		Coder.Exp2NextReg(_curFunc, e);
-		Util.Assert(e.Kind == ExpKind.VNONRELOC);
+		LuaUtil.Assert(e.Kind == ExpKind.VNONRELOC);
 		return e.Info;
 	}
 
@@ -1044,7 +1049,7 @@ public sealed class Parser
 				{
 					var pi = fs.GetCode(e);
 					pi.Value = pi.Value.SET_OPCODE(OpCode.OP_TAILCALL);
-					Util.Assert(pi.Value.GETARG_A() == fs.NumActVar);
+					LuaUtil.Assert(pi.Value.GETARG_A() == fs.NumActVar);
 				}
 				first = fs.NumActVar;
 				nret = LuaDef.LUA_MULTRET;
@@ -1059,7 +1064,7 @@ public sealed class Parser
 				{
 					Coder.Exp2NextReg(fs, e); // values must go to the `stack'
 					first = fs.NumActVar;
-					Util.Assert(nret == fs.FreeReg - first);
+					LuaUtil.Assert(nret == fs.FreeReg - first);
 				}
 			}
 		}
@@ -1149,7 +1154,7 @@ public sealed class Parser
 		// ULDebug.Log("MaxStackSize: " + CurFunc.Proto.MaxStackSize);
 		// ULDebug.Log("FreeReg: " + CurFunc.FreeReg);
 		// ULDebug.Log("NumActVar: " + CurFunc.NumActVar);
-		Util.Assert(_curFunc.Proto.MaxStackSize >= _curFunc.FreeReg &&
+		LuaUtil.Assert(_curFunc.Proto.MaxStackSize >= _curFunc.FreeReg &&
 		            _curFunc.FreeReg >= _curFunc.NumActVar);
 		_curFunc.FreeReg = _curFunc.NumActVar; // free registers
 		LeaveLevel();
@@ -1218,7 +1223,7 @@ public sealed class Parser
 		if (SingleVarAux(_curFunc, name, e, true) != ExpKind.VVOID) return;
 		var key = new ExpDesc();
 		SingleVarAux(_curFunc, LuaDef.LUA_ENV, e, true);
-		Util.Assert(e.Kind is ExpKind.VLOCAL or ExpKind.VUPVAL);
+		LuaUtil.Assert(e.Kind is ExpKind.VLOCAL or ExpKind.VUPVAL);
 		CodeString(key, name);
 		Coder.Indexed(_curFunc, e, key);
 	}
@@ -1668,7 +1673,7 @@ public sealed class Parser
 		Coder.Exp2NextReg(fs, t);
 		CheckNext('{');
 		do {
-			Util.Assert(cc.ExpLastItem.Kind == ExpKind.VVOID ||
+			LuaUtil.Assert(cc.ExpLastItem.Kind == ExpKind.VVOID ||
 			            cc.NumToStore > 0);
 			if (_lexer.Token.Val1 == '}')
 				break;
@@ -1784,7 +1789,7 @@ public sealed class Parser
 				break;
 		}
 
-		Util.Assert(e.Kind == ExpKind.VNONRELOC);
+		LuaUtil.Assert(e.Kind == ExpKind.VNONRELOC);
 		var baseReg = e.Info;
 		int nparams;
 		if (HasMultiRet(args.Kind))

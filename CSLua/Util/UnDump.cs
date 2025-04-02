@@ -4,7 +4,7 @@
 
 using CSLua.Parse;
 
-namespace CSLua.Utils;
+namespace CSLua.Util;
 
 public sealed class BinaryBytesReader(ILoadInfo loadinfo)
 {

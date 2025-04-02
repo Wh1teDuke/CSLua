@@ -19,7 +19,7 @@ public interface ILuaAuxLib
 	uint	CheckUnsigned(int narg);
 	object	CheckUserData(int narg);
 	List<TValue>	CheckList(int narg);
-	LuaLClosureValue	CheckLuaFunction(int narg);
+	LuaClosure	CheckLuaFunction(int narg);
 	void 	ArgCheck(bool cond, int narg, string extraMsg);
 	int 	ArgError(int nArg, string extraMsg);
 	string 	TypeName(int index);
@@ -41,16 +41,15 @@ public interface ILuaAuxLib
 	void	Traceback(ILuaState otherLua, string? msg = null, int level = 0);
 	int		Len(int index);
 
-	ThreadStatus LoadBuffer(string s, string name);
-	ThreadStatus LoadBufferX(string s, string name, string mode);
+	ThreadStatus LoadBuffer(string s, string? name = null);
+	ThreadStatus LoadBufferX(string s, string? name = null, string? mode = null);
 	ThreadStatus LoadFile(string? filename);
-	ThreadStatus LoadFileX(string filename, string mode);
+	ThreadStatus LoadFileX(string? filename, string? mode);
 
-	ThreadStatus LoadString(string s);
+	ThreadStatus LoadString(string s, string? name = null);
 	ThreadStatus LoadBytes(byte[] bytes, string name);
-	ThreadStatus DoString(string s);
+	ThreadStatus DoString(string s, string? name = null);
 	ThreadStatus DoFile(string filename);
-		
 
 	string	Gsub(string src, string pattern, string rep);
 

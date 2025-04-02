@@ -1,4 +1,4 @@
-﻿using CSLua.Utils;
+﻿using CSLua.Util;
 using NotImplementedException = System.NotImplementedException;
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 // ReSharper disable InconsistentNaming
@@ -183,7 +183,7 @@ public static class Coder
 		if (!Instruction.ISK(reg) && reg >= fs.NumActVar)
 		{
 			fs.FreeReg--;
-			Util.Assert(reg == fs.FreeReg);
+			LuaUtil.Assert(reg == fs.FreeReg);
 		}
 	}
 
@@ -273,7 +273,7 @@ public static class Coder
 	{
 		var jmp = fs.Proto.Code[pc];
 		var offset = dest - (pc + 1);
-		Util.Assert(dest != NO_JUMP);
+		LuaUtil.Assert(dest != NO_JUMP);
 		if (Math.Abs(offset) > Instruction.MAXARG_sBx)
 			fs.Lexer.SyntaxError("Control structure too long");
 		jmp.SETARG_sBx(offset);
@@ -362,7 +362,7 @@ public static class Coder
 	private static void InvertJump(FuncState fs, ExpDesc e)
 	{
 		var pc = GetJumpControl(fs, e.Info);
-		Util.Assert(TestTMode(pc.Value.GET_OPCODE())
+		LuaUtil.Assert(TestTMode(pc.Value.GET_OPCODE())
 		            && pc.Value.GET_OPCODE() != OpCode.OP_TESTSET
 		            && pc.Value.GET_OPCODE() != OpCode.OP_TEST );
 		pc.Value = pc.Value.SETARG_A(pc.Value.GETARG_A() == 0 ? 1 : 0);
@@ -566,13 +566,13 @@ public static class Coder
 		switch (op)
 		{
 			case BinOpr.AND: 
-				Util.Assert(e1.ExitTrue == NO_JUMP);
+				LuaUtil.Assert(e1.ExitTrue == NO_JUMP);
 				DischargeVars(fs, e2);
 				e2.ExitFalse = Concat(fs, e2.ExitFalse, e1.ExitFalse);
 				e1.CopyFrom(e2);
 				break;
 			case BinOpr.OR: 
-				Util.Assert(e1.ExitFalse == NO_JUMP);
+				LuaUtil.Assert(e1.ExitFalse == NO_JUMP);
 				DischargeVars(fs, e2);
 				e2.ExitTrue = Concat(fs, e2.ExitTrue, e1.ExitTrue);
 				e1.CopyFrom(e2);
@@ -583,7 +583,7 @@ public static class Coder
 				if (e2.Kind == ExpKind.VRELOCABLE &&
 				    pe2.Value.GET_OPCODE() == OpCode.OP_CONCAT)
 				{
-					Util.Assert(e1.Info == pe2.Value.GETARG_B() - 1);
+					LuaUtil.Assert(e1.Info == pe2.Value.GETARG_B() - 1);
 					FreeExp(fs, e1);
 					pe2.Value = pe2.Value.SETARG_B(e1.Info);
 					e1.Kind = ExpKind.VRELOCABLE;
@@ -632,7 +632,7 @@ public static class Coder
 			case BinOpr.GE: 
 				CodeComp(fs, OpCode.OP_LE, 0, e1, e2);
 				break;
-			default: Util.Assert(false); break;
+			default: LuaUtil.Assert(false); break;
 		}
 	}
 
@@ -663,7 +663,7 @@ public static class Coder
 			PatchToHere(fs, list);
 		else
 		{
-			Util.Assert(target < fs.Pc);
+			LuaUtil.Assert(target < fs.Pc);
 			PatchListAux(fs, list, target, NO_REG, target);
 		}
 	}
@@ -675,7 +675,7 @@ public static class Coder
 		{
 			var next = GetJump(fs, list);
 			var pi = new InstructionPtr(fs.Proto.Code, list);
-			Util.Assert(pi.Value.GET_OPCODE() == OpCode.OP_JMP &&
+			LuaUtil.Assert(pi.Value.GET_OPCODE() == OpCode.OP_JMP &&
 			            (pi.Value.GETARG_A() == 0 ||
 			              pi.Value.GETARG_A() >= level));
 			pi.Value = pi.Value.SETARG_A(level);
@@ -798,7 +798,7 @@ public static class Coder
 					CodeABC(fs, OpCode.OP_MOVE, reg, e.Info, 0);
 				break;
 			default: 
-				Util.Assert(e.Kind is ExpKind.VVOID or ExpKind.VJMP);
+				LuaUtil.Assert(e.Kind is ExpKind.VVOID or ExpKind.VJMP);
 				return; // nothing to do...
 		}
 		e.Info = reg;
@@ -1053,7 +1053,7 @@ public static class Coder
 	{
 		var c = (nElems - 1) / LuaDef.LFIELDS_PER_FLUSH + 1;
 		var b = (toStore == LuaDef.LUA_MULTRET) ? 0 : toStore;
-		Util.Assert(toStore != 0);
+		LuaUtil.Assert(toStore != 0);
 
 		if (c <= Instruction.MAXARG_C)
 		{
@@ -1104,7 +1104,7 @@ public static class Coder
 
 	private static int CodeExtraArg(FuncState fs, int a)
 	{
-		Util.Assert(a <= Instruction.MAXARG_Ax);
+		LuaUtil.Assert(a <= Instruction.MAXARG_Ax);
 		return Code(fs, Instruction.CreateAx(OpCode.OP_EXTRAARG, a));
 	}
 
@@ -1123,9 +1123,9 @@ public static class Coder
 	public static int CodeABx(FuncState fs, OpCode op, int a, uint bc)
 	{
 		var mode = OpCodeInfo.GetMode(op);
-		Util.Assert(mode.OpMode is OpMode.iABx or OpMode.iAsBx);
-		Util.Assert(mode.CMode == OpArgMask.OpArgN);
-		Util.Assert(a < Instruction.MAXARG_A & bc <= Instruction.MAXARG_Bx);
+		LuaUtil.Assert(mode.OpMode is OpMode.iABx or OpMode.iAsBx);
+		LuaUtil.Assert(mode.CMode == OpArgMask.OpArgN);
+		LuaUtil.Assert(a < Instruction.MAXARG_A & bc <= Instruction.MAXARG_Bx);
 		return Code(fs, Instruction.CreateABx(op, a, bc));
 	}
 

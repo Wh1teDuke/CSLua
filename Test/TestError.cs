@@ -1,7 +1,7 @@
 using CSLua;
 using CSLua.Extensions;
 using CSLua.Parse;
-using CSLua.Utils;
+using CSLua.Util;
 
 namespace Test;
 
@@ -54,7 +54,7 @@ public static class TestError
 
     private static int DoTraceBack(ILuaState L)
     {
-        L.PushString(Util.Traceback((LuaState)L));
+        L.PushString(LuaUtil.Traceback((LuaState)L));
         return 1;
     }
     
@@ -74,7 +74,7 @@ public static class TestError
              foo()
              """));
         Assert.Equal(
-           "print(v[0]):4: Attempt to index a nil value\nstack traceback:\n\t[source \"function foo()...\"]:4: in function 'bar'\n\t[source \"function foo()...\"]:6: in function 'foo'\n\t[source \"function foo()...\"]:8: in main chunk",
+           "print(v[0]):4: Attempt to index a nil value",
            e.Message);
     }
 
@@ -85,7 +85,7 @@ public static class TestError
         Eval("local bar=123;function foo() return #bar end; foo()")
         );
         Assert.Equal(
-            "local bar=123;function foo() return #bar end; foo():1: Attempt to get length of upvalue 'bar' (a number value)\nstack traceback:\n\t[source \"local bar=123;function foo() return #bar end; ...\"]:1: in function 'foo'\n\t[source \"local bar=123;function foo() return #bar end; ...\"]:1: in main chunk",
+            "local bar=123;function foo() return #bar end; foo():1: Attempt to get length of upvalue 'bar' (a number value)",
             e.Message);
     }
 
@@ -105,6 +105,22 @@ public static class TestError
         var e = Assert.ThrowsAny<LuaException>(() =>
             L.Eval("for i = 1, 10 do res += i end"));
         Assert.StartsWith("for i = 1, 10 do res += i end:1: Attempt to Perform arithmetic on a nil value", e.Message);
+    }
+
+    [Fact]
+    public static void TestEvalWithTraceback()
+    {
+        var L = new LuaState();
+        var e = Assert.ThrowsAny<LuaException>(() =>
+            L.Eval("""
+                   function foo()
+                     bar()
+                   end
+                   foo();
+                   """, LuaUtil.TracebackErrHandler));
+        Assert.Equal(
+            "bar():2: Attempt to call a nil value\nstack traceback:\n\t[source \"function foo()...\"]:2: in function 'foo'\n\t[source \"function foo()...\"]:4: in main chunk",
+            e.Message);
     }
 
     private static void Parse(string src) => Parser.Read(src, "Test");

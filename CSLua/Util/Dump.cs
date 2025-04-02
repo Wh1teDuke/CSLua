@@ -1,7 +1,7 @@
 ﻿
 // ReSharper disable InconsistentNaming
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-namespace CSLua.Utils;
+namespace CSLua.Util;
 
 public enum DumpStatus { OK, ERROR, }
 
@@ -118,7 +118,7 @@ internal sealed class DumpState
 					DumpString(k.AsString());
 					break;
 				default:
-					Util.Assert(false);
+					LuaUtil.Assert(false);
 					break;
 			}
 		});

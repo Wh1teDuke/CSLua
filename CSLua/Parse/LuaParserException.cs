@@ -1,4 +1,4 @@
-using CSLua.Utils;
+using CSLua.Util;
 
 namespace CSLua.Parse;
 

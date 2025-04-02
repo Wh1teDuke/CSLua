@@ -2,7 +2,8 @@
 using System.Reflection;
 using System.Text;
 using CSLua.Parse;
-using CSLua.Utils;
+using CSLua.Util;
+
 // ReSharper disable InconsistentNaming
 
 namespace CSLua.Lib;

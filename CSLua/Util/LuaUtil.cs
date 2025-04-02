@@ -2,13 +2,19 @@
 #define API_CHECK
 #define LUA_ASSERT
 
-namespace CSLua.Utils;
+namespace CSLua.Util;
 
 using DebugS = System.Diagnostics.Debug;
 using NumberStyles = System.Globalization.NumberStyles;
 
-public static class Util
+public static class LuaUtil
 {
+	public static readonly CsClosure TracebackErrHandler = new (lua =>
+	{
+		lua.Traceback(lua, lua.ToString(-1), 1);
+		return 1;
+	});
+	
 	private static void Throw(params string[] msgs) => 
 		throw new LuaException(string.Join("", msgs));
 

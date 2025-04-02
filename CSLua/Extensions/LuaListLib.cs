@@ -1,4 +1,4 @@
-using CSLua.Utils;
+using CSLua.Util;
 
 namespace CSLua.Extensions;
 
@@ -8,7 +8,7 @@ public static class LuaListLib
 	
     public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
     
-    internal static readonly LuaCsClosureValue PairsCl = new (ListPairs);
+    internal static readonly CsClosure PairsCl = new (ListPairs);
 
     public static int OpenLib(ILuaState lua)
     {

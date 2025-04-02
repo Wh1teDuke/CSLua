@@ -1,4 +1,5 @@
 using CSLua;
+using CSLua.Extensions;
 
 namespace Test;
 

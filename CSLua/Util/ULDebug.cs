@@ -1,4 +1,4 @@
-﻿namespace CSLua.Utils;
+﻿namespace CSLua.Util;
 
 public static class ULDebug
 {
