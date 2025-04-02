@@ -63,7 +63,7 @@ public static class LuaPkgLib
 		lua.SetField(-2, "config");
 
 		// Set field 'loaded'
-		lua.GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_LOADED");
+		lua.GetSubTable(LuaDef.LUA_REGISTRYINDEX, LuaDef.LUA_LOADED);
 		lua.SetField(-2, "loaded");
 
 		// Set field 'preload'

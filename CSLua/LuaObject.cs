@@ -196,6 +196,20 @@ public struct TValue : IEquatable<TValue>
 		result.SetNil();
 		return result;
 	}
+	
+	public static TValue Of(string value)
+	{
+		var result = new TValue();
+		result.SetString(value);
+		return result;
+	}
+	
+	public static TValue Of(bool value)
+	{
+		var result = new TValue();
+		result.SetBool(value);
+		return result;
+	}
 }
 
 public readonly ref struct StkId(ref TValue v)

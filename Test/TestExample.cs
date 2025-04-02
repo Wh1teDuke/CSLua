@@ -16,6 +16,7 @@ public sealed class TestExample
         
         L.DoString(
             """
+            assert(_CSLUA)
             local a, b = 1, 2
             return FromCS(a, b);
             """);

@@ -388,13 +388,12 @@ public sealed class LuaState : ILuaState
 		L.IncrTop();
 	}
 
-	private static readonly PFuncDelegate<LoadParameter> DG_F_Load = Load;
-
 	public ThreadStatus Load<T>(
-		T loadInfo, string? name, string? mode) where T: struct, ILoadInfo
+		T loadInfo, string? name = null, string? mode = null
+		) where T: struct, ILoadInfo
 	{
 		var param  = new LoadParameter(this, loadInfo, name, mode);
-		var status = PCall(DG_F_Load, ref param, TopIndex, ErrFunc);
+		var status = PCall(Load, ref param, TopIndex, ErrFunc);
 		if (status != ThreadStatus.LUA_OK) return status;
 
 		var below = Ref[TopIndex - 1];
@@ -475,8 +474,6 @@ public sealed class LuaState : ILuaState
 	private static void Call(ref CallS ud) => 
 		ud.L.Call(ud.L.Ref[ud.FuncIndex], ud.NumResults, false);
 
-	private static readonly PFuncDelegate<CallS> DG_F_Call = Call;
-
 	private void CheckResults(int numArgs, int numResults)
 	{
 		LuaUtil.ApiCheck(numResults == LuaDef.LUA_MULTRET ||
@@ -490,12 +487,12 @@ public sealed class LuaState : ILuaState
 			CI.TopIndex = TopIndex;
 	}
 
-	public ThreadStatus PCall(int numArgs, int numResults, int errFunc) => 
-		API.PCallK(numArgs, numResults, errFunc, 0);
+	public ThreadStatus PCall(int numArgs, int numResults, int errFunc = 0) => 
+		PCallK(numArgs, numResults, errFunc, 0, null);
 
 	public ThreadStatus PCallK( 
-		int numArgs, int numResults, int errFunc,
-		int context, CSharpFunctionDelegate? continueFunc)
+		int numArgs, int numResults, int errFunc = 0,
+		int context = 0, CSharpFunctionDelegate? continueFunc = null)
 	{
 		LuaUtil.ApiCheck(continueFunc == null || !CI.IsLua,
 			"Cannot use continuations inside hooks");
@@ -509,18 +506,17 @@ public sealed class LuaState : ILuaState
 			func = 0;
 		else
 		{
-			if (!Index2Addr(errFunc, out _))
-				LuaUtil.InvalidIndex();
+			if (!Index2Addr(errFunc, out _)) LuaUtil.InvalidIndex();
 			errFunc += errFunc <= 0 ? TopIndex : CI.FuncIndex;
 			func = errFunc;
 		}
 
 		ThreadStatus status;
 		var c = new CallS { L = this, FuncIndex = TopIndex - (numArgs + 1) };
-		if (continueFunc == null || NumNonYieldable > 0) // no continuation or no yieldable?
+		if (continueFunc == null || NumNonYieldable > 0) // No continuation or no yieldable?
 		{
 			c.NumResults = numResults;
-			status = PCall(DG_F_Call, ref c, c.FuncIndex, func);
+			status = PCall(Call, ref c, c.FuncIndex, func);
 		}
 		else
 		{
@@ -1804,14 +1800,15 @@ public sealed class LuaState : ILuaState
 				break;
 
 			default: // Error message on current top
-				old.V.SetObj(Ref[TopIndex - 1]);
+				old.Set(Ref[TopIndex - 1]);
 				break;
 		}
 		TopIndex = oldTop + 1;
 	}
 
 	private ThreadStatus PCall<T>(
-		PFuncDelegate<T> func, ref T ud, int oldTopIndex, int errFunc) where T: struct
+		PFuncDelegate<T> func, ref T ud, int oldTopIndex, int errFunc
+		) where T: struct
 	{
 		var oldCIIndex = CI.Index;
 		var oldNumNonYieldable= NumNonYieldable;
@@ -2418,13 +2415,13 @@ public sealed class LuaState : ILuaState
 		var status = LoadString(s, name);
 		return status != ThreadStatus.LUA_OK ? 
 			status :
-			API.PCall(0, LuaDef.LUA_MULTRET, 0);
+			PCall(0, LuaDef.LUA_MULTRET);
 	}
 
-	public ThreadStatus LoadProto(string name, LuaProto proto)
+	public ThreadStatus LoadProto(LuaProto proto, string? name = null)
 	{
 		var loadInfo = new ProtoLoadInfo(proto);
-		return API.Load(loadInfo, name, null);
+		return Load(loadInfo, name);
 	}
 
 	public ThreadStatus Compile(string name, string code)
@@ -2437,23 +2434,23 @@ public sealed class LuaState : ILuaState
 	public ThreadStatus DoFile(string filename)
 	{
 		var status = LoadFile(filename);
-		if (status != ThreadStatus.LUA_OK)
-			return status;
-		return API.PCall(0, LuaDef.LUA_MULTRET, 0);
+		return status != ThreadStatus.LUA_OK 
+			? status 
+			: PCall(0, LuaDef.LUA_MULTRET, 0);
 	}
 	
-	public ThreadStatus DoProto(LuaProto proto, string name = "???")
+	public ThreadStatus DoProto(LuaProto proto, string? name = null)
 	{
-		var status = LoadProto(name, proto);
-		if (status != ThreadStatus.LUA_OK)
-			return status;
-		return API.PCall(0, LuaDef.LUA_MULTRET, 0);
+		var status = LoadProto(proto, name);
+		return status != ThreadStatus.LUA_OK 
+			? status
+			: PCall(0, LuaDef.LUA_MULTRET);
 	}
 
 	public string Gsub(string src, string pattern, string rep)
 	{
 		var res = src.Replace(pattern, rep);
-		API.PushString(res);
+		PushString(res);
 		return res;
 	}
 		
@@ -2485,11 +2482,12 @@ public sealed class LuaState : ILuaState
 		return ToString(-1)!;
 	}
 
-	public void OpenLibs()
+	public void OpenLibs(bool global = true)
 	{
 		Span<NameFuncPair> define = 
 		[
 			LuaBaseLib.NameFuncPair,
+			//
 			LuaBitLib.NameFuncPair,
 			LuaCoroLib.NameFuncPair,
 			LuaDebugLib.NameFuncPair,
@@ -2505,12 +2503,11 @@ public sealed class LuaState : ILuaState
 
 		foreach (var t in define)
 		{
-			Require(t.Name, t.Func, true);
-			Pop(1);
+			Open(t, global);
 		}
 	}
 	
-	public void OpenSafeLibs()
+	public void OpenSafeLibs(bool global = true)
 	{
 		Span<NameFuncPair> define = 
 		[
@@ -2520,8 +2517,8 @@ public sealed class LuaState : ILuaState
 			LuaCoroLib.NameFuncPair,
 			LuaDebugLib.SafeNameFuncPair,
 			LuaEncLib.NameFuncPair,
-			//new(LuaFFILib.LIB_NAME,	LuaFFILib.OpenLib),
-			//new(LuaIOLib.LIB_NAME,	LuaIOLib.OpenLib),
+			//LuaFFILib.NameFuncPair,
+			//LuaIOLib.NameFuncPair,
 			LuaMathLib.NameFuncPair,
 			LuaOSLib.SafeNameFuncPair,
 			LuaPkgLib.NameFuncPair,
@@ -2531,8 +2528,7 @@ public sealed class LuaState : ILuaState
 
 		foreach (var t in define)
 		{
-			Require(t.Name, t.Func, true);
-			Pop(1);
+			Open(t, global);
 		}
 	}
 
@@ -2545,17 +2541,17 @@ public sealed class LuaState : ILuaState
 	public void Require(
 		string moduleName, CSharpFunctionDelegate openFunc, bool global)
 	{
-		API.PushCSharpFunction(openFunc);
-		API.PushString(moduleName);
-		API.Call(1, 1);
-		GetSubTable(LuaDef.LUA_REGISTRYINDEX, "_LOADED");
-		API.PushValue(-2);
-		API.SetField(-2, moduleName);
-		API.Pop(1);
+		PushCSharpFunction(openFunc);
+		PushString(moduleName);
+		Call(1, 1);
+		GetSubTable(LuaDef.LUA_REGISTRYINDEX, LuaDef.LUA_LOADED);
+		PushValue(-2);
+		SetField(-2, moduleName);
+		Pop(1);
 		if (global)
 		{
-			API.PushValue(-1);
-			API.SetGlobal(moduleName);
+			PushValue(-1);
+			SetGlobal(moduleName);
 		}
 	}
 

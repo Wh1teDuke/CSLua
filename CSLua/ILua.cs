@@ -44,9 +44,9 @@ public interface ILua
 	void Call(int numArgs, int numResults);
 	void CallK(int numArgs, int numResults,
 		int context, CSharpFunctionDelegate? continueFunc = null);
-	ThreadStatus PCall(int numArgs, int numResults, int errFunc);
-	ThreadStatus PCallK(int numArgs, int numResults, int errFunc,
-		int context, CSharpFunctionDelegate? continueFunc = null);
+	ThreadStatus PCall(int numArgs, int numResults, int errFunc = 0);
+	ThreadStatus PCallK(int numArgs, int numResults, int errFunc = 0,
+		int context = 0, CSharpFunctionDelegate? continueFunc = null);
 
 	ThreadStatus Resume(ILuaState from, int numArgs);
 	int Yield(int numResults);

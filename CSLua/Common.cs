@@ -52,6 +52,7 @@ public static class LuaDef
 	public const string LUA_VERSION = "Lua " + LUA_VERSION_MAJOR + "." + LUA_VERSION_MINOR;
 
 	public const string LUA_ENV = "_ENV";
+	public const string LUA_LOADED = "_LOADED";
 
 	public const int BASE_CI_SIZE = 8;
 }

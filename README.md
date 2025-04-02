@@ -3,7 +3,7 @@
 ## Example
 
 ```cs
-public void Test()
+public void Test1()
 {
     var L = new LuaState();
     L.OpenLibs();
@@ -13,6 +13,7 @@ public void Test()
     
     L.DoString(
         """
+        assert(_CSLUA)
         local a, b = 1, 2
         return FromCS(a, b);
         """);

@@ -51,6 +51,10 @@ public static class LuaBaseLib
 
 		lua.PushString(LuaDef.LUA_VERSION);
 		lua.SetField(-2, "_VERSION");
+		
+		// CSLua ID
+		lua.PushBoolean(true);
+		lua.SetField(-2, "_CSLUA");
 
 		return 1;
 	}

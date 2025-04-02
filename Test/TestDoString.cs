@@ -13,6 +13,7 @@ public sealed class TestDoString
         L.DoString(
             """
             function foo(bar) print(bar) end
+            assert(_CSLUA)
             local bar = "bar"
             foo(bar)
             return 7;

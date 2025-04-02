@@ -29,7 +29,8 @@ public interface ILuaAuxLib
 	int 	GetSubTable(int index, string fname);
 
 	void 	Require(string moduleName, CSharpFunctionDelegate openFunc, bool global);
-	void 	OpenLibs();
+	void 	OpenLibs(bool global = true);
+	void 	OpenSafeLibs(bool global = true);
 	void 	NewLibTable(ReadOnlySpan<NameFuncPair> define);
 	void	NewLib(ReadOnlySpan<NameFuncPair> define);
 	void 	SetFuncs(ReadOnlySpan<NameFuncPair> define, int nup);
