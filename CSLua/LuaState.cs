@@ -362,6 +362,7 @@ public sealed class LuaState : ILuaState
 		LuaProto proto;
 		if (param.LoadInfo is ProtoLoadInfo plInfo)
 			proto = plInfo.Proto;
+
 		else if (param.LoadInfo.PeekByte() == LuaConf.LUA_SIGNATURE[0])
 		{
 			L.CheckMode(param.Mode, "binary");
@@ -374,6 +375,9 @@ public sealed class LuaState : ILuaState
 				param.LoadInfo, param.Name, L.NumCSharpCalls);
 			proto = parser.Proto;
 		}
+
+		if (param.Name is { } name)
+			proto.Source = name;
 
 		var cl = new LuaClosure(proto);
 		LuaUtil.Assert(cl.Length == cl.Proto.Upvalues.Count);
@@ -2270,21 +2274,30 @@ public sealed class LuaState : ILuaState
 	private void PushFuncName(LuaDebug ar)
 	{
 		if (ar.NameWhat.Length > 0 && ar.NameWhat[0] != '\0') // Is there a name?
-			API.PushString($"function '{ar.Name}'");
+			PushString($"function '{ar.Name}'");
 		else if (ar.What.Length > 0 && ar.What[0] == 'm') // Main?
-			API.PushString("main chunk");
+			PushString("main chunk");
 		else if (ar.What.Length > 0 && ar.What[0] == 'C')
 		{
 			if (PushGlobalFuncName(ar))
 			{
-				API.PushString($"function '{API.ToString(-1)}'");
-				API.Remove(-2); // Remove name
+				PushString($"function '{API.ToString(-1)}'");
+				Remove(-2); // Remove name
+			}
+			// !! Maybe is a function pushed from C#
+			else if (Top.V.AsLuaClosure() is { Proto.Name: {} fName })
+			{
+				PushString($"function '{fName}'");
+			}
+			else if (Top.V.AsCSClosure() is {} csClosure)
+			{
+				PushString($"function '{csClosure.Name}'");
 			}
 			else
-				API.PushString("?");
+				PushString("?");
 		}
 		else
-			API.PushString($"function <{ar.ShortSrc}:{ar.LineDefined}>");
+			PushString($"function <{ar.ShortSrc}:{ar.LineDefined}>");
 	}
 
 	private int CountLevels()
@@ -4080,10 +4093,9 @@ public sealed class LuaState : ILuaState
 
 		if (what[0] == '>')
 		{
-			func = Ref[TopIndex - 1];
+			func = Ref[--TopIndex];
 
 			LuaUtil.ApiCheck(func.V.IsFunction(), "Function expected");
-			--TopIndex;
 		}
 		else
 		{
@@ -4124,14 +4136,14 @@ public sealed class LuaState : ILuaState
 					LuaUtil.Assert(func.V.IsFunction());
 					if (func.V.IsLuaClosure()) 
 					{
-						var lcl = func.V.AsLuaClosure();
+						var lcl = func.V.AsLuaClosure()!;
 						ar.NumUps = lcl.Length;
 						ar.IsVarArg = lcl.Proto.IsVarArg;
 						ar.NumParams = lcl.Proto.NumParams;
 					}
 					else if (func.V.IsCsClosure()) 
 					{
-						var ccl = func.V.AsCSClosure();
+						var ccl = func.V.AsCSClosure()!;
 						ar.NumUps = ccl.Upvals.Length;
 						ar.IsVarArg = true;
 						ar.NumParams = 0;
@@ -4139,9 +4151,9 @@ public sealed class LuaState : ILuaState
 					else throw new NotImplementedException();
 					break;
 				case 't':
-					ar.IsTailCall = (ci != null)
-						? ((ci.CallStatus & CallStatus.CIST_TAIL) != 0)
-						: false;
+					ar.IsTailCall =
+						(ci != null) &&
+						((ci.CallStatus & CallStatus.CIST_TAIL) != 0);
 					break;
 				case 'n':
 					if (ci != null
@@ -4315,22 +4327,20 @@ public sealed class LuaState : ILuaState
 
 		var proto = GetCurrentLuaFunc(CI)!.Proto;
 		var line = GetCurrentLine(CI);
-		var src = proto.Source;
-		if (proto.Name is {} name)
-			src = name;
-		else if (proto.Prev != null)
-		{
-			var p = proto;
-			while (p.Prev != null)
-			{
-				p = p.Prev;
-				if (p.Name == null) continue;
-				src = p.Name;
-				break;
-			}
-		}
 
-		if (src == proto.Source)
+		string? root = null;
+		var p = proto;
+		while (p.Parent != null) p = p.Parent;
+		root = p.RootName;
+		
+		var src = root;
+
+		if (src == null)
+			src = proto.Source;
+		if (src == "")
+			src = "?";
+
+		if (src == proto.Source && src.Contains('\n'))
 		{
 			// Get portion
 			var lines = src.Replace("\r","").Split('\n');

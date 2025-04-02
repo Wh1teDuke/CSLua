@@ -137,7 +137,7 @@ public sealed class Parser
 	public static Parser Read(
 		ILoadInfo loadInfo, string? name, int numCSharpCalls)
 	{
-		var parser = new Parser { _lexer = new LLex(loadInfo, name) };
+		var parser = new Parser(name, new LLex(loadInfo, name));
 		parser._NumCSharpCalls += numCSharpCalls;
 		var topFuncState = new FuncState();
 		parser.MainFunc(topFuncState);
@@ -156,15 +156,20 @@ public sealed class Parser
 	private readonly List<LabelDesc> _pendingGotos;
 	private readonly List<LabelDesc> _activeLabels;
 
-	private LLex 			_lexer = null!;
+	private readonly LLex 	_lexer;
 	private FuncState 		_curFunc;
 
 	private int _NumCSharpCalls;
 
+	public readonly string? Name;
+
 	public LuaProto Proto { get; private set; } = null!;
 
-	private Parser()
+	private Parser(string? name, LLex lexer)
 	{
+		Name = name;
+		_lexer = lexer;
+		
 		_actVars = [];
 		_pendingGotos = [];
 		_activeLabels = [];
@@ -196,7 +201,7 @@ public sealed class Parser
 		fs.Prev = _curFunc;
 		
 		if (_curFunc != null)
-			fs.Proto.Prev = _curFunc.Proto;
+			fs.Proto.Parent = _curFunc.Proto;
 
 		_curFunc = fs;
 
@@ -210,6 +215,7 @@ public sealed class Parser
 		// registers 0/1 are always valid
 		fs.Proto.MaxStackSize = 2;
 		fs.Proto.Source = _lexer.Source();
+		fs.Proto.RootName = Name;
 
 		EnterBlock(fs, block, false);
 	}
@@ -947,10 +953,11 @@ public sealed class Parser
 	{
 		var b = new ExpDesc();
 		var fs = _curFunc;
-		var v = NewLocalVar(CheckName());
+		var name = CheckName();
+		var v = NewLocalVar(name);
 		_actVars.Add(v);
 		AdjustLocalVars(1); // enter its scope
-		Body(b, false, _lexer.LineNumber);
+		Body(b, false, _lexer.LineNumber, name);
 		GetLocalVar(fs, b.Info).StartPc = fs.Pc;
 	}
 
@@ -978,9 +985,9 @@ public sealed class Parser
 	}
 
 	// funcname -> NAME {fieldsel} [`:' NAME]
-	private bool FuncName(ExpDesc v)
+	private bool FuncName(ExpDesc v, out string name)
 	{
-		SingleVar(v);
+		SingleVar(v, out name);
 		while (_lexer.Token.Val1 == '.')
 		{
 			FieldSel(v);
@@ -1000,8 +1007,8 @@ public sealed class Parser
 		var v = new ExpDesc();
 		var b = new ExpDesc();
 		_lexer.Next();
-		var isMethod = FuncName(v);
-		Body(b, isMethod, line);
+		var isMethod = FuncName(v, out var name);
+		Body(b, isMethod, line, name);
 		Coder.StoreVar(_curFunc, v, b);
 		Coder.FixLine(_curFunc, line);
 	}
@@ -1217,9 +1224,9 @@ public sealed class Parser
 		return ExpKind.VUPVAL;
 	}
 
-	private void SingleVar(ExpDesc e)
+	private void SingleVar(ExpDesc e, out string name)
 	{
-		var name = CheckName();
+		name = CheckName();
 		if (SingleVarAux(_curFunc, name, e, true) != ExpKind.VVOID) return;
 		var key = new ExpDesc();
 		SingleVarAux(_curFunc, LuaDef.LUA_ENV, e, true);
@@ -1732,12 +1739,13 @@ public sealed class Parser
 		Coder.ReserveRegs(_curFunc, _curFunc.NumActVar);
 	}
 
-	private void Body(ExpDesc e, bool isMethod, int line)
+	private void Body(ExpDesc e, bool isMethod, int line, string name)
 	{
 		var newFs = new FuncState();
 		var block = new BlockCnt();
 		newFs.Proto = AddPrototype();
 		newFs.Proto.LineDefined = line;
+		newFs.Proto.Name = name;
 		OpenFunc(newFs, block);
 		CheckNext('(');
 		if (isMethod)
@@ -1826,7 +1834,7 @@ public sealed class Parser
 				return;
 
 			case (int)TK.NAME: 
-				SingleVar(e);
+				SingleVar(e, out _);
 				return;
 
 			default: 
@@ -1913,7 +1921,7 @@ public sealed class Parser
 
 			case (int)TK.FUNCTION: 
 				_lexer.Next();
-				Body(e, false, _lexer.LineNumber);
+				Body(e, false, _lexer.LineNumber, "(anonymous)");
 				return;
 
 			default: 

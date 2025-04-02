@@ -244,7 +244,7 @@ public sealed class LuaProto
 	public readonly List<int>			LineInfo = [];
 	public readonly List<LocVar>		LocVars = [];
 
-	public LuaProto? Prev;
+	public LuaProto? Parent;
 
 	public int	LineDefined;
 	public int	LastLineDefined;
@@ -255,6 +255,7 @@ public sealed class LuaProto
 
 	public string Source = "";
 	public string? Name = null;
+	public string? RootName = null;
 
 	private LuaClosure? _pure;
 
@@ -298,19 +299,22 @@ public sealed class CsClosure: BaseClosure
 {
 	public readonly CSharpFunctionDelegate Fun;
 	public readonly TValue[] Upvals;
+	public readonly string Name;
 
-	public CsClosure(CSharpFunctionDelegate fun)
+	public CsClosure(CSharpFunctionDelegate fun, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = [];
+		Name = name;
 	}
 
-	public CsClosure(CSharpFunctionDelegate fun, int len)
+	public CsClosure(CSharpFunctionDelegate fun, int len, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = new TValue[len];
 		for (var i = 0; i < len; ++i) 
 			Upvals[i].SetNil();
+		Name = name;
 	}
 
 	public StkId Ref(int index) => new (ref Upvals[index]);

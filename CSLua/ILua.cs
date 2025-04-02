@@ -15,7 +15,7 @@ public interface ILoadInfo
 public sealed class LuaDebug
 {
 	public string? 		Name;
-	public string 		NameWhat;
+	public string? 		NameWhat;
 	public int 			ActiveCIIndex;
 	public int			CurrentLine;
 	public int			NumUps;

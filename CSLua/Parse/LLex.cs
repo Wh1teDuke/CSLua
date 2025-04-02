@@ -152,11 +152,8 @@ public sealed class LLex
 		_Next();
 	}
 
-	public string Source()
-	{
-		if (_loadInfo is StringLoadInfo sli) return sli.Source;
-		return _name ?? "???";
-	}
+	public string Source() => 
+		_loadInfo is StringLoadInfo sli ? sli.Source : _name ?? "???";
 
 	public void Next()
 	{
