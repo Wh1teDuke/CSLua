@@ -2462,6 +2462,7 @@ public sealed class LuaState : ILuaState
 		switch (Type(index))
 		{
 			case LuaType.LUA_TNUMBER:
+			case LuaType.LUA_TINT64:
 			case LuaType.LUA_TSTRING:
 				API.PushValue(index);
 				break;
@@ -3735,11 +3736,21 @@ public sealed class LuaState : ILuaState
 
 	private static bool ToStringX(ref TValue v)
 	{
-		if (!v.IsNumber()) return false;
+		if (v.IsNumber())
+		{
+			v.SetString(v.NValue.ToString(
+				CultureInfo.InvariantCulture));
+			return true;	
+		}
 
-		v.SetString(v.NValue.ToString(
-			CultureInfo.InvariantCulture));
-		return true;
+		if (v.IsInt64())
+		{
+			v.SetString(v.AsInt64().ToString(
+				CultureInfo.InvariantCulture));
+			return true;	
+		}
+		
+		return false;
 	}
 
 	private static LuaOp TMS2OP(TMS op)

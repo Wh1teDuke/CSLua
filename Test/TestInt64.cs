@@ -50,4 +50,12 @@ public sealed class TestInt64
         Assert.Equal(30, iMul);
         Assert.Equal((5 / 6.0), iDiv);
     }
+
+    [Fact]
+    public void TestInt64Print()
+    {
+        var L = new LuaState();
+        L.OpenLibs();
+        L.Eval("local i = math.tointeger(5); print(i)");
+    }
 }
