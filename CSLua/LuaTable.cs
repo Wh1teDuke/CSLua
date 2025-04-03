@@ -135,6 +135,17 @@ public sealed class LuaTable
 		Set(new StkId(ref k), new StkId(ref v));
 	}
 	
+	public void Set(string key, object val)
+	{
+		var k = new TValue();
+		var v = new TValue();
+		
+		k.SetString(key);
+		v.SetUserData(val);
+		
+		Set(new StkId(ref k), new StkId(ref v));
+	}
+	
 	public void Set(string key, int val)
 	{
 		var k = new TValue();
@@ -143,6 +154,20 @@ public sealed class LuaTable
 		k.SetString(key);
 		v.SetDouble(val);
 		
+		Set(new StkId(ref k), new StkId(ref v));
+	}
+
+	public void Set(string key, CsDelegate val) =>
+		Set(key, new CsClosure(val));
+
+	public void Set(string key, CsClosure val)
+	{
+		var k = new TValue();
+		var v = new TValue();
+		
+		k.SetString(key);
+		v.SetCSClosure(val);
+
 		Set(new StkId(ref k), new StkId(ref v));
 	}
 

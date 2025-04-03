@@ -91,6 +91,8 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaTable? AsTable() => OValue as LuaTable;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public object? AsUserData() => OValue;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaClosure? AsLuaClosure() => OValue as LuaClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public CsClosure? AsCSClosure() => OValue as CsClosure;

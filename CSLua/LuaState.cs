@@ -1605,6 +1605,9 @@ public sealed class LuaState : ILuaState
 		};
 	}
 
+	public LuaTable? ToTable(int index) =>
+		!Index2Addr(index, out var addr) ? null : addr.V.AsTable();
+
 	public List<TValue>? ToList(int index)
 	{
 		if (!Index2Addr(index, out var addr))
@@ -2142,8 +2145,15 @@ public sealed class LuaState : ILuaState
 
 	public string CheckString(int nArg)
 	{
-		var s = API.ToString(nArg);
+		var s = ToString(nArg);
 		if (s == null) TagError(nArg, LuaType.LUA_TSTRING);
+		return s!;
+	}
+
+	public LuaTable CheckTable(int nArg)
+	{
+		var s = ToTable(nArg);
+		if (s == null) TagError(nArg, LuaType.LUA_TTABLE);
 		return s!;
 	}
 

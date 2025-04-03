@@ -140,6 +140,7 @@ public interface ILua
 	long	ToInt64X(int index, out bool isNum);
 	object?	ToObject(int index);
 	object? ToUserData(int index);
+	LuaTable? ToTable(int index);
 	List<TValue>? ToList(int index);
 	ILuaState	ToThread(int index);
 	public LuaClosure? ToLuaClosure(int index);

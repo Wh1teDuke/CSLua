@@ -16,6 +16,7 @@ public interface ILuaAuxLib
 	long	CheckInt64(int narg);
 	int 	CheckInteger(int narg);
 	string 	CheckString(int narg);
+	LuaTable 	CheckTable(int narg);
 	uint	CheckUnsigned(int narg);
 	object	CheckUserData(int narg);
 	List<TValue>	CheckList(int narg);
