@@ -149,13 +149,13 @@ public static class LuaExtensions
     }
 
     public static void RegisterFunction(
-        this ILuaState L, string name, CsDelegate callBack)
+        this ILua L, string name, CsDelegate callBack)
     {
         L.PushCsDelegate(callBack);
         L.SetGlobal(name);
     }
 
-    public static void DeleteGlobal(this ILuaState L, string name)
+    public static void DeleteGlobal(this ILua L, string name)
     {
         L.GetGlobal(name);
         L.PushNil();
@@ -163,7 +163,7 @@ public static class LuaExtensions
         L.Pop(-1);
     }
     
-    public static void DeleteField(this ILuaState L, string name, string field)
+    public static void DeleteField(this ILua L, string name, string field)
     {
         L.GetGlobal(name);
         L.PushNil();
@@ -205,13 +205,13 @@ public static class LuaExtensions
             this ILuaState L, string s, CsDelegate onError) =>
         L.EvalX(s, new CsClosure(onError));
     
-    private static void PushClosure(this ILuaState L, BaseClosure c)
+    private static void PushClosure(this ILua L, BaseClosure c)
     {
         if (c is LuaClosure closure) L.PushLuaClosure(closure);
         else L.PushCsClosure((CsClosure)c);
     }
     
-    public static bool TestStack(this ILuaState L, ReadOnlySpan<LuaType> args)
+    public static bool TestStack(this ILua L, ReadOnlySpan<LuaType> args)
     {
         if (L.GetTop() != args.Length) return false;
         var i = 1;
