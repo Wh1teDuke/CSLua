@@ -64,7 +64,7 @@ public static class LuaExtensions
     
     public static LuaClosure? PopLuaClosure(this ILuaState L)
     {
-        var t = L.ToLuaFunction(-1);
+        var t = L.ToLuaClosure(-1);
         if (t != null) L.Pop(1);
         return t;
     }
@@ -149,9 +149,9 @@ public static class LuaExtensions
     }
 
     public static void RegisterFunction(
-        this ILuaState L, string name, CSharpFunctionDelegate callBack)
+        this ILuaState L, string name, CsDelegate callBack)
     {
-        L.PushCSharpFunction(callBack);
+        L.PushCsDelegate(callBack);
         L.SetGlobal(name);
     }
 
@@ -202,12 +202,24 @@ public static class LuaExtensions
         L.EvalX(s, onError);
 	
     public static void Eval(
-            this ILuaState L, string s, CSharpFunctionDelegate onError) =>
+            this ILuaState L, string s, CsDelegate onError) =>
         L.EvalX(s, new CsClosure(onError));
     
     private static void PushClosure(this ILuaState L, BaseClosure c)
     {
-        if (c is LuaClosure closure) L.PushLuaFunction(closure);
-        else L.PushCsFunction((CsClosure)c);
+        if (c is LuaClosure closure) L.PushLuaClosure(closure);
+        else L.PushCsClosure((CsClosure)c);
+    }
+    
+    public static bool TestStack(this ILuaState L, ReadOnlySpan<LuaType> args)
+    {
+        if (L.GetTop() != args.Length) return false;
+        var i = 1;
+        foreach (var arg in args)
+        {
+            if (L.Type(i++) != arg) return false;
+        }
+
+        return true;
     }
 }

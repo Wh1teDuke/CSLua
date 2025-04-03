@@ -297,18 +297,18 @@ public sealed class LuaClosure(LuaProto p): BaseClosure
 
 public sealed class CsClosure: BaseClosure
 {
-	public readonly CSharpFunctionDelegate Fun;
+	public readonly CsDelegate Fun;
 	public readonly TValue[] Upvals;
 	public readonly string Name;
 
-	public CsClosure(CSharpFunctionDelegate fun, string name = "C#Closure")
+	public CsClosure(CsDelegate fun, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = [];
 		Name = name;
 	}
 
-	public CsClosure(CSharpFunctionDelegate fun, int len, string name = "C#Closure")
+	public CsClosure(CsDelegate fun, int len, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = new TValue[len];

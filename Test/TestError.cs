@@ -38,7 +38,7 @@ public static class TestError
     public static void Test4()
     {
         var L = new LuaState();
-        L.PushCSharpFunction(DoTraceBack);
+        L.PushCsDelegate(DoTraceBack);
         L.SetGlobal("doTraceBack");
         L.Eval("""
                function foo()

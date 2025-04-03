@@ -46,7 +46,7 @@ public sealed class TestCompile
 
         for (var i = 0; i < 10; i++)
         {
-            L.PushLuaFunction(fun);
+            L.PushLuaClosure(fun);
             L.Call(0, 0);
         }
 

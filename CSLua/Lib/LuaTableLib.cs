@@ -5,7 +5,7 @@ namespace CSLua.Lib;
 
 using StringBuilder = System.Text.StringBuilder;
 
-internal static class LuaTableLib
+public static class LuaTableLib
 {
 	public const string LIB_NAME = "table";
 	

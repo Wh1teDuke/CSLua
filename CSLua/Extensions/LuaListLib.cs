@@ -1,5 +1,3 @@
-using CSLua.Util;
-
 namespace CSLua.Extensions;
 
 public static class LuaListLib
@@ -38,8 +36,8 @@ public static class LuaListLib
     private static int ListNew(ILuaState lua)
     {
         var L = (LuaState)lua;
-        var list = new List<TValue>();
         var top = lua.GetTop();
+        var list = new List<TValue>(Math.Max(16, top + 1));
 
         for (var i = 1; i <= top; i++)
         {
@@ -213,10 +211,8 @@ public static class LuaListLib
 
         if (key.V.IsNil())
             index = -1;
-        else if (key.V.IsNumber())
-            index = (int)key.V.NValue;
         else
-            throw new LuaException("Integer index expected, got: " + key.V);
+            index = lua.ToInteger(-1);
 
         if (index < list.Count - 1)
         {
@@ -232,11 +228,13 @@ public static class LuaListLib
         lua.PushNil();
         return 1;
     }
+
+    private static readonly CsClosure NextClosure = new (ListNext);
     
     private static int ListPairs(ILuaState lua)
     {
         lua.CheckList(1);
-        lua.PushCSharpFunction(ListNext);
+        lua.PushCsClosure(NextClosure);
         lua.PushValue(1);
         lua.PushNil();
 

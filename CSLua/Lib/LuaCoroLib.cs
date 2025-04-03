@@ -138,7 +138,7 @@ public static class LuaCoroLib
 	private static int CO_Wrap(ILuaState lua)
 	{
 		CO_Create(lua);
-		lua.PushCSharpClosure(CO_AuxWrap, 1);
+		lua.PushCsDelegate(CO_AuxWrap, 1);
 		return 1;
 	}
 

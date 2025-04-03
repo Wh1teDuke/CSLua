@@ -60,7 +60,7 @@ public sealed class TestFunction
         string? error = null;
         var L = new LuaState();
         L.OpenLibs();
-        L.PushCSharpFunction(OnError);
+        L.PushCsDelegate(OnError);
         var eIdx = L.GetTop();
 
         Assert.Equal(ThreadStatus.LUA_OK, L.LoadString("error('FooBar')"));

@@ -3,12 +3,12 @@
 ## Example
 
 ```cs
-public void Test1()
+public void Test()
 {
     var L = new LuaState();
-    L.OpenLibs();
+    L.OpenLibs(); // or L.OpenSafeLibs();
     
-    L.PushCSharpFunction(FromCS);
+    L.PushCsDelegate(FromCS);
     L.SetGlobal("FromCS");
     
     L.DoString(

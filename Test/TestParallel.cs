@@ -49,7 +49,7 @@ public sealed class TestParallel
         var res = 0;
         for (var i = 0; i < 100; i++)
         {
-            L.PushLuaFunction(test);
+            L.PushLuaClosure(test);
             L.Call(0, 1);
             var r = L.PopInteger();
             Assert.Equal(125250, r);

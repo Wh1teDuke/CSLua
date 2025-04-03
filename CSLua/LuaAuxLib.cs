@@ -3,7 +3,7 @@
 namespace CSLua;
 
 public readonly record struct NameFuncPair(
-	string Name, CSharpFunctionDelegate Func);
+	string Name, CsDelegate Func);
 
 public interface ILuaAuxLib
 {
@@ -28,7 +28,7 @@ public interface ILuaAuxLib
 	bool 	GetMetaField(int index, string method);
 	int 	GetSubTable(int index, string fname);
 
-	void 	Require(string moduleName, CSharpFunctionDelegate openFunc, bool global);
+	void 	Require(string moduleName, CsDelegate openFunc, bool global);
 	void 	OpenLibs(bool global = true);
 	void 	OpenSafeLibs(bool global = true);
 	void 	NewLibTable(ReadOnlySpan<NameFuncPair> define);

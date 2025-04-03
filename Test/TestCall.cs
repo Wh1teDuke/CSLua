@@ -54,7 +54,7 @@ public sealed class TestCall
     public void TestCSClosure1()
     {
         var L = new LuaState();
-        L.PushCSharpFunction(TestFunction);
+        L.PushCsDelegate(TestFunction);
         Assert.Equal(1, L.GetTop());
         L.SetGlobal("inc");
         Assert.Equal(0, L.GetTop());
@@ -82,7 +82,7 @@ public sealed class TestCall
     public void TestCSClosure2()
     {
         var L = new LuaState();
-        L.PushCSharpFunction(TestFunction);
+        L.PushCsDelegate(TestFunction);
         Assert.Equal(1, L.GetTop());
         L.SetGlobal("inc");
         Assert.Equal(0, L.GetTop());
@@ -115,7 +115,7 @@ public sealed class TestCall
         var L = new LuaState();
         L.NewTable();
         Assert.Equal(1, L.GetTop());
-        L.PushCSharpFunction(GetID);
+        L.PushCsDelegate(GetID);
         Assert.Equal(2, L.GetTop());
         L.SetField(-2, "GetID");
         Assert.Equal(1, L.GetTop());
@@ -144,7 +144,7 @@ public sealed class TestCall
         var L = new LuaState();
         L.NewTable();
         Assert.Equal(1, L.GetTop());
-        L.PushCSharpFunction(GetID);
+        L.PushCsDelegate(GetID);
         Assert.Equal(2, L.GetTop());
         L.SetField(-2, "GetID");
         Assert.Equal(1, L.GetTop());
@@ -182,14 +182,14 @@ public sealed class TestCall
     {
         var L = new LuaState();
         
-        L.PushCsFunction(LuaUtil.TracebackErrHandler);
+        L.PushCsClosure(LuaUtil.TracebackErrHandler);
         var errFunc = L.GetTop();
         
         L.DoString("function foo(arg) return bar(arg) end", "TestPCallCBWithTraceback");
         L.GetGlobal("foo");
         var foo = L.PopLuaClosure()!;
 
-        L.PushLuaFunction(foo);
+        L.PushLuaClosure(foo);
         L.PushNumber(1);
         var res = L.PCall(1, 0, errFunc);
 

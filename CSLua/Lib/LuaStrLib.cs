@@ -764,7 +764,7 @@ public static class LuaStrLib
 		lua.CheckString(2);
 		lua.SetTop(2);
 		lua.PushInteger(0);
-		lua.PushCSharpClosure(GmatchAux, 3);
+		lua.PushCsDelegate(GmatchAux, 3);
 		return 1;
 	}
 		

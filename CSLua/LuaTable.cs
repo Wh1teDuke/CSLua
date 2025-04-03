@@ -233,7 +233,7 @@ public sealed class LuaTable
 			}
 
 			// Else must find a boundary in hash part
-			if (_hashPart == DD.DummyHashPart) return (int)j;
+			if (_hashPart == Dummy.HashPart) return (int)j;
 			return UnboundSearch(j);
 		}
 	}
@@ -302,31 +302,23 @@ public sealed class LuaTable
 		}
 	}
 
-	private readonly struct DData
+	private readonly struct DummyData
 	{
-		public readonly TValue[] DummyArrayPart;
-		public readonly HNode DummyNode;
-		public readonly HNode[] DummyHashPart;
+		public readonly HNode Node;
+		public readonly HNode[] HashPart;
 
-		public DData()
+		public DummyData()
 		{
-			var nil = new TValue();
-			nil.SetNil();
-
-			DummyArrayPart = [];
-			DummyNode = new HNode { Key = nil, Val = nil, Next = null };
-			DummyHashPart = new HNode[1];
-			DummyHashPart[0] = DummyNode;
-			DummyHashPart[0].Index = 0;
+			var nil = TValue.Nil();
+			Node = new HNode { Key = nil, Val = nil, Next = null, Index = 0, };
+			HashPart = [Node];
 		}
 	}
 
-	private static readonly ThreadLocal<DData> dd = new(() => new DData());
-
-	private static DData DD => dd.Value;
+	private static readonly DummyData Dummy = new();
 
 	private const int MAXBITS = 30;
-	private const int MAXASIZE = (1 << MAXBITS);
+	private const int MAXASIZE = 1 << MAXBITS;
 
 	private static HNode NewHNode()
 	{
@@ -338,7 +330,7 @@ public sealed class LuaTable
 
 	private void InitLuaTable()
 	{
-		_arrayPart = DD.DummyArrayPart;
+		_arrayPart = [];
 		_arraySize = _arrayPart.Length;
 		SetNodeVector(0);
 	}
@@ -380,7 +372,7 @@ public sealed class LuaTable
 	{
 		if (size == 0) 
 		{
-			_hashPart = DD.DummyHashPart;
+			_hashPart = Dummy.HashPart;
 			_hashSize = _hashPart.Length;
 			_lastFree = size;
 			return;
@@ -560,7 +552,7 @@ public sealed class LuaTable
 		var node = GetHashNode(k);
 
 		// If main position is taken
-		if (!node.Val.IsNil() || node == DD.DummyNode)
+		if (!node.Val.IsNil() || node == Dummy.Node)
 		{
 			var n = GetFreePos();
 			if (n == null) 
@@ -569,7 +561,7 @@ public sealed class LuaTable
 				return !Get(k, out var cell) ? NewTableKey(k) : cell;
 			}
 
-			LuaUtil.Assert(n != DD.DummyNode);
+			LuaUtil.Assert(n != Dummy.Node);
 			var otherN = GetHashNode(node.PtrKey);
 			// Is colliding node out of its main position?
 			if (otherN != node) 

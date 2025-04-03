@@ -86,12 +86,12 @@ public static class LuaPkgLib
 
 	private static void CreateSearchersTable(ILuaState lua)
 	{
-		Span<CSharpFunctionDelegate> searchers = [SearcherPreload, SearcherLua];
+		Span<CsDelegate> searchers = [SearcherPreload, SearcherLua];
 		lua.CreateTable(searchers.Length, 0);
 		for (var i = 0; i < searchers.Length; ++i)
 		{
 			lua.PushValue(-2); // set 'package' as upvalue for all searchers
-			lua.PushCSharpClosure(searchers[i], 1);
+			lua.PushCsDelegate(searchers[i], 1);
 			lua.RawSetI(-2, i + 1);
 		}
 	}

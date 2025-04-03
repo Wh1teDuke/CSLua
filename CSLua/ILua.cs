@@ -29,7 +29,7 @@ public sealed class LuaDebug
 	public string		ShortSrc;
 }
 
-public delegate int CSharpFunctionDelegate(ILuaState state);
+public delegate int CsDelegate(ILuaState state);
 
 public interface ILua
 {
@@ -43,15 +43,15 @@ public interface ILua
 	ThreadStatus GetContext(out int context);
 	void Call(int numArgs, int numResults);
 	void CallK(int numArgs, int numResults,
-		int context, CSharpFunctionDelegate? continueFunc = null);
+		int context = 0, CsDelegate? continueFunc = null);
 	ThreadStatus PCall(int numArgs, int numResults, int errFunc = 0);
 	ThreadStatus PCallK(int numArgs, int numResults, int errFunc = 0,
-		int context = 0, CSharpFunctionDelegate? continueFunc = null);
+		int context = 0, CsDelegate? continueFunc = null);
 
 	ThreadStatus Resume(ILuaState from, int numArgs);
 	int Yield(int numResults);
 	int YieldK(int numResults,
-		int context, CSharpFunctionDelegate? continueFunc = null);
+		int context = 0, CsDelegate? continueFunc = null);
 
 	int  AbsIndex(int index);
 	int  GetTop();
@@ -107,15 +107,14 @@ public interface ILua
 	void PushInteger(int n);
 	void PushUnsigned(uint n);
 	void PushString(string s);
-	void PushCSharpFunction(CSharpFunctionDelegate f);
-	void PushCSharpClosure(CSharpFunctionDelegate f, int n);
+	void PushCsDelegate(CsDelegate f, int n = 0);
 	void PushValue(int index);
 	void PushGlobalTable();
 	void PushLightUserData(object o);
 	void PushInt64(long o);
 	bool PushThread();
-	void PushLuaFunction(LuaClosure f);
-	void PushCsFunction(CsClosure f);
+	void PushLuaClosure(LuaClosure f);
+	void PushCsClosure(CsClosure f);
 	void PushTable(LuaTable table);
 	void PushList(List<TValue> list);
 
@@ -126,18 +125,6 @@ public interface ILua
 
 	void GetGlobal(string name);
 	void SetGlobal(string name);
-
-	public bool TestStack(ReadOnlySpan<LuaType> args)
-	{
-		if (GetTop() != args.Length) return false;
-		var i = 1;
-		foreach (var arg in args)
-		{
-			if (Type(i++) != arg) return false;
-		}
-
-		return true;
-	}
 
 	ILuaState GetThread(out int arg);
 
@@ -155,7 +142,7 @@ public interface ILua
 	object? ToUserData(int index);
 	List<TValue>? ToList(int index);
 	ILuaState	ToThread(int index);
-	public LuaClosure? ToLuaFunction(int index);
+	public LuaClosure? ToLuaClosure(int index);
 
 	ThreadStatus Status { get; }
 
