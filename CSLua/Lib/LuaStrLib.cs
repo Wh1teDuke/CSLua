@@ -927,24 +927,24 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Sub( ILuaState lua )
+	private static int Str_Sub(ILuaState lua)
 	{
 		var s = lua.CheckString(1);
-		var start = PosRelative( lua.CheckInteger(2), s.Length );
-		var end = PosRelative( lua.OptInt(3, -1), s.Length );
-		if( start < 1 ) start = 1;
-		if( end > s.Length ) end = s.Length;
-		if( start <= end )
-			lua.PushString( s.Substring(start-1, end-start+1) );
+		var start = PosRelative(lua.CheckInteger(2), s.Length);
+		var end = PosRelative(lua.OptInt(3, -1), s.Length);
+		if (start < 1) start = 1;
+		if (end > s.Length) end = s.Length;
+		if (start <= end)
+			lua.PushString(s.Substring(start - 1, end - start + 1));
 		else
-			lua.PushString( "" );
+			lua.PushString("");
 		return 1;
 	}
 
-	private static int Str_Upper( ILuaState lua )
+	private static int Str_Upper(ILuaState lua)
 	{
 		var s = lua.CheckString(1);
-		lua.PushString( s.ToUpper() );
+		lua.PushString(s.ToUpper());
 		return 1;
 	}
 }

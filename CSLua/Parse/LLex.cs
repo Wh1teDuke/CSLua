@@ -80,7 +80,7 @@ public readonly record struct LuaToken(
 		return Kind switch
 		{
 			TokenKind.Typed => $"TypedToken: {TokenType}",
-			TokenKind.Literal => $"TokenLiteral: {Val1}",
+			TokenKind.Literal => $"TokenLiteral: {(char)Val1}",
 			TokenKind.String => $"TokenString: {Str}",
 			TokenKind.LongString => $"TokenLongString: {Str}",
 			TokenKind.Named => $"TokenNamed: {Str}",

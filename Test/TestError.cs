@@ -123,6 +123,19 @@ public static class TestError
             e.Message);
     }
 
+    [Fact]
+    public static void TestParseStringOp1()
+    {
+        var e = Assert.ThrowsAny<LuaParserException>(() => Parse("local foo = 'foo'.bar()"));
+        Assert.Equal("Test:1: unexpected symbol: TokenLiteral: .", e.Message);
+    }
+
+    [Fact]
+    public static void TestParseStringOp2()
+    {
+        var e = Assert.ThrowsAny<LuaParserException>(() => Parse("return 'foo'.bar"));
+        Assert.Equal("Test:1: EOS expected", e.Message);
+    }
     private static void Parse(string src) => Parser.Read(src, "Test");
     private static void Eval(string src) => new LuaState().Eval(src);
 }

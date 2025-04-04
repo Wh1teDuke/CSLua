@@ -239,6 +239,7 @@ public sealed class Parser
 		_lexer.Next(); // Read first token
 		StatList();
 		// check TK_EOS
+		Check(TK.EOS);
 		CloseFunc();
 	}
 
@@ -313,8 +314,7 @@ public sealed class Parser
 		var where = (line == 0)
 			? "main function"
 			: $"function at line {line}";
-		var msg = string.Format("too many {0} (limit is {1}) in {2}",
-			what, limit, where);
+		var msg = $"too many {what} (limit is {limit}) in {where}";
 		_lexer.SyntaxError(msg);
 	}
 
