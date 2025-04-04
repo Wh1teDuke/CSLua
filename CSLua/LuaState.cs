@@ -201,9 +201,7 @@ public sealed class LuaState : ILuaState
 		BaseCI = new CallInfo[LuaDef.BASE_CI_SIZE];
 		for (var i = 0; i < LuaDef.BASE_CI_SIZE; ++i) 
 		{
-			var newCI = new CallInfo();
-			BaseCI[i] = newCI;
-			newCI.Index = i;
+			BaseCI[i] = new CallInfo { Index = i };
 		}
 		CI = BaseCI[0];
 		CI.FuncIndex = TopIndex;
@@ -385,7 +383,6 @@ public sealed class LuaState : ILuaState
 		for (var i = 0; i < cl.Length; i++)
 		{
 			cl.Upvals[i] = new LuaUpValue(L);
-			cl.Upvals[i].Value.SetNil();
 		}
 
 		L.Top.V.SetLuaClosure(cl);
@@ -784,7 +781,7 @@ public sealed class LuaState : ILuaState
 
 		index += index <= 0 ? TopIndex : CI.FuncIndex;
 		for (var i = index + 1; i < TopIndex; ++i)
-			Ref[i - 1].V.SetObj(Ref[i]);
+			Ref[i - 1].Set(Ref[i]);
 
 		--TopIndex;
 	}
@@ -2004,7 +2001,7 @@ public sealed class LuaState : ILuaState
 		for (var i = stackBase; i < stackBase + NumFixArgs; ++i)
 		{
 			Ref[i].Set(Ref[fixedArg]);
-			Ref[fixedArg++].V.SetNil();
+			Stack[fixedArg++].SetNil();
 		}
 		TopIndex = stackBase + NumFixArgs;
 		return stackBase;
@@ -2596,12 +2593,12 @@ public sealed class LuaState : ILuaState
 	{
 		// TODO: Check Version
 		CheckStack(nup, "Too many upvalues");
-		foreach (var t in list)
+		foreach (var (name, func) in list)
 		{
 			for (var i = 0; i < nup; ++i)
 				PushValue(-nup);
-			PushCsDelegate(t.Func, nup);
-			SetField(-(nup + 2), t.Name);
+			PushCsDelegate(func, nup);
+			SetField(-(nup + 2), name);
 		}
 		Pop(nup);
 	}
@@ -2612,26 +2609,26 @@ public sealed class LuaState : ILuaState
 			return false; // Not found
 
 		PushNil(); // Start 'next' loop
-		while (API.Next(-2)) // for each pair in table
+		while (Next(-2)) // for each pair in table
 		{
-			if (API.Type(-2) == LuaType.LUA_TSTRING) // ignore non-string keys
+			if (Type(-2) == LuaType.LUA_TSTRING) // ignore non-string keys
 			{
 				if (API.RawEqual(objIndex, -1)) // found object?
 				{
-					API.Pop(1); // remove value (but keep name)
+					Pop(1); // remove value (but keep name)
 					return true;
 				}
 
 				if (FindField(objIndex, level - 1)) // try recursively
 				{
-					API.Remove(-2); // remove table (but keep name)
-					API.PushString(".");
+					Remove(-2); // remove table (but keep name)
+					PushString(".");
 					API.Insert(-2); // place '.' between the two names
-					API.Concat(3);
+					Concat(3);
 					return true;
 				}
 			}
-			API.Pop(1); // remove value
+			Pop(1); // remove value
 		}
 		return false; // not found
 	}
@@ -3325,7 +3322,7 @@ public sealed class LuaState : ILuaState
 						if (ra.V.IsList())
 						{
 							TopIndex = cbi + 1;
-							Ref[TopIndex - 1].V.SetCSClosure(LuaListLib.PairsCl);
+							Stack[TopIndex - 1].SetCSClosure(LuaListLib.PairsCl);
 						}
 						else if (!TryGetTMByObj(ra, TMS.TM_ITER, out var tm)
 						    || !tm.V.IsFunction())
@@ -3391,7 +3388,7 @@ public sealed class LuaState : ILuaState
 					var ra1 = Ref[raIdx + 1];
 					if (!ra1.V.IsNil())	// continue loop?
 					{
-						ra.V.SetObj(ra1);
+						ra.Set(ra1);
 						ci.SavedPc += i.GETARG_sBx();
 					}
 					break;
@@ -3535,13 +3532,13 @@ public sealed class LuaState : ILuaState
 				tbl.TryGet(key, out var res);
 				if (!res.V.IsNil()) 
 				{
-					val.V.SetObj(res);
+					val.Set(res);
 					return;
 				}
 				
 				if (!TryFastTM(tbl.MetaTable, TMS.TM_INDEX, out tmObj)) 
 				{
-					val.V.SetObj(res);
+					val.Set(res);
 					return;
 				}
 
