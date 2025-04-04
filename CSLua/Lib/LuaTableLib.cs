@@ -38,10 +38,10 @@ public static class LuaTableLib
 
 	private static int TBL_Concat(ILuaState lua)
 	{
-		var sep = lua.OptString(2, "");
 		lua.CheckType(1, LuaType.LUA_TTABLE);
+		var sep = lua.OptString(2, "");
 		var i = lua.OptInt(3, 1);
-		var last = lua.Opt(lua.CheckInteger, 4, ((ILuaAuxLib)lua).Len(1));
+		var last = lua.OptInt(4, ((ILuaAuxLib)lua).Len(1));
 
 		var sb = new StringBuilder();
 		for (; i < last; ++i)

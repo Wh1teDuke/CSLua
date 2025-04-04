@@ -2363,7 +2363,7 @@ public sealed class LuaState : ILuaState
 
 		var l = API.ToIntegerX(-1, out var isNum);
 		if (!isNum) Error("Object length is not a number");
-		API.Pop(1);
+		Pop(1);
 		return l;
 	}
 
