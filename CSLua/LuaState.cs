@@ -3520,6 +3520,9 @@ public sealed class LuaState : ILuaState
 				SimpleTypeError(t, "index");
 
 			var index = (int)n.NValue;
+			if (index < 0 || index >= list.Count)
+				RunError("Index '{0}' not in range {1} ..< {2}", index, 0, list.Count);
+			
 			val.Set(new StkId(ref CollectionsMarshal.AsSpan(list)[index]));
 			return;
 		}
@@ -3572,6 +3575,9 @@ public sealed class LuaState : ILuaState
 				SimpleTypeError(t, "index");
 
 			var index = (int)n.NValue;
+			if (index < 0 || index >= list.Count)
+				RunError("Index '{0}' not in range {1} ..< {2}", index, 0, list.Count);
+			
 			list[index] = val.V;
 			return;
 		}
