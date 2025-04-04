@@ -2782,7 +2782,7 @@ public sealed class LuaState : ILuaState
 #endif
 
 			// WARNING: several calls may realloc the stack and invalidate 'ra'
-			var raIdx = env.Base + i.GETARG_A();
+			var raIdx = env.RAIndex;
 			var ra = env.RA;
 
 #if DEBUG_DUMP_INS_STACK
