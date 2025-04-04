@@ -213,7 +213,7 @@ public static class LuaStrLib
 	private static bool MatchClass(char c, char cl)
 	{
 		bool res;
-		switch(cl)
+		switch (char.ToLower(cl))
 		{
 			case 'a': res = char.IsLetter(c); break;
 			case 'c': res = char.IsControl(c); break;
@@ -228,7 +228,7 @@ public static class LuaStrLib
 			case 'z': res = (c == '\0'); break;  /* deprecated option */
 			default: return (cl == c);
 		}
-		return res;
+		return char.IsLower(cl) ? res : !res;
 	}
 
 	private static bool MatchBreaketClass( MatchState ms, char c, int p, int ec )
