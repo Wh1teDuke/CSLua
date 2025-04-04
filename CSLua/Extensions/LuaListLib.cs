@@ -1,3 +1,4 @@
+// ReSharper disable InconsistentNaming
 namespace CSLua.Extensions;
 
 public static class LuaListLib
