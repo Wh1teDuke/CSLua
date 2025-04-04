@@ -14,6 +14,7 @@ public static class LuaListLib
         Span<NameFuncPair> define =
         [
             new("new",          ListNew),
+            new("newoflength",  ListNewLength),
             new("remove",       ListDel),
             new("insert",       ListInsert),
             new("contains",     ListContains),
@@ -47,6 +48,20 @@ public static class LuaListLib
         }
         
         lua.PushList(list);
+        return 1;
+    }
+    
+    private static int ListNewLength(ILuaState lua)
+    {
+        var len = lua.CheckInteger(1);
+        var list = new List<TValue>(len);
+        var nil = TValue.Nil();
+        
+        for (var i = 0; i < len; i++)
+            list.Add(nil);
+
+        lua.PushList(list);
+
         return 1;
     }
 
