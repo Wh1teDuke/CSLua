@@ -1,4 +1,5 @@
-﻿using CSLua.Util;
+﻿using System.Runtime.CompilerServices;
+using CSLua.Util;
 using NotImplementedException = System.NotImplementedException;
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 // ReSharper disable InconsistentNaming
@@ -7,12 +8,10 @@ namespace CSLua.Parse;
 
 using InstructionPtr = Pointer<Instruction>;
 
-public struct Instruction(uint val)
+public readonly record struct Instruction(uint Val)
 {
-	private uint _value = val;
-
 	public static explicit operator Instruction(uint val) => new(val);
-	public static explicit operator uint(Instruction i) => i._value;
+	public static explicit operator uint(Instruction i) => i.Val;
 
 	public override string ToString()
 	{
@@ -69,14 +68,10 @@ public struct Instruction(uint val)
 	public const int POS_Ax = POS_A;
 
 #pragma warning disable 0429
-	public const int MAXARG_Bx  = SIZE_Bx<LuaConf.LUAI_BITSINT
-			? ((1<<SIZE_Bx)-1)
-			: LuaLimits.MAX_INT
-		;
-	public const int MAXARG_sBx = SIZE_Bx<LuaConf.LUAI_BITSINT
-			? (MAXARG_Bx>>1)
-			: LuaLimits.MAX_INT
-		;
+	public const int MAXARG_Bx  = SIZE_Bx < LuaConf.LUAI_BITSINT
+			? ((1 << SIZE_Bx) - 1) : LuaLimits.MAX_INT;
+	public const int MAXARG_sBx = SIZE_Bx < LuaConf.LUAI_BITSINT
+			? (MAXARG_Bx >> 1) : LuaLimits.MAX_INT;
 #pragma warning restore 0429
 
 	public const int MAXARG_Ax = ((1 << SIZE_Ax) - 1);
@@ -103,44 +98,51 @@ public struct Instruction(uint val)
 	public static uint MASK0(int size, int pos) => (~MASK1(size, pos));
 
 	public OpCode GET_OPCODE() => 
-		(OpCode)((_value >> POS_OP) & MASK1(SIZE_OP, 0));
+		(OpCode)((Val >> POS_OP) & MASK1(SIZE_OP, 0));
 
 	public Instruction SET_OPCODE(OpCode op)
 	{
-		_value = (_value & MASK0(SIZE_OP, POS_OP)) |
+		var nValue = (Val & MASK0(SIZE_OP, POS_OP)) |
 		        ((((uint)op) << POS_OP) & MASK1(SIZE_OP, POS_OP));
-		return this;
+		return new Instruction(nValue);
 	}
 
 	public int GETARG(int pos, int size) => 
-		(int)((_value >> pos) & MASK1(size, 0));
+		(int)((Val >> pos) & MASK1(size, 0));
 
 	public Instruction SETARG(int value, int pos, int size)
 	{
-		_value = ((_value & MASK0(size, pos)) |
+		var nValue = ((Val & MASK0(size, pos)) |
 		         (((uint)value << pos) & MASK1(size, pos)));
-		return this;
+		return new Instruction(nValue);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_A() => GETARG(POS_A, SIZE_A);
 
 	public Instruction SETARG_A(int value) => SETARG(value, POS_A, SIZE_A);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_B() => GETARG(POS_B, SIZE_B);
 
 	public Instruction SETARG_B(int value) => SETARG(value, POS_B, SIZE_B);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_C() => GETARG(POS_C, SIZE_C);
 
 	public Instruction SETARG_C(int value) => SETARG(value, POS_C, SIZE_C);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_Bx() => GETARG(POS_Bx, SIZE_Bx);
 
 	public Instruction SETARG_Bx(int value) => SETARG(value, POS_Bx, SIZE_Bx);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_Ax() => GETARG(POS_Ax, SIZE_Ax);
+
 	public Instruction SETARG_Ax(int value) => SETARG(value, POS_Ax, SIZE_Ax);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_sBx() => GETARG_Bx() - MAXARG_sBx;
 
 	public Instruction SETARG_sBx(int value) => SETARG_Bx(value + MAXARG_sBx);
@@ -192,11 +194,9 @@ public static class Coder
 		if (e.Kind == ExpKind.VNONRELOC) FreeReg(fs, e.Info);
 	}
 
-	private static bool IsNumeral(ExpDesc e)
-	{
-		return e.Kind == ExpKind.VKNUM
-		       && e is { ExitTrue: NO_JUMP, ExitFalse: NO_JUMP };
-	}
+	private static bool IsNumeral(ExpDesc e) =>
+		e.Kind == ExpKind.VKNUM
+		&& e is { ExitTrue: NO_JUMP, ExitFalse: NO_JUMP };
 
 	private static bool ConstFolding(OpCode op, ExpDesc e1, ExpDesc e2)
 	{
@@ -276,8 +276,7 @@ public static class Coder
 		LuaUtil.Assert(dest != NO_JUMP);
 		if (Math.Abs(offset) > Instruction.MAXARG_sBx)
 			fs.Lexer.SyntaxError("Control structure too long");
-		jmp.SETARG_sBx(offset);
-		fs.Proto.Code[pc] = jmp;
+		fs.Proto.Code[pc] = jmp.SETARG_sBx(offset);
 	}
 
 	// returns current `pc' and mark it as a jump target

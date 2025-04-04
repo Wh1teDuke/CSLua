@@ -206,7 +206,7 @@ public static class LuaListLib
         lua.SetTop(2);
 
         var list = lua.CheckList(1);
-        var key = L.Ref[L.TopIndex - 1];
+        var key = L.Ref((L.TopIndex - 1));
         var index = 0;
 
         if (key.V.IsNil())

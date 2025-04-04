@@ -285,7 +285,7 @@ public sealed class LuaUpValue
 	}
 
 	public StkId StkId => 
-		StackIndex != -1 ? L!.Ref[StackIndex] : new StkId(ref Value);
+		StackIndex != -1 ? L!.Ref(StackIndex) : new StkId(ref Value);
 }
 
 public interface BaseClosure;
