@@ -10,18 +10,19 @@ public interface ILuaAuxLib
 	void 	Where(int level);
 	int 	Error(string fmt, params object[] args);
 	void	CheckStack(int size, string? msg = null);
-	void 	CheckAny(int narg);
+	void 	CheckAny(int nArg);
 	void 	CheckType(int index, LuaType t);
-	double	CheckNumber(int narg);
-	long	CheckInt64(int narg);
-	int 	CheckInteger(int narg);
-	string 	CheckString(int narg);
-	LuaTable 	CheckTable(int narg);
-	uint	CheckUnsigned(int narg);
-	object	CheckUserData(int narg);
-	List<TValue>	CheckList(int narg);
-	LuaClosure	CheckLuaFunction(int narg);
-	void 	ArgCheck(bool cond, int narg, string extraMsg);
+	double	CheckNumber(int nArg);
+	long	CheckInt64(int nArg);
+	int 	CheckInteger(int nArg);
+	bool 	CheckBoolean(int nArg);
+	string 	CheckString(int nArg);
+	LuaTable 	CheckTable(int nArg);
+	uint	CheckUnsigned(int nArg);
+	object	CheckUserData(int nArg);
+	List<TValue>	CheckList(int nArg);
+	LuaClosure	CheckLuaFunction(int nArg);
+	void 	ArgCheck(bool cond, int nArg, string extraMsg);
 	int 	ArgError(int nArg, string extraMsg);
 	string 	TypeName(int index);
 
@@ -37,8 +38,9 @@ public interface ILuaAuxLib
 	void 	SetFuncs(ReadOnlySpan<NameFuncPair> define, int nup);
 		
 	T 		Opt<T>(Func<int,T> f, int n, T def);
-	int		OptInt(int narg, int def);
-	string 	OptString(int narg, string def);
+	int		OptInt(int nArg, int def);
+	bool	OptBoolean(int nArg, bool def);
+	string 	OptString(int nArg, string def);
 	bool 	CallMeta(int obj, string name);
 	void	Traceback(ILuaState otherLua, string? msg = null, int level = 0);
 	int		Len(int index);

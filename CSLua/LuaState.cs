@@ -2131,6 +2131,13 @@ public sealed class LuaState : ILuaState
 		return d;
 	}
 
+	public bool CheckBoolean(int nArg)
+	{
+		if (Type(nArg) != LuaType.LUA_TBOOLEAN)
+			TagError(nArg, LuaType.LUA_TBOOLEAN);
+		return ToBoolean(nArg);
+	}
+
 	public long CheckInt64(int nArg)
 	{
 		var v = API.ToInt64X(nArg, out var isNum);
@@ -2188,9 +2195,14 @@ public sealed class LuaState : ILuaState
 
 	public int OptInt(int nArg, int def)
 	{
-		var t = API.Type(nArg);
-		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
 			def : CheckInteger(nArg);
+	}
+
+	public bool OptBoolean(int nArg, bool def)
+	{
+		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+			def : CheckBoolean(nArg);
 	}
 
 	public string OptString(int nArg, string def)

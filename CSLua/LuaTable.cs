@@ -22,6 +22,13 @@ public sealed class LuaTable
 		InitLuaTable();
 	}
 
+	public int? GetInt(string key)
+	{
+		if (TryGetStr(key, out var val) && val.V.IsNumber())
+			return (int)val.V.NValue;
+		return null!;
+	}
+
 	public bool TryGet(StkId key, out StkId value)
 	{
 		value = StkId.Nil;

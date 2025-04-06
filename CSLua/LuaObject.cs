@@ -206,6 +206,13 @@ public struct TValue : IEquatable<TValue>
 		return result;
 	}
 	
+	public static TValue Of(long value)
+	{
+		var result = new TValue();
+		result.SetInt64(value);
+		return result;
+	}
+	
 	public static TValue Of(bool value)
 	{
 		var result = new TValue();
