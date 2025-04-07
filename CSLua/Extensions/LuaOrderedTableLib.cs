@@ -108,7 +108,7 @@ public static class LuaOrderedTableLib
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
         var val = otable[key.V];
-        ((LuaState)lua).Push(val);
+        ((LuaState)lua).PushTValue(val);
         return 1;
     }
     
@@ -117,7 +117,7 @@ public static class LuaOrderedTableLib
         var otable = GetTable(lua, 1);
         var index = lua.CheckInteger(2);
         var val = otable.GetAt(index).Value;
-        ((LuaState)lua).Push(val);
+        ((LuaState)lua).PushTValue(val);
         return 1;
     }
 

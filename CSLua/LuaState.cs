@@ -1292,6 +1292,12 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
+	public void PushTValue(TValue val)
+	{
+		Top.V.SetObj(new StkId(ref val));
+		ApiIncrTop();
+	}
+
 	public void PushValue(int index)
 	{
 		if (!Index2Addr(index, out var addr))
@@ -1307,12 +1313,6 @@ public sealed class LuaState : ILuaState
 	public void PushLightUserData(object o)
 	{
 		Top.V.SetUserData(o);
-		ApiIncrTop();
-	}
-	
-	public void Push(TValue value)
-	{
-		Top.Set(new StkId(ref value));
 		ApiIncrTop();
 	}
 

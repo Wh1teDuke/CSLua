@@ -108,6 +108,7 @@ public interface ILua
 	void PushUnsigned(uint n);
 	void PushString(string s);
 	void PushCsDelegate(CsDelegate f, int n = 0);
+	void PushTValue(TValue val);
 	void PushValue(int index);
 	void PushGlobalTable();
 	void PushLightUserData(object o);

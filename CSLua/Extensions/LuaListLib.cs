@@ -82,7 +82,7 @@ public static class LuaListLib
             list.RemoveAt(index);            
         }
 
-        L.Push(value);
+        L.PushTValue(value);
         return 1;
     }
 
@@ -172,7 +172,7 @@ public static class LuaListLib
         var list = lua.CheckList(1);
         var index = lua.ToInteger(2);
         var value = list[index];
-        L.Push(value);
+        L.PushTValue(value);
         return 1;
     }
 
