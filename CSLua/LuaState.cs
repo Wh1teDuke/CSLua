@@ -2199,6 +2199,12 @@ public sealed class LuaState : ILuaState
 			def : CheckInteger(nArg);
 	}
 
+	public long OptInt64(int nArg, long def)
+	{
+		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+			def : CheckInt64(nArg);
+	}
+
 	public bool OptBoolean(int nArg, bool def)
 	{
 		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?

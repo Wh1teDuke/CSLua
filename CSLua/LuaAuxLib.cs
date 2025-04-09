@@ -39,6 +39,7 @@ public interface ILuaAuxLib
 		
 	T 		Opt<T>(Func<int,T> f, int n, T def);
 	int		OptInt(int nArg, int def);
+	long		OptInt64(int nArg, long def);
 	bool	OptBoolean(int nArg, bool def);
 	string 	OptString(int nArg, string def);
 	bool 	CallMeta(int obj, string name);
