@@ -99,7 +99,7 @@ public interface ILua
 	bool Compare(int index1, int index2, LuaEq op);
 	bool RawEqual(int index1, int index2);
 	int  RawLen(int index);
-	void Len(int index);
+	void PushLen(int index);
 
 	void PushNil();
 	void PushBoolean(bool b);

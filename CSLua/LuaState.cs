@@ -878,7 +878,7 @@ public sealed class LuaState : ILuaState
 	int ILua.Error()
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
-		var msg = API.ToString(-1)!;
+		var msg = ToString(-1)!;
 		ErrorMsg(msg);
 		return 0;
 	}
@@ -1077,12 +1077,12 @@ public sealed class LuaState : ILuaState
 		TopIndex -= 2;
 	}
 
-	void ILua.Concat(int n)
+	public void Concat(int n)
 	{
 		LuaUtil.ApiCheckNumElems(this, n);
 		if (n >= 2)
 		{
-			Concat(n);
+			ConcatAux(n);
 		}
 		else if (n == 0)
 		{
@@ -1193,7 +1193,7 @@ public sealed class LuaState : ILuaState
 		};
 	}
 
-	void ILua.Len(int index)
+	public void PushLen(int index)
 	{
 		if (!Index2Addr(index, out var addr))
 			LuaUtil.InvalidIndex();
@@ -1308,7 +1308,7 @@ public sealed class LuaState : ILuaState
 	}
 
 	public void PushGlobalTable() => 
-		API.RawGetI(LuaDef.LUA_REGISTRYINDEX, LuaDef.LUA_RIDX_GLOBALS);
+		RawGetI(LuaDef.LUA_REGISTRYINDEX, LuaDef.LUA_RIDX_GLOBALS);
 
 	public void PushLightUserData(object o)
 	{
@@ -2082,23 +2082,23 @@ public sealed class LuaState : ILuaState
 	public void Where(int level)
 	{
 		var ar = new LuaDebug();
-		if (API.GetStack(ar, level)) // Check function at level
+		if (GetStack(ar, level)) // Check function at level
 		{
 			GetInfo(ar, "Sl"); // Get info about it
 			if (ar.CurrentLine > 0) // Is there info?
 			{
-				API.PushString($"{ar.ShortSrc}:{ar.CurrentLine}: ");
+				PushString($"{ar.ShortSrc}:{ar.CurrentLine}: ");
 				return;
 			}
 		}
-		API.PushString(""); // else, no information available...
+		PushString(""); // else, no information available...
 	}
 
 	public int Error(string fmt, params ReadOnlySpan<object?> args)
 	{
 		Where(1);
-		API.PushString(string.Format(fmt, args));
-		API.Concat(2);
+		PushString(string.Format(fmt, args));
+		Concat(2);
 		return API.Error();
 	}
 
@@ -2346,38 +2346,38 @@ public sealed class LuaState : ILuaState
 	{
 		var oLua = (LuaState)otherLua;
 		var ar = new LuaDebug();
-		var top = API.GetTop();
+		var top = GetTop();
 		var numLevels = oLua.CountLevels();
 		var mark = (numLevels > LEVELS1 + LEVELS2) ? LEVELS1 : 0;
-		if (msg != null) API.PushString($"{msg}\n");
-		API.PushString("stack traceback:");
+		if (msg != null) PushString($"{msg}\n");
+		PushString("stack traceback:");
 		while (otherLua.GetStack(ar, level++))
 		{
 			if (level == mark) // Too many levels?
 			{
-				API.PushString("\n\t...");
+				PushString("\n\t...");
 				level = numLevels - LEVELS2; // And skip to last ones
 			}
 			else
 			{
 				oLua.GetInfo(ar, "Slnt");
-				API.PushString($"\n\t{ar.ShortSrc}:");
+				PushString($"\n\t{ar.ShortSrc}:");
 				if (ar.CurrentLine > 0)
-					API.PushString($"{ar.CurrentLine}:");
-				API.PushString(" in ");
+					PushString($"{ar.CurrentLine}:");
+				PushString(" in ");
 				PushFuncName(ar);
 				if (ar.IsTailCall)
-					API.PushString("\n\t(...tail calls...)");
-				API.Concat(API.GetTop() - top);
+					PushString("\n\t(...tail calls...)");
+				Concat(GetTop() - top);
 			}
 		}
-		API.Concat(API.GetTop() - top);
+		Concat(GetTop() - top);
 		return ToString(-1)!;
 	}
 
 	public int Len(int index)
 	{
-		API.Len(index);
+		PushLen(index);
 
 		var l = API.ToIntegerX(-1, out var isNum);
 		if (!isNum) Error("Object length is not a number");
@@ -2398,7 +2398,7 @@ public sealed class LuaState : ILuaState
 	public ThreadStatus LoadBytes(byte[] bytes, string name)
 	{
 		var loadInfo = new BytesLoadInfo(bytes);
-		return API.Load(loadInfo, name, null);
+		return Load(loadInfo, name, null);
 	}
 
 	private static ThreadStatus ErrFile(string what, int fNameIdx) => 
@@ -2416,21 +2416,21 @@ public sealed class LuaState : ILuaState
 			throw new NotImplementedException();
 		}
 
-		var fNameIdx = API.GetTop() + 1;
-		API.PushString("@" + filename);
+		var fNameIdx = GetTop() + 1;
+		PushString("@" + filename);
 		try
 		{
 			using var loadInfo = LuaFile.OpenFile(BaseFolder, filename);
 			loadInfo.SkipComment();
-			status = API.Load(loadInfo, API.ToString(-1)!, mode);
+			status = Load(loadInfo, API.ToString(-1)!, mode);
 		}
 		catch (LuaRuntimeException e)
 		{
-			API.PushString($"Cannot open {filename}: {e.Message}");
+			PushString($"Cannot open {filename}: {e.Message}");
 			return ThreadStatus.LUA_ERRFILE;
 		}
 
-		API.Remove(fNameIdx);
+		Remove(fNameIdx);
 		return status;
 	}
 
@@ -2640,7 +2640,7 @@ public sealed class LuaState : ILuaState
 					Remove(-2); // remove table (but keep name)
 					PushString(".");
 					API.Insert(-2); // place '.' between the two names
-					Concat(3);
+					ConcatAux(3);
 					return true;
 				}
 			}
@@ -3095,7 +3095,7 @@ public sealed class LuaState : ILuaState
 					var b = i.GETARG_B();
 					var c = i.GETARG_C();
 					TopIndex = env.Base + c + 1;
-					Concat(c - b + 1);
+					ConcatAux(c - b + 1);
 					env.Base = ci.BaseIndex;
 
 					//raIdx = env.Base + i.GETARG_A();
@@ -3694,7 +3694,7 @@ public sealed class LuaState : ILuaState
 		CallTM(tmObj, rb, rb, ra, true);
 	}
 
-	private void Concat(int total)
+	private void ConcatAux(int total)
 	{
 		LuaUtil.Assert(total >= 2);
 
@@ -3975,7 +3975,7 @@ public sealed class LuaState : ILuaState
 				if (total > 1) // Are there elements to concat?
 				{
 					--TopIndex;
-					Concat(total);
+					ConcatAux(total);
 				}
 				// Move final result to final position
 				var ci = BaseCI[ciIndex];
@@ -4358,10 +4358,9 @@ public sealed class LuaState : ILuaState
 		var proto = GetCurrentLuaFunc(CI)!.Proto;
 		var line = GetCurrentLine(CI);
 
-		string? root = null;
 		var p = proto;
 		while (p.Parent != null) p = p.Parent;
-		root = p.RootName;
+		var root = p.RootName;
 		
 		var src = root;
 

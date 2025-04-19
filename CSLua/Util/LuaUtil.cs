@@ -15,7 +15,7 @@ public static class LuaUtil
 		return 1;
 	});
 	
-	private static void Throw(params string[] msgs) => 
+	private static void Throw(params ReadOnlySpan<string?> msgs) => 
 		throw new LuaException(string.Join("", msgs));
 
 	public static void Assert(bool condition)
