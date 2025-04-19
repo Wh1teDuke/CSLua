@@ -148,7 +148,7 @@ public interface ILua
 
 	ThreadStatus Status { get; }
 
-	string BaseFolder { get; set; }
+	public string BaseFolder { get; set; }
 
 	string 	DebugGetInstructionHistory();
 }
