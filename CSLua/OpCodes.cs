@@ -1,6 +1,8 @@
 ﻿
 // ReSharper disable InconsistentNaming
 
+using System.Collections.Frozen;
+
 namespace CSLua;
 
 public enum OpCode: byte
