@@ -1943,7 +1943,8 @@ public sealed class Parser
 		return null;
 	}
 
-	private static int NewUpValue(FuncState fs, string name, ExpDesc e, bool isEnv = false)
+	private static int NewUpValue(
+		FuncState fs, string name, ExpDesc e, bool isEnv = false)
 	{
 		var f = fs.Proto;
 		var idx = f.Upvalues.Count;

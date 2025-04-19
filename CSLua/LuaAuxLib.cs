@@ -8,7 +8,7 @@ public readonly record struct NameFuncPair(
 public interface ILuaAuxLib
 {
 	void 	Where(int level);
-	int 	Error(string fmt, params object[] args);
+	int 	Error(string fmt, params ReadOnlySpan<object?> args);
 	void	CheckStack(int size, string? msg = null);
 	void 	CheckAny(int nArg);
 	void 	CheckType(int index, LuaType t);

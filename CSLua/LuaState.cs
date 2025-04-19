@@ -899,7 +899,7 @@ public sealed class LuaState : ILuaState
 				return null;
 			val = f.Upvals[n - 1].StkId;
 			var name = p.Upvalues[n - 1].Name;
-			return (name == null) ? "" : name;
+			return name;
 		}
 
 		if (addr.V.IsCsClosure()) 
@@ -2094,7 +2094,7 @@ public sealed class LuaState : ILuaState
 		API.PushString(""); // else, no information available...
 	}
 
-	public int Error(string fmt, params object[] args)
+	public int Error(string fmt, params ReadOnlySpan<object?> args)
 	{
 		Where(1);
 		API.PushString(string.Format(fmt, args));
@@ -2249,7 +2249,7 @@ public sealed class LuaState : ILuaState
 		{
 			nArg--; // Do not count 'self'
 			if (nArg == 0) // Error is in the self argument itself?
-				return Error("Calling '{0}' on bad self", ar.Name);
+				return Error("Calling '{0}' on bad self", ar.Name!);
 		}
 		ar.Name ??= PushGlobalFuncName(ar) ? ToString(-1)! : "?";
 		return Error("Bad argument {0} to '{1}' ({2})",
@@ -4383,7 +4383,7 @@ public sealed class LuaState : ILuaState
 		O_PushString($"{src}:{line}: {msg}");
 	}
 
-	internal void RunError(string fmt, params object[] args)
+	internal void RunError(string fmt, params ReadOnlySpan<object?> args)
 	{
 		var msg = string.Format(fmt, args);
 		AddInfo(msg);
