@@ -66,10 +66,8 @@ public static class LuaOSLib
 	
 	private static int OS_Rename(ILuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TSTRING);
-		lua.CheckType(2, LuaType.LUA_TSTRING);
-		var oldName = lua.ToString(1);
-		var newName = lua.ToString(2);
+		var oldName = lua.CheckString(1);
+		var newName = lua.CheckString(2);
 
 		try
 		{
