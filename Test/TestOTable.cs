@@ -1,6 +1,6 @@
 using CSLua;
 using CSLua.Extensions;
-using CSLua.Lib;
+
 // ReSharper disable InconsistentNaming
 
 namespace Test;
