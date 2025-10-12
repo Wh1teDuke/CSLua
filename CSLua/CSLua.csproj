@@ -1,10 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <PackageId>CSLua</PackageId>
+        <Version>0.0.1-alpha</Version>
+        <Authors>Wh1teDuke</Authors>
+        <PackageTags>lua;interpreter;alpha</PackageTags>
+        <PackageProjectUrl>https://github.com/Wh1teDuke/CSLua</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Wh1teDuke/CSLua.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>../README.md</PackageReadmeFile>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        
         <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Title>CSLua</Title>
+        <Description>Lua interpreter in pure c#</Description>
         <!-- TODO <WarningsAsErrors>Nullable</WarningsAsErrors>-->
     </PropertyGroup>
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="../README.md" />
+        <None Include="../LICENSE" Pack="true" PackagePath="../LICENSE" />
+    </ItemGroup>
 </Project>
