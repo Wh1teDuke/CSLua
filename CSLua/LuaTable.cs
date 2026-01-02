@@ -28,6 +28,13 @@ public sealed class LuaTable
 			return (int)val.V.NValue;
 		return null!;
 	}
+	
+	public object? GetUserData(string key)
+	{
+		if (TryGetStr(key, out var val) && val.V.IsUserData())
+			return val.V.AsUserData();
+		return null!;
+	}
 
 	public bool TryGet(StkId key, out StkId value)
 	{
@@ -154,6 +161,17 @@ public sealed class LuaTable
 	}
 	
 	public void Set(string key, int val)
+	{
+		var k = new TValue();
+		var v = new TValue();
+		
+		k.SetString(key);
+		v.SetDouble(val);
+		
+		Set(new StkId(ref k), new StkId(ref v));
+	}
+	
+	public void Set(string key, double val)
 	{
 		var k = new TValue();
 		var v = new TValue();
