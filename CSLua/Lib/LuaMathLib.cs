@@ -52,6 +52,7 @@ public static class LuaMathLib
 			new("tan",   		Math_Tan),
 			new("tointeger",    Math_ToInt),
 			new("type",         Math_Type),
+			new("lerp",         Math_Lerp),
 		];
 
 		lua.NewLib(define);
@@ -275,6 +276,16 @@ public static class LuaMathLib
 		lua.PushNumber(
 			Math.Pow(lua.CheckNumber(1),
 			lua.CheckNumber(2)));
+		return 1;
+	}
+	
+	private static int Math_Lerp(ILuaState lua)
+	{
+		lua.PushNumber(double.Lerp(
+			lua.CheckNumber(1),
+			lua.CheckNumber(2),
+			lua.CheckNumber(3)
+		));
 		return 1;
 	}
 
