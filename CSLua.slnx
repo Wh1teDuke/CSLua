@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CSLua/CSLua.csproj" />
+  <Project Path="Test/Test.csproj" />
+</Solution>
