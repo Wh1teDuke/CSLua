@@ -3,25 +3,21 @@
         <PackageId>CSLua</PackageId>
         <Version>0.0.1-alpha-0002</Version>
         <Authors>Wh1teDuke</Authors>
-        <PackageTags>lua;interpreter;alpha</PackageTags>
+        <PackageTags>lua;interpreter</PackageTags>
         <PackageProjectUrl>https://github.com/Wh1teDuke/CSLua</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Wh1teDuke/CSLua.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <IncludeSymbols>true</IncludeSymbols>
         <PackageIcon>cslua_logo.png</PackageIcon>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        
+        <Description>Lua interpreter in pure c#</Description>
+
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Title>CSLua</Title>
-        <Description>Lua interpreter in pure c#</Description>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
+
     <ItemGroup>
         <None Include="../README.md" Pack="true" PackagePath="\" />
         <None Include="../LICENSE" Pack="true" PackagePath="\" />
