@@ -1,3 +1,4 @@
+![logo](cslua_logo.png "CSLua") 
 # CSLua
 
 ## Example
