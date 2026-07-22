@@ -23,7 +23,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build
-          run: dotnet build CSLua/CSLua.csproj --configuration Release
+        run: dotnet build CSLua/CSLua.csproj --configuration Release
 
       - name: Pack
         run: dotnet pack CSLua/CSLua.csproj --configuration Release --output ./nupkg
