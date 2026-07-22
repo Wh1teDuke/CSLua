@@ -195,7 +195,7 @@ public static class LuaBaseLib
 		else // loading from a reader function
 		{
 			var chunkName = lua.OptString(2, "=(load)");
-			lua.CheckType(1, LuaType.LUA_TFUNCTION);
+			lua.CheckType(1, Lua.Type.LUA_TFUNCTION);
 			
 			throw new NotImplementedException(); // TODO
 		}
@@ -258,7 +258,7 @@ public static class LuaBaseLib
 	public static int B_RawLen(LuaState lua)
 	{
 		var t = lua.Type(1);
-		lua.ArgCheck(t is LuaType.LUA_TTABLE or LuaType.LUA_TSTRING,
+		lua.ArgCheck(t is Lua.Type.LUA_TTABLE or Lua.Type.LUA_TSTRING,
 			1, "table or string expected");
 		lua.PushInteger(lua.RawLen(1));
 		return 1;
@@ -266,7 +266,7 @@ public static class LuaBaseLib
 
 	public static int B_RawGet(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		lua.CheckAny(2);
 		lua.SetTop(2);
 		lua.RawGet(1);
@@ -275,7 +275,7 @@ public static class LuaBaseLib
 
 	public static int B_RawSet(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		lua.CheckAny(2);
 		lua.CheckAny(3);
 		lua.SetTop(3);
@@ -286,7 +286,7 @@ public static class LuaBaseLib
 	public static int B_Select(LuaState lua)
 	{
 		var n = lua.GetTop();
-		if (lua.Type(1) == LuaType.LUA_TSTRING &&
+		if (lua.Type(1) == Lua.Type.LUA_TSTRING &&
 		    lua.ToString(1)![0] == '#')
 		{
 			lua.PushInteger(n - 1);
@@ -315,8 +315,8 @@ public static class LuaBaseLib
 	public static int B_SetMetaTable(LuaState lua)
 	{
 		var t = lua.Type(2);
-		lua.CheckType(1, LuaType.LUA_TTABLE);
-		lua.ArgCheck(t is LuaType.LUA_TNIL or LuaType.LUA_TTABLE,
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
+		lua.ArgCheck(t is Lua.Type.LUA_TNIL or Lua.Type.LUA_TTABLE,
 			2, "nil or table expected");
 		if (lua.GetMetaField(1, "__metatable"))
 			return lua.Error("cannot change a protected metatable");
@@ -328,7 +328,7 @@ public static class LuaBaseLib
 	public static int B_ToNumber(LuaState lua)
 	{
 		var t = lua.Type(2);
-		if (t is LuaType.LUA_TNONE or LuaType.LUA_TNIL) // standard conversion
+		if (t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL) // standard conversion
 		{
 			var n = lua.ToNumberX(1, out var isNum);
 			if (isNum)
@@ -380,7 +380,7 @@ public static class LuaBaseLib
 	public static int B_Type(LuaState lua)
 	{
 		var t = lua.Type(1);
-		var tName = LuaState.TypeName(t);
+		var tName = Lua.TypeName(t);
 		lua.PushString(tName);
 		return 1;
 	}
@@ -390,7 +390,7 @@ public static class LuaBaseLib
 	{
 		if (!lua.GetMetaField(1, method)) // No metamethod?
 		{
-			lua.CheckType(1, LuaType.LUA_TTABLE);
+			lua.CheckType(1, Lua.Type.LUA_TTABLE);
 			lua.PushCsClosure(iter);
 			lua.PushValue(1);
 			if (isZero)

@@ -128,7 +128,7 @@ public static class LuaStrLib
 
 	private static int Str_Dump(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TFUNCTION);
+		lua.CheckType(1, Lua.Type.LUA_TFUNCTION);
 		lua.SetTop(1);
 		var bsb = new ByteStringBuilder();
 
@@ -796,18 +796,18 @@ public static class LuaStrLib
 		var lua = ms.Lua;
 		// ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 		switch (lua.Type(3)) {
-			case LuaType.LUA_TNUMBER:
-			case LuaType.LUA_TSTRING: {
+			case Lua.Type.LUA_TNUMBER:
+			case Lua.Type.LUA_TSTRING: {
 				Add_S(ms, b, s, e);
 				return;
 			}
-			case LuaType.LUA_TFUNCTION: {
+			case Lua.Type.LUA_TFUNCTION: {
 				lua.PushValue(3);
 				var n = PushCaptures(lua, ms, s, e);
 				lua.Call(n, 1);
 				break;
 			}
-			case LuaType.LUA_TTABLE: {
+			case Lua.Type.LUA_TTABLE: {
 				PushOneCapture(ms, 0, s, e);
 				lua.GetTable(3);
 				break;
@@ -839,8 +839,8 @@ public static class LuaStrLib
 		}
 		var b = new StringBuilder(srcl);
 		lua.ArgCheck(
-			tr is LuaType.LUA_TNUMBER or LuaType.LUA_TSTRING or
-				LuaType.LUA_TFUNCTION or LuaType.LUA_TTABLE, 3,
+			tr is Lua.Type.LUA_TNUMBER or Lua.Type.LUA_TSTRING or
+				Lua.Type.LUA_TFUNCTION or Lua.Type.LUA_TTABLE, 3,
 			"string/function/table expected");
 		var n = 0;
 		var ms = new MatchState(lua, src, p)

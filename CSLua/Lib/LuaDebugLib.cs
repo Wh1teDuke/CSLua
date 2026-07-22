@@ -59,7 +59,7 @@ public static class LuaDebugLib
 		var what = L.OptString(arg + 2, "flnStu");
 		var debug = new Lua.Debug();
 		
-		if (L.Type(arg + 1) == LuaType.LUA_TNUMBER)
+		if (L.Type(arg + 1) == Lua.Type.LUA_TNUMBER)
 		{
 			var level = L.ToInteger(arg + 1);
 			if (!L.GetStack(debug, level))
@@ -68,9 +68,9 @@ public static class LuaDebugLib
 				return 1;
 			}
 		}
-		else if (L.Type(arg + 1) == LuaType.LUA_TSTRING)
+		else if (L.Type(arg + 1) == Lua.Type.LUA_TSTRING)
 			what = L.ToString(arg + 1);
-		else if (L.Type(arg + 1) == LuaType.LUA_TFUNCTION)
+		else if (L.Type(arg + 1) == Lua.Type.LUA_TFUNCTION)
 		{
 			what = ">" + what;
 			lua.PushValue(arg + 1);
@@ -99,7 +99,7 @@ public static class LuaDebugLib
 	private static int AuxUpvalue(LuaState lua, int get)
 	{
 		var n = lua.CheckInteger(2);
-		lua.CheckType(1, LuaType.LUA_TFUNCTION);
+		lua.CheckType(1, Lua.Type.LUA_TFUNCTION);
 
 		var name = get == 1 ? lua.GetUpValue(1, n) : lua.SetUpValue(1, n);
 		if (name == null) return 0;

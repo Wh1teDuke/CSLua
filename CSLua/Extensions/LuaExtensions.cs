@@ -207,7 +207,7 @@ public static class LuaExtensions
             else L.PushCsClosure((CsClosure)c);
         }
 
-        public bool TestStack(ReadOnlySpan<LuaType> args)
+        public bool TestStack(ReadOnlySpan<Lua.Type> args)
         {
             if (L.GetTop() != args.Length) return false;
             var i = 1;

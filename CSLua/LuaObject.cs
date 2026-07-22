@@ -12,7 +12,7 @@ public struct TValue : IEquatable<TValue>
 
 	public object? OValue;
 	public double NValue;
-	public LuaType Type;
+	public Lua.Type Type;
 
 	public override bool Equals(object? o) => 
 		o is TValue value && Equals(value);
@@ -34,12 +34,12 @@ public struct TValue : IEquatable<TValue>
 
 		return Type switch
 		{
-			LuaType.LUA_TNIL => true,
-			LuaType.LUA_TBOOLEAN => AsBool() == o.AsBool(),
+			Lua.Type.LUA_TNIL => true,
+			Lua.Type.LUA_TBOOLEAN => AsBool() == o.AsBool(),
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
-			LuaType.LUA_TNUMBER => NValue == o.NValue,
-			LuaType.LUA_TINT64 => AsInt64() == o.AsInt64(),
-			LuaType.LUA_TSTRING => AsString() == o.AsString(),
+			Lua.Type.LUA_TNUMBER => NValue == o.NValue,
+			Lua.Type.LUA_TINT64 => AsInt64() == o.AsInt64(),
+			Lua.Type.LUA_TSTRING => AsString() == o.AsString(),
 			_ => ReferenceEquals(OValue, o.OValue)
 		};
 	}
@@ -50,25 +50,25 @@ public struct TValue : IEquatable<TValue>
 	public static bool operator!=(TValue lhs, TValue rhs) => !lhs.Equals(rhs);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsNil() => Type == LuaType.LUA_TNIL;
+	public bool IsNil() => Type == Lua.Type.LUA_TNIL;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsBoolean() => Type == LuaType.LUA_TBOOLEAN;
+	public bool IsBoolean() => Type == Lua.Type.LUA_TBOOLEAN;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsNumber() => Type == LuaType.LUA_TNUMBER;
+	public bool IsNumber() => Type == Lua.Type.LUA_TNUMBER;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsInt64() => Type == LuaType.LUA_TINT64;
+	public bool IsInt64() => Type == Lua.Type.LUA_TINT64;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsString() => Type == LuaType.LUA_TSTRING;
+	public bool IsString() => Type == Lua.Type.LUA_TSTRING;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsTable() => Type == LuaType.LUA_TTABLE;
+	public bool IsTable() => Type == Lua.Type.LUA_TTABLE;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsFunction() => Type == LuaType.LUA_TFUNCTION;
+	public bool IsFunction() => Type == Lua.Type.LUA_TFUNCTION;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsThread() => Type == LuaType.LUA_TTHREAD;
+	public bool IsThread() => Type == Lua.Type.LUA_TTHREAD;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsUserData() => Type == LuaType.LUA_TLIGHTUSERDATA;
+	public bool IsUserData() => Type == Lua.Type.LUA_TLIGHTUSERDATA;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsList() => Type == LuaType.LUA_TLIST;
+	public bool IsList() => Type == Lua.Type.LUA_TLIST;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsLuaClosure() => OValue is LuaClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,13 +103,13 @@ public struct TValue : IEquatable<TValue>
 
 	public void SetNil() 
 	{
-		Type = LuaType.LUA_TNIL;
+		Type = Lua.Type.LUA_TNIL;
 		NValue = 0.0; OValue = null!;
 	}
 
 	public void SetBool(bool v) 
 	{
-		Type = LuaType.LUA_TBOOLEAN;
+		Type = Lua.Type.LUA_TBOOLEAN;
 		NValue = BitConverter.Int64BitsToDouble(
 			v ? BOOLEAN_TRUE : BOOLEAN_FALSE);
 		OValue = null!;
@@ -123,56 +123,56 @@ public struct TValue : IEquatable<TValue>
 	
 	public void SetList(List<TValue> v) 
 	{
-		Type = LuaType.LUA_TLIST;
+		Type = Lua.Type.LUA_TLIST;
 		NValue = 0; OValue = v;
 	}
 	
 	public void SetDouble(double v) 
 	{
-		Type = LuaType.LUA_TNUMBER;
+		Type = Lua.Type.LUA_TNUMBER;
 		NValue = v; OValue = null!;
 	}
 
 	public void SetInt64(long v) 
 	{
-		Type = LuaType.LUA_TINT64;
+		Type = Lua.Type.LUA_TINT64;
 		NValue = BitConverter.Int64BitsToDouble(v);
 		OValue = null;
 	}
 
 	public void SetString(string v) 
 	{
-		Type = LuaType.LUA_TSTRING;
+		Type = Lua.Type.LUA_TSTRING;
 		NValue = 0.0; OValue = v;
 	}
 
 	public void SetTable(LuaTable v) 
 	{
-		Type = LuaType.LUA_TTABLE;
+		Type = Lua.Type.LUA_TTABLE;
 		NValue = 0.0; OValue = v;
 	}
 
 	public void SetThread(LuaState v) 
 	{
-		Type = LuaType.LUA_TTHREAD;
+		Type = Lua.Type.LUA_TTHREAD;
 		NValue = 0.0; OValue = v;
 	}
 
 	public void SetUserData(object v) 
 	{
-		Type = LuaType.LUA_TLIGHTUSERDATA;
+		Type = Lua.Type.LUA_TLIGHTUSERDATA;
 		NValue = 0.0; OValue = v;
 	}
 	
 	public void SetLuaClosure(LuaClosure v) 
 	{
-		Type = LuaType.LUA_TFUNCTION;
+		Type = Lua.Type.LUA_TFUNCTION;
 		NValue = 0.0; OValue = v;
 	}
 
 	public void SetCSClosure(CsClosure v) 
 	{
-		Type = LuaType.LUA_TFUNCTION;
+		Type = Lua.Type.LUA_TFUNCTION;
 		NValue = 0.0; OValue = v;
 	}
 
@@ -237,7 +237,7 @@ public readonly ref struct StkId(ref TValue v)
 	public override string ToString()
 	{
 		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";
-		return $"StkId - {LuaState.TypeName(V.Type)} - {detail}";
+		return $"StkId - {Lua.TypeName(V.Type)} - {detail}";
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

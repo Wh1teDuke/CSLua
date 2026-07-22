@@ -10,10 +10,10 @@ public sealed class TestPatches
     {
         var L = new LuaState();
         L.Eval("return false ~= true");
-        Assert.Equal(LuaType.LUA_TBOOLEAN, L.Type(-1));
+        Assert.Equal(Lua.Type.LUA_TBOOLEAN, L.Type(-1));
         Assert.True(L.PopBool());
         L.Eval("return false != true");
-        Assert.Equal(LuaType.LUA_TBOOLEAN, L.Type(-1));
+        Assert.Equal(Lua.Type.LUA_TBOOLEAN, L.Type(-1));
         Assert.True(L.PopBool());
     }
 

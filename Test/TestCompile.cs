@@ -39,7 +39,7 @@ public sealed class TestCompile
         var r2 = L.LoadString("foo = foo + 1");
         Assert.Equal(ThreadStatus.LUA_OK, r2);
         Assert.Equal(1, L.GetTop());
-        Assert.Equal(LuaType.LUA_TFUNCTION, L.Type(-1));
+        Assert.Equal(Lua.Type.LUA_TFUNCTION, L.Type(-1));
 
         var fun = L.CheckLuaFunction(-1);
         L.Pop(1);

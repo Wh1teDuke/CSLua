@@ -72,7 +72,7 @@ public static class LuaListLib
         var index = lua.ToInteger(2);
         var value = list[index];
 
-        if (lua.Type(3) == LuaType.LUA_TBOOLEAN && lua.ToBoolean(3))
+        if (lua.Type(3) == Lua.Type.LUA_TBOOLEAN && lua.ToBoolean(3))
         {
             list[index] = list[^1];
             list.RemoveAt(list.Count - 1);

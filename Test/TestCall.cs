@@ -61,7 +61,7 @@ public sealed class TestCall
 
         var res = L.DoString("return inc(1)");
         Assert.Equal(ThreadStatus.LUA_OK, res);
-        Assert.Equal(LuaType.LUA_TNUMBER, L.Type(-1));
+        Assert.Equal(Lua.Type.LUA_TNUMBER, L.Type(-1));
 
         var r = L.ToInteger(-1);
         Assert.Equal(2, r);
@@ -70,8 +70,8 @@ public sealed class TestCall
         int TestFunction(LuaState L)
         {
             Assert.Equal(1, L.GetTop());
-            Assert.Equal(LuaType.LUA_TNUMBER, L.Type(1));
-            Assert.True(L.TestStack([LuaType.LUA_TNUMBER]));
+            Assert.Equal(Lua.Type.LUA_TNUMBER, L.Type(1));
+            Assert.True(L.TestStack([Lua.Type.LUA_TNUMBER]));
             var i = L.ToInteger(1);
             L.PushInteger(i + 1);
             return 1;
@@ -89,7 +89,7 @@ public sealed class TestCall
 
         var res = L.DoString("return inc(1, true)");
         Assert.Equal(ThreadStatus.LUA_OK, res);
-        Assert.Equal(LuaType.LUA_TNUMBER, L.Type(-1));
+        Assert.Equal(Lua.Type.LUA_TNUMBER, L.Type(-1));
 
         var r = L.ToInteger(-1);
         Assert.Equal(2, r);
@@ -98,10 +98,10 @@ public sealed class TestCall
         int TestFunction(LuaState L)
         {
             Assert.Equal(2, L.GetTop());
-            Assert.Equal(LuaType.LUA_TNUMBER, L.Type(1));
-            Assert.Equal(LuaType.LUA_TBOOLEAN, L.Type(2));
+            Assert.Equal(Lua.Type.LUA_TNUMBER, L.Type(1));
+            Assert.Equal(Lua.Type.LUA_TBOOLEAN, L.Type(2));
             Assert.True(L.TestStack(
-                [LuaType.LUA_TNUMBER, LuaType.LUA_TBOOLEAN]));
+                [Lua.Type.LUA_TNUMBER, Lua.Type.LUA_TBOOLEAN]));
             var i = L.ToInteger(1);
             L.PushInteger(i + 1);
             return 1;
@@ -161,7 +161,7 @@ public sealed class TestCall
         int GetID(LuaState L)
         {
             Assert.Equal(1, L.GetTop());
-            Assert.Equal(LuaType.LUA_TTABLE, L.Type(1));
+            Assert.Equal(Lua.Type.LUA_TTABLE, L.Type(1));
             L.PushInteger(id);
             return 1;
         }

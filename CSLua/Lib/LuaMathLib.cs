@@ -376,8 +376,8 @@ public static class LuaMathLib
 	private static int Math_Type(LuaState lua)
 	{
 		var t = lua.Type(1);
-		if (t == LuaType.LUA_TINT64) lua.PushString("integer");
-		if (t == LuaType.LUA_TNUMBER) lua.PushString("float");
+		if (t == Lua.Type.LUA_TINT64) lua.PushString("integer");
+		if (t == Lua.Type.LUA_TNUMBER) lua.PushString("float");
 		lua.CheckAny(1);
 		lua.PushNil();
 		return 1;

@@ -25,7 +25,7 @@ public static class LuaCoroLib
 
 	private static int CO_Create(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TFUNCTION);
+		lua.CheckType(1, Lua.Type.LUA_TFUNCTION);
 		var newLua = lua.NewThread();
 		lua.PushValue(1); // Move function to top
 		lua.XMove(newLua, 1); // Move function from lua to newLua

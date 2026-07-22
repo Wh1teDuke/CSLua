@@ -105,16 +105,16 @@ internal sealed class DumpState
 			DumpByte((byte)t);
 			switch (t)
 			{
-				case LuaType.LUA_TNIL:
+				case Lua.Type.LUA_TNIL:
 					break;
-				case LuaType.LUA_TBOOLEAN:
+				case Lua.Type.LUA_TBOOLEAN:
 					DumpBool(k.AsBool());
 					break;
-				case LuaType.LUA_TINT64:
-				case LuaType.LUA_TNUMBER:
+				case Lua.Type.LUA_TINT64:
+				case Lua.Type.LUA_TNUMBER:
 					DumpBlock(BitConverter.GetBytes(k.NValue));
 					break;
-				case LuaType.LUA_TSTRING:
+				case Lua.Type.LUA_TSTRING:
 					DumpString(k.AsString());
 					break;
 				default:

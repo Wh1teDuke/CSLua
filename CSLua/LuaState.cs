@@ -86,7 +86,7 @@ public sealed class GlobalState(LuaState state)
 {
 	private TValue _registry;
 
-	public readonly LuaTable?[] MetaTables = new LuaTable[(int)LuaType.LUA_NUMTAGS];
+	public readonly LuaTable?[] MetaTables = new LuaTable[(int)Lua.Type.LUA_NUMTAGS];
 	public readonly LuaState	MainThread = state;
 	
 	public StkId Registry => new (ref _registry);
@@ -301,13 +301,13 @@ public sealed class LuaState
 
 		switch (o.V.Type)
 		{
-			case LuaType.LUA_TTABLE:
+			case Lua.Type.LUA_TTABLE:
 			{
 				var tbl = o.V.AsTable()!;
 				mt = tbl.MetaTable;
 				break;
 			}
-			case LuaType.LUA_TUSERDATA:
+			case Lua.Type.LUA_TUSERDATA:
 				throw new NotImplementedException();
 
 			default:
@@ -1084,33 +1084,14 @@ public sealed class LuaState
 		}
 	}
 
-	public LuaType Type(int index)
+	public Lua.Type Type(int index)
 	{
 		return !Index2Addr(index, out var addr) 
-			? LuaType.LUA_TNONE : addr.V.Type;
+			? Lua.Type.LUA_TNONE : addr.V.Type;
 	}
 
-	internal static string TypeName(LuaType t) => // TODO: move statics to Lua.cs
-		t switch
-		{
-			LuaType.LUA_TNIL => "nil",
-			LuaType.LUA_TBOOLEAN => "boolean",
-			LuaType.LUA_TLIGHTUSERDATA => "lightuserdata",
-			LuaType.LUA_TINT64 => "long",
-			LuaType.LUA_TNUMBER => "number",
-			LuaType.LUA_TSTRING => "string",
-			LuaType.LUA_TTABLE => "table",
-			LuaType.LUA_TLIST => "list",
-			LuaType.LUA_TFUNCTION => "function",
-			LuaType.LUA_TUSERDATA => "userdata",
-			LuaType.LUA_TTHREAD => "thread",
-			LuaType.LUA_TPROTO => "proto",
-			LuaType.LUA_TUPVAL => "upval",
-			_ => "no value"
-		};
-
 	private static string ObjTypeName(StkId v) => 
-		TypeName(v.V.Type);
+		Lua.TypeName(v.V.Type);
 
 	// For internal use only; will not trigger an error in ApiIncrTop() due to Top exceeding CI.Top
 	private void O_PushString(string s)
@@ -1119,25 +1100,25 @@ public sealed class LuaState
 		IncrTop();
 	}
 
-	public bool IsNil(int index) => Type(index) == LuaType.LUA_TNIL;
+	public bool IsNil(int index) => Type(index) == Lua.Type.LUA_TNIL;
 
-	public bool IsNone(int index) => Type(index) == LuaType.LUA_TNONE;
+	public bool IsNone(int index) => Type(index) == Lua.Type.LUA_TNONE;
 
 	public bool IsNoneOrNil(int index)
 	{
 		var t = Type(index);
-		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL;
+		return t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL;
 	}
 
 	public bool IsString(int index)
 	{
 		var t = Type(index);
-		return t is LuaType.LUA_TSTRING or LuaType.LUA_TNUMBER;
+		return t is Lua.Type.LUA_TSTRING or Lua.Type.LUA_TNUMBER;
 	}
 
-	public bool IsTable(int index) => Type(index) == LuaType.LUA_TTABLE;
-	public bool IsList(int index) => Type(index) == LuaType.LUA_TLIST;
-	public bool IsFunction(int index) => Type(index) == LuaType.LUA_TFUNCTION;
+	public bool IsTable(int index) => Type(index) == Lua.Type.LUA_TTABLE;
+	public bool IsList(int index) => Type(index) == Lua.Type.LUA_TLIST;
+	public bool IsFunction(int index) => Type(index) == Lua.Type.LUA_TFUNCTION;
 
 	internal bool Compare(int index1, int index2, LuaEq op)
 	{
@@ -1174,10 +1155,10 @@ public sealed class LuaState
 
 		return addr.V.Type switch
 		{
-			LuaType.LUA_TSTRING => addr.V.AsString()?.Length ?? 0,
-			LuaType.LUA_TTABLE => addr.V.AsTable()?.Length ?? 0,
-			LuaType.LUA_TLIST => addr.V.AsList()?.Count ?? 0,
-			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
+			Lua.Type.LUA_TSTRING => addr.V.AsString()?.Length ?? 0,
+			Lua.Type.LUA_TTABLE => addr.V.AsTable()?.Length ?? 0,
+			Lua.Type.LUA_TLIST => addr.V.AsList()?.Count ?? 0,
+			Lua.Type.LUA_TUSERDATA => throw new NotImplementedException(),
 			_ => 0
 		};
 	}
@@ -1328,13 +1309,13 @@ public sealed class LuaState
 		LuaTable? mt;
 		switch (addr.V.Type)
 		{
-			case LuaType.LUA_TTABLE:
+			case Lua.Type.LUA_TTABLE:
 			{
 				var tbl = addr.V.AsTable()!;
 				mt = tbl.MetaTable;
 				break;
 			}
-			case LuaType.LUA_TUSERDATA:
+			case Lua.Type.LUA_TUSERDATA:
 			{
 				throw new NotImplementedException();
 			}
@@ -1369,11 +1350,11 @@ public sealed class LuaState
 
 		switch (addr.V.Type)
 		{
-			case LuaType.LUA_TTABLE:
+			case Lua.Type.LUA_TTABLE:
 				var tbl = addr.V.AsTable()!;
 				tbl.MetaTable = mt;
 				break;
-			case LuaType.LUA_TUSERDATA:
+			case Lua.Type.LUA_TUSERDATA:
 				throw new NotImplementedException();
 			default:
 				G.MetaTables[(int)addr.V.Type] = mt;
@@ -1582,8 +1563,8 @@ public sealed class LuaState
 
 		return addr.V.Type switch
 		{
-			LuaType.LUA_TUSERDATA => throw new NotImplementedException(),
-			LuaType.LUA_TLIGHTUSERDATA => addr.V.OValue,
+			Lua.Type.LUA_TUSERDATA => throw new NotImplementedException(),
+			Lua.Type.LUA_TLIGHTUSERDATA => addr.V.OValue,
 			_ => null
 		};
 	}
@@ -2100,102 +2081,102 @@ public sealed class LuaState
 
 	public void CheckAny(int nArg)
 	{
-		if (Type(nArg) == LuaType.LUA_TNONE)
+		if (Type(nArg) == Lua.Type.LUA_TNONE)
 			ArgError(nArg, "Value expected");
 	}
 
 	public double CheckNumber(int nArg)
 	{
 		var d = ToNumberX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
+		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
 	public int CheckInteger(int nArg)
 	{
 		var d = ToIntegerX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
+		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
 	public bool CheckBoolean(int nArg)
 	{
-		if (Type(nArg) != LuaType.LUA_TBOOLEAN)
-			TagError(nArg, LuaType.LUA_TBOOLEAN);
+		if (Type(nArg) != Lua.Type.LUA_TBOOLEAN)
+			TagError(nArg, Lua.Type.LUA_TBOOLEAN);
 		return ToBoolean(nArg);
 	}
 
 	public long CheckInt64(int nArg)
 	{
 		var v = ToInt64X(nArg, out var isNum);
-		if (!isNum) TagError(nArg, LuaType.LUA_TINT64);
+		if (!isNum) TagError(nArg, Lua.Type.LUA_TINT64);
 		return v;
 	}
 
 	public string CheckString(int nArg)
 	{
 		var s = ToString(nArg);
-		if (s == null) TagError(nArg, LuaType.LUA_TSTRING);
+		if (s == null) TagError(nArg, Lua.Type.LUA_TSTRING);
 		return s!;
 	}
 
 	public LuaTable CheckTable(int nArg)
 	{
 		var s = ToTable(nArg);
-		if (s == null) TagError(nArg, LuaType.LUA_TTABLE);
+		if (s == null) TagError(nArg, Lua.Type.LUA_TTABLE);
 		return s!;
 	}
 
 	public uint CheckUnsigned(int nArg)
 	{
 		var d = ToUnsignedX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
+		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
 	public object CheckUserData(int nArg)
 	{
 		var o = ToUserData(nArg);
-		if (o == null) TagError(nArg, LuaType.LUA_TUSERDATA);
+		if (o == null) TagError(nArg, Lua.Type.LUA_TUSERDATA);
 		return o!;
 	}
 
 	public List<TValue> CheckList(int narg)
 	{
 		var o = ToList(narg);
-		if (o == null) TagError(narg, LuaType.LUA_TLIST);
+		if (o == null) TagError(narg, Lua.Type.LUA_TLIST);
 		return o!;
 	}
 
 	public LuaClosure CheckLuaFunction(int narg)
 	{
 		var o = ToLuaClosure(narg);
-		if (o == null) TagError(narg, LuaType.LUA_TFUNCTION);
+		if (o == null) TagError(narg, Lua.Type.LUA_TFUNCTION);
 		return o!;
 	}
 
 	public T Opt<T>(Func<int,T> f, int n, T def)
 	{
 		var t = Type(n);
-		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ? def : f(n);
+		return t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ? def : f(n);
 	}
 
 	public int OptInt(int nArg, int def) =>
-		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+		Type(nArg) is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckInteger(nArg);
 
 	public long OptInt64(int nArg, long def) =>
-		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+		Type(nArg) is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckInt64(nArg);
 
 	public bool OptBoolean(int nArg, bool def) =>
-		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+		Type(nArg) is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckBoolean(nArg);
 
 	public string? OptString(int nArg, string? def = null)
 	{
 		var t = Type(nArg);
-		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+		return t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckString(nArg);
 	}
 
@@ -2206,10 +2187,10 @@ public sealed class LuaState
 		return ArgError(index, msg);
 	}
 
-	private void TagError(int index, LuaType t) => 
-		TypeError(index, TypeName(t));
+	private void TagError(int index, Lua.Type t) => 
+		TypeError(index, Lua.TypeName(t));
 
-	public void CheckType(int index, LuaType t)
+	public void CheckType(int index, Lua.Type t)
 	{
 		if (Type(index) != t) TagError(index, t);
 	}
@@ -2237,7 +2218,7 @@ public sealed class LuaState
 			nArg, ar.Name, extraMsg);
 	}
 
-	public string TypeName(int index) => TypeName(Type(index));
+	public string TypeName(int index) => Lua.TypeName(Type(index));
 
 	public bool GetMetaField(int obj, string name)
 	{
@@ -2469,17 +2450,17 @@ public sealed class LuaState
 
 		switch (Type(index))
 		{
-			case LuaType.LUA_TNUMBER:
-			case LuaType.LUA_TINT64:
-			case LuaType.LUA_TSTRING:
+			case Lua.Type.LUA_TNUMBER:
+			case Lua.Type.LUA_TINT64:
+			case Lua.Type.LUA_TSTRING:
 				PushValue(index);
 				break;
 
-			case LuaType.LUA_TBOOLEAN:
+			case Lua.Type.LUA_TBOOLEAN:
 				PushString(ToBoolean(index) ? "true" : "false");
 				break;
 
-			case LuaType.LUA_TNIL:
+			case Lua.Type.LUA_TNIL:
 				PushString("nil");
 				break;
 
@@ -2608,7 +2589,7 @@ public sealed class LuaState
 		PushNil(); // Start 'next' loop
 		while (Next(-2)) // for each pair in table
 		{
-			if (Type(-2) == LuaType.LUA_TSTRING) // ignore non-string keys
+			if (Type(-2) == Lua.Type.LUA_TSTRING) // ignore non-string keys
 			{
 				if (RawEqual(objIndex, -1)) // found object?
 				{
@@ -4023,20 +4004,20 @@ public sealed class LuaState
 		var tm = StkId.Nil;
 		switch (t1.V.Type)
 		{
-			case LuaType.LUA_TNIL:
+			case Lua.Type.LUA_TNIL:
 				return true;
-			case LuaType.LUA_TNUMBER:
+			case Lua.Type.LUA_TNUMBER:
 				// ReSharper disable once CompareOfFloatsByEqualityOperator
 				return t1.V.NValue == t2.V.NValue;
-			case LuaType.LUA_TINT64:
+			case Lua.Type.LUA_TINT64:
 				return t1.V.AsInt64() == t2.V.AsInt64();
-			case LuaType.LUA_TBOOLEAN:
+			case Lua.Type.LUA_TBOOLEAN:
 				return t1.V.AsBool() == t2.V.AsBool();
-			case LuaType.LUA_TSTRING:
+			case Lua.Type.LUA_TSTRING:
 				return t1.V.AsString() == t2.V.AsString();
-			case LuaType.LUA_TUSERDATA:
+			case Lua.Type.LUA_TUSERDATA:
 				throw new NotImplementedException();
-			case LuaType.LUA_TLIST:
+			case Lua.Type.LUA_TLIST:
 			{
 				var l1 = t1.V.AsList()!;
 				var l2 = t2.V.AsList()!;
@@ -4055,7 +4036,7 @@ public sealed class LuaState
 
 				return true;
 			}
-			case LuaType.LUA_TTABLE:
+			case Lua.Type.LUA_TTABLE:
 			{
 				var tbl1 = t1.V.AsTable()!;
 				var tbl2 = t2.V.AsTable()!;

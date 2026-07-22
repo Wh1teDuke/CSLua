@@ -233,27 +233,27 @@ public sealed class UnDump
 			var v = new TValue();
 			switch (t)
 			{
-				case (int)LuaType.LUA_TNIL:
+				case (int)Lua.Type.LUA_TNIL:
 					v.SetNil();
 					proto.K.Add(v);
 					break;
 
-				case (int)LuaType.LUA_TBOOLEAN:
+				case (int)Lua.Type.LUA_TBOOLEAN:
 					v.SetBool(LoadBoolean());
 					proto.K.Add(v);
 					break;
 
-				case (int)LuaType.LUA_TNUMBER:
+				case (int)Lua.Type.LUA_TNUMBER:
 					v.SetDouble(LoadNumber());
 					proto.K.Add(v);
 					break;
 				
-				case (int)LuaType.LUA_TINT64:
+				case (int)Lua.Type.LUA_TINT64:
 					v.SetInt64(LoadInt64());
 					proto.K.Add(v);
 					break;
 
-				case (int)LuaType.LUA_TSTRING:
+				case (int)Lua.Type.LUA_TSTRING:
 #if DEBUG_UNDUMP
 					ULDebug.Log("LuaType.LUA_TSTRING");
 #endif

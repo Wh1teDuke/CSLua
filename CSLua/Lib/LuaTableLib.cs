@@ -38,7 +38,7 @@ public static class LuaTableLib
 
 	private static int TBL_Concat(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		var sep = lua.OptString(2, "");
 		var i = lua.OptInt(3, 1);
 		var last = lua.OptInt(4, lua.Len(1));
@@ -73,13 +73,13 @@ public static class LuaTableLib
 	private static int TBL_MaxN(LuaState lua)
 	{
 		var max = 0.0;
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		lua.PushNil(); // first key
 
 		while(lua.Next(1))
 		{
 			lua.Pop(1); // remove value
-			if (lua.Type(-1) == LuaType.LUA_TNUMBER)
+			if (lua.Type(-1) == Lua.Type.LUA_TNUMBER)
 			{
 				var v = lua.ToNumber(-1);
 				if (v > max) max = v;
@@ -91,7 +91,7 @@ public static class LuaTableLib
 
 	private static int AuxGetN(LuaState lua, int n)
 	{
-		lua.CheckType(n, LuaType.LUA_TTABLE);
+		lua.CheckType(n, Lua.Type.LUA_TTABLE);
 		return lua.Len(n);
 	}
 
@@ -161,7 +161,7 @@ public static class LuaTableLib
 
 	private static int TBL_Unpack(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		var i = lua.OptInt(2, 1);
 		var e = lua.OptInt(3, lua.Len(1));
 		if (i > e) return 0; // empty range
@@ -280,7 +280,7 @@ public static class LuaTableLib
 		var n = AuxGetN(lua, 1);
 		lua.CheckStack(40, "");  /* assume array is smaller than 2^40 */
 		if (!lua.IsNoneOrNil(2))  /* is there a 2nd argument? */
-			lua.CheckType(2, LuaType.LUA_TFUNCTION);
+			lua.CheckType(2, Lua.Type.LUA_TFUNCTION);
 		lua.SetTop(2);  /* make sure there is two arguments */
 		AuxSort(lua, 1, n);
 		return 0;
@@ -288,7 +288,7 @@ public static class LuaTableLib
 
 	private static int TBL_Length(LuaState lua)
 	{
-		lua.CheckType(1, LuaType.LUA_TTABLE);
+		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		lua.PushNil();
 		var count = 0;
 		while (lua.Next(1))
