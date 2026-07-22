@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>CSLua</PackageId>
-        <Version>0.0.1-alpha</Version>
+        <Version>0.0.1-alpha-0001</Version>
         <Authors>Wh1teDuke</Authors>
         <PackageTags>lua;interpreter;alpha</PackageTags>
         <PackageProjectUrl>https://github.com/Wh1teDuke/CSLua</PackageProjectUrl>
