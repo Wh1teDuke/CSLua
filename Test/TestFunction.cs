@@ -69,7 +69,7 @@ public sealed class TestFunction
         Assert.StartsWith("[source \"error('FooBar')\"]:1: FooBar", error);
 
         return;
-        int OnError(ILuaState lua)
+        int OnError(LuaState lua)
         {
             error = lua.ToString(1);
             return 0;

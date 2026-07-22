@@ -6,9 +6,9 @@ public static class LuaOrderedTableLib
     
     public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
     
-    public static int OpenLib(ILuaState lua)
+    public static int OpenLib(LuaState lua)
     {
-        Span<NameFuncPair> define =
+        ReadOnlySpan<NameFuncPair> define =
         [
             new("new",          OTableNew),
             new("remove",       OTableRemove),
@@ -31,14 +31,14 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableNew(ILuaState lua)
+    private static int OTableNew(LuaState lua)
     {
         var otable = new OrderedDictionary<TValue, TValue>();
         lua.PushLightUserData(otable);
         return 1;
     }
     
-    private static int OTableRemove(ILuaState lua)
+    private static int OTableRemove(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
@@ -48,7 +48,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableRemoveAt(ILuaState lua)
+    private static int OTableRemoveAt(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         var index = lua.CheckInteger(2);
@@ -57,7 +57,7 @@ public static class LuaOrderedTableLib
         return 0;
     }
     
-    private static int OTableHasKey(ILuaState lua)
+    private static int OTableHasKey(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
@@ -67,7 +67,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableHasVal(ILuaState lua)
+    private static int OTableHasVal(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var val);
@@ -77,7 +77,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableAddAll(ILuaState lua)
+    private static int OTableAddAll(LuaState lua)
     {
         var otable1 = GetTable(lua, 1);
         var top = lua.GetTop();
@@ -92,7 +92,7 @@ public static class LuaOrderedTableLib
         return 0;
     }
     
-    private static int OTableIndexOf(ILuaState lua)
+    private static int OTableIndexOf(LuaState lua)
     {
         var otable1 = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
@@ -103,7 +103,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableGet(ILuaState lua)
+    private static int OTableGet(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
@@ -112,7 +112,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableGetAt(ILuaState lua)
+    private static int OTableGetAt(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         var index = lua.CheckInteger(2);
@@ -121,7 +121,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
 
-    private static int OTableSet(ILuaState lua)
+    private static int OTableSet(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
@@ -133,28 +133,28 @@ public static class LuaOrderedTableLib
         return 1;
     }
     
-    private static int OTableClear(ILuaState lua)
+    private static int OTableClear(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         otable.Clear();
         return 0;
     }
     
-    private static int OTableIsEmpty(ILuaState lua)
+    private static int OTableIsEmpty(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         lua.PushBoolean(otable.Count == 0);
         return 1;
     }
 
-    private static int OTableLength(ILuaState lua)
+    private static int OTableLength(LuaState lua)
     {
         var otable = GetTable(lua, 1);
         lua.PushInteger(otable.Count);
         return 1;
     }
 
-    private static int OTableNext(ILuaState lua)
+    private static int OTableNext(LuaState lua)
     {
         var L = (LuaState)lua;
         lua.SetTop(2);
@@ -185,7 +185,7 @@ public static class LuaOrderedTableLib
 
     private static readonly CsClosure NextClosure = new (OTableNext);
 
-    private static int OTablePairs(ILuaState lua)
+    private static int OTablePairs(LuaState lua)
     {
         GetTable(lua, 1);
         lua.PushCsClosure(NextClosure);
@@ -195,7 +195,7 @@ public static class LuaOrderedTableLib
         return 3;
     }
 
-    private static OrderedDictionary<TValue, TValue> GetTable(ILuaState lua, int index)
+    private static OrderedDictionary<TValue, TValue> GetTable(LuaState lua, int index)
     {
         if (lua.CheckUserData(index) is OrderedDictionary<TValue, TValue> table)
             return table;
@@ -204,7 +204,7 @@ public static class LuaOrderedTableLib
         return null!;
     }
 
-    private static void GetValue(ILuaState lua, int index, out StkId id)
+    private static void GetValue(LuaState lua, int index, out StkId id)
     {
         if (!((LuaState)lua).Index2Addr(index, out id))
             lua.Error("Can't access variable");

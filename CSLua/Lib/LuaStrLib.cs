@@ -24,9 +24,9 @@ public static class LuaStrLib
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 	public static NameFuncPair SafeNameFuncPair => new (LIB_NAME, OpenSafeLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("byte", 	Str_Byte),
 			new("char", 	Str_Char),
@@ -50,7 +50,7 @@ public static class LuaStrLib
 		return 1;
 	}
 	
-	public static int OpenSafeLib(ILuaState lua)
+	public static int OpenSafeLib(LuaState lua)
 	{
 		Span<NameFuncPair> define = 
 		[
@@ -76,7 +76,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static void CreateMetaTable(ILuaState lua)
+	private static void CreateMetaTable(LuaState lua)
 	{
 		lua.CreateTable(0, 1); // table to be metatable for strings
 		lua.PushString("" ); // dummy string
@@ -95,7 +95,7 @@ public static class LuaStrLib
 		return len - (-pos) + 1;
 	}
 
-	private static int Str_Byte(ILuaState lua)
+	private static int Str_Byte(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		var posi = PosRelative(lua.OptInt(2, 1), s.Length);
@@ -112,7 +112,7 @@ public static class LuaStrLib
 		return n;
 	}
 
-	private static int Str_Char(ILuaState lua)
+	private static int Str_Char(LuaState lua)
 	{
 		var n = lua.GetTop();
 		var sb = new StringBuilder();
@@ -126,7 +126,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Dump(ILuaState lua)
+	private static int Str_Dump(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TFUNCTION);
 		lua.SetTop(1);
@@ -152,7 +152,7 @@ public static class LuaStrLib
 
 	private sealed class MatchState
 	{
-		public readonly ILuaState	Lua;
+		public readonly LuaState	Lua;
 		public readonly string		Src;
 		public readonly string		Pattern;
 
@@ -162,7 +162,7 @@ public static class LuaStrLib
 		public int				PatternEnd;
 		public readonly CaptureInfo[] Capture;
 
-		public MatchState(ILuaState lua, string src, string pattern)
+		public MatchState(LuaState lua, string src, string pattern)
 		{
 			Lua = lua;
 			Src = src;
@@ -501,7 +501,7 @@ public static class LuaStrLib
 		}
 	}
 
-	private static int PushCaptures(ILuaState lua, MatchState ms, int spos, int epos )
+	private static int PushCaptures(LuaState lua, MatchState ms, int spos, int epos )
 	{
 		var nLevels = (ms.Level == 0 && spos >= 0) ? 1 : ms.Level;
 		lua.CheckStack(nLevels, "too many captures");
@@ -513,7 +513,7 @@ public static class LuaStrLib
 	private static bool NoSpecials(string pattern) => 
 		pattern.IndexOfAny(SPECIALS) == -1;
 
-	private static int StrFindAux(ILuaState lua, bool find)
+	private static int StrFindAux(LuaState lua, bool find)
 	{
 		var s = lua.CheckString(1);
 		var p = lua.CheckString(2);
@@ -572,9 +572,9 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Find(ILuaState lua) => StrFindAux(lua, true);
+	private static int Str_Find(LuaState lua) => StrFindAux(lua, true);
 
-	private static int ScanFormat(ILuaState lua, string format, int s)
+	private static int ScanFormat(LuaState lua, string format, int s)
 	{
 		var p = s;
 		// skip flags
@@ -595,7 +595,7 @@ public static class LuaStrLib
 		return p;
 	}
 
-	private static int Str_Format(ILuaState lua)
+	private static int Str_Format(LuaState lua)
 	{
 		var top = lua.GetTop();
 		var sb = new StringBuilder();
@@ -708,7 +708,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static void AddQuoted(ILuaState lua, StringBuilder sb, int arg)
+	private static void AddQuoted(LuaState lua, StringBuilder sb, int arg)
 	{
 		var s = lua.CheckString(arg);
 		sb.Append('"');
@@ -730,10 +730,10 @@ public static class LuaStrLib
 		sb.Append('"');
 	}
 
-	private static int GmatchAux(ILuaState lua)
+	private static int GmatchAux(LuaState lua)
 	{
-		var src = lua.ToString(lua.UpValueIndex(1));
-		var pattern = lua.ToString(lua.UpValueIndex(2));
+		var src = lua.ToString(LuaState.UpValueIndex(1));
+		var pattern = lua.ToString(LuaState.UpValueIndex(2));
 
 		var ms = new MatchState(lua, src, pattern)
 		{
@@ -742,7 +742,7 @@ public static class LuaStrLib
 			PatternEnd = pattern.Length
 		};
 
-		for (var s = lua.ToInteger(lua.UpValueIndex(3))
+		for (var s = lua.ToInteger(LuaState.UpValueIndex(3))
 		     ; s <= ms.SrcEnd
 		     ; s++)
 		{
@@ -752,13 +752,13 @@ public static class LuaStrLib
 
 			var newStart = e == 0 ? 1: e;
 			lua.PushInteger(newStart);
-			lua.Replace(lua.UpValueIndex(3));
+			lua.Replace(LuaState.UpValueIndex(3));
 			return PushCaptures(lua, ms, s, e);
 		}
 		return 0; // not found
 	}
 
-	private static int Str_Gmatch(ILuaState lua)
+	private static int Str_Gmatch(LuaState lua)
 	{
 		lua.CheckString(1);
 		lua.CheckString(2);
@@ -824,7 +824,7 @@ public static class LuaStrLib
 			b.Append(lua.ToString(-1));
 	}
 
-	private static int Str_Gsub(ILuaState lua)
+	private static int Str_Gsub(LuaState lua)
 	{
 		var src = lua.CheckString(1);
 		var srcl = src.Length;
@@ -875,23 +875,23 @@ public static class LuaStrLib
 		return 2;
 	}
 
-	private static int Str_Len(ILuaState lua)
+	private static int Str_Len(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		lua.PushInteger(s.Length);
 		return 1;
 	}
 
-	private static int Str_Lower(ILuaState lua)
+	private static int Str_Lower(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		lua.PushString(s.ToLower());
 		return 1;
 	}
 
-	private static int Str_Match(ILuaState lua) => StrFindAux(lua, false);
+	private static int Str_Match(LuaState lua) => StrFindAux(lua, false);
 
-	private static int Str_Rep(ILuaState lua)
+	private static int Str_Rep(LuaState lua)
 	{
 		var str = lua.ToString(1);
 		var n = lua.ToInteger(2);
@@ -917,7 +917,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Reverse(ILuaState lua)
+	private static int Str_Reverse(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		var sb = new StringBuilder(s.Length);
@@ -927,7 +927,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Sub(ILuaState lua)
+	private static int Str_Sub(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		var start = PosRelative(lua.CheckInteger(2), s.Length);
@@ -941,7 +941,7 @@ public static class LuaStrLib
 		return 1;
 	}
 
-	private static int Str_Upper(ILuaState lua)
+	private static int Str_Upper(LuaState lua)
 	{
 		var s = lua.CheckString(1);
 		lua.PushString(s.ToUpper());

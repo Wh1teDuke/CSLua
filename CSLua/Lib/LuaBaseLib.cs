@@ -12,9 +12,9 @@ public static class LuaBaseLib
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 	public static NameFuncPair SafeNameFuncPair => new (LIB_NAME, OpenSafeLib);
 	
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("assert", 			B_Assert),
 			new("collectgarbage",	B_CollectGarbage),
@@ -45,7 +45,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 	
-	public static int OpenSafeLib(ILuaState lua)
+	public static int OpenSafeLib(LuaState lua)
 	{
 		Span<NameFuncPair> define = 
 		[
@@ -78,7 +78,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	private static void CommonOpen(ILuaState lua, Span<NameFuncPair> define)
+	private static void CommonOpen(LuaState lua, ReadOnlySpan<NameFuncPair> define)
 	{
 		// Set global _G
 		lua.PushGlobalTable();
@@ -96,7 +96,7 @@ public static class LuaBaseLib
 		lua.SetField(-2, "_CSLUA");
 	}
 
-	public static int B_Assert(ILuaState lua)
+	public static int B_Assert(LuaState lua)
 	{
 		if (!lua.ToBoolean(1))
 			return lua.Error(
@@ -105,7 +105,7 @@ public static class LuaBaseLib
 		return lua.GetTop();
 	}
 
-	public static int B_CollectGarbage(ILuaState lua)
+	public static int B_CollectGarbage(LuaState lua)
 	{
 		// not implement gc
 		var opt = lua.OptString(1, "collect");
@@ -127,9 +127,9 @@ public static class LuaBaseLib
 		}
 	}
 
-	private static int DoFileContinuation(ILuaState lua) => lua.GetTop() - 1;
+	private static int DoFileContinuation(LuaState lua) => lua.GetTop() - 1;
 
-	public static int B_DoFile(ILuaState lua)
+	public static int B_DoFile(LuaState lua)
 	{
 		var filename = lua.OptString(1, null);
 		lua.SetTop(1);
@@ -139,7 +139,7 @@ public static class LuaBaseLib
 		return DoFileContinuation(lua);
 	}
 
-	public static int B_Error(ILuaState lua)
+	public static int B_Error(LuaState lua)
 	{
 		var level = lua.OptInt(2, 1);
 		lua.SetTop(1);
@@ -152,7 +152,7 @@ public static class LuaBaseLib
 		return lua.Error();
 	}
 
-	private static int LoadAux(ILuaState lua, ThreadStatus status, int envidx)
+	private static int LoadAux(LuaState lua, ThreadStatus status, int envidx)
 	{
 		if (status == ThreadStatus.LUA_OK)
 		{
@@ -172,7 +172,7 @@ public static class LuaBaseLib
 		return 2; // return nil plus error message
 	}
 
-	public static int B_LoadFile(ILuaState lua)
+	public static int B_LoadFile(LuaState lua)
 	{
 		var fName = lua.OptString(1, null);
 		var mode = lua.OptString(2, null);
@@ -181,7 +181,7 @@ public static class LuaBaseLib
 		return LoadAux(lua, status, env);
 	}
 
-	public static int B_Load(ILuaState lua)
+	public static int B_Load(LuaState lua)
 	{
 		ThreadStatus status;
 		var s = lua.ToString(1);
@@ -202,7 +202,7 @@ public static class LuaBaseLib
 		return LoadAux(lua, status, env);
 	}
 
-	private static int FinishPCall(ILuaState lua, bool status)
+	private static int FinishPCall(LuaState lua, bool status)
 	{
 		// No space for extra boolean?
 		if (!lua.CheckStack(1)) 
@@ -217,13 +217,13 @@ public static class LuaBaseLib
 		return lua.GetTop();
 	}
 
-	private static int PCallContinuation(ILuaState lua)
+	private static int PCallContinuation(LuaState lua)
 	{
 		var status = lua.GetContext(out _);
 		return FinishPCall(lua, status == ThreadStatus.LUA_YIELD);
 	}
 
-	public static int B_PCall(ILuaState lua)
+	public static int B_PCall(LuaState lua)
 	{
 		lua.CheckAny(1);
 		lua.PushNil();
@@ -235,7 +235,7 @@ public static class LuaBaseLib
 		return FinishPCall(lua, status == ThreadStatus.LUA_OK);
 	}
 
-	public static int B_XPCall(ILuaState lua)
+	public static int B_XPCall(LuaState lua)
 	{
 		var n = lua.GetTop();
 		lua.ArgCheck(n >= 2, 2, "value expected");
@@ -247,7 +247,7 @@ public static class LuaBaseLib
 		return FinishPCall(lua, status == ThreadStatus.LUA_OK);
 	}
 
-	public static int B_RawEqual(ILuaState lua)
+	public static int B_RawEqual(LuaState lua)
 	{
 		lua.CheckAny(1);
 		lua.CheckAny(2);
@@ -255,7 +255,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_RawLen(ILuaState lua)
+	public static int B_RawLen(LuaState lua)
 	{
 		var t = lua.Type(1);
 		lua.ArgCheck(t is LuaType.LUA_TTABLE or LuaType.LUA_TSTRING,
@@ -264,7 +264,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_RawGet(ILuaState lua)
+	public static int B_RawGet(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TTABLE);
 		lua.CheckAny(2);
@@ -273,7 +273,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_RawSet(ILuaState lua)
+	public static int B_RawSet(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TTABLE);
 		lua.CheckAny(2);
@@ -283,7 +283,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_Select(ILuaState lua)
+	public static int B_Select(LuaState lua)
 	{
 		var n = lua.GetTop();
 		if (lua.Type(1) == LuaType.LUA_TSTRING &&
@@ -300,7 +300,7 @@ public static class LuaBaseLib
 		return n - i;
 	}
 
-	public static int B_GetMetaTable(ILuaState lua)
+	public static int B_GetMetaTable(LuaState lua)
 	{
 		lua.CheckAny(1);
 		if (!lua.GetMetaTable(1))
@@ -312,7 +312,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_SetMetaTable(ILuaState lua)
+	public static int B_SetMetaTable(LuaState lua)
 	{
 		var t = lua.Type(2);
 		lua.CheckType(1, LuaType.LUA_TTABLE);
@@ -325,7 +325,7 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_ToNumber(ILuaState lua)
+	public static int B_ToNumber(LuaState lua)
 	{
 		var t = lua.Type(2);
 		if (t is LuaType.LUA_TNONE or LuaType.LUA_TNIL) // standard conversion
@@ -377,16 +377,16 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static int B_Type(ILuaState lua)
+	public static int B_Type(LuaState lua)
 	{
 		var t = lua.Type(1);
-		var tName = lua.TypeName(t);
+		var tName = LuaState.TypeName(t);
 		lua.PushString(tName);
 		return 1;
 	}
 
 	private static int PairsMeta(
-		ILuaState lua, string method, bool isZero, CsClosure iter)
+		LuaState lua, string method, bool isZero, CsClosure iter)
 	{
 		if (!lua.GetMetaField(1, method)) // No metamethod?
 		{
@@ -406,7 +406,7 @@ public static class LuaBaseLib
 		return 3;
 	}
 
-	public static int B_Next(ILuaState lua)
+	public static int B_Next(LuaState lua)
 	{
 		lua.SetTop(2);
 		if (lua.Next(1))
@@ -419,10 +419,10 @@ public static class LuaBaseLib
 	public static readonly CsClosure PairsClosure = new (B_Next);
 	public static readonly CsClosure IPairsClosure = new (IpairsAux);
 
-	public static int B_Pairs(ILuaState lua) => 
+	public static int B_Pairs(LuaState lua) => 
 		PairsMeta(lua, "__pairs", false, PairsClosure);
 
-	private static int IpairsAux(ILuaState lua)
+	private static int IpairsAux(LuaState lua)
 	{
 		var i = lua.ToInteger(2);
 		i++; // next value
@@ -431,10 +431,10 @@ public static class LuaBaseLib
 		return lua.IsNil(-1) ? 1 : 2;
 	}
 
-	public static int B_Ipairs(ILuaState lua) => 
+	public static int B_Ipairs(LuaState lua) => 
 		PairsMeta(lua, "__ipairs", true, IPairsClosure);
 
-	public static int B_Print(ILuaState lua)
+	public static int B_Print(LuaState lua)
 	{
 		var sb = new StringBuilder();
 		var n = lua.GetTop();
@@ -455,7 +455,7 @@ public static class LuaBaseLib
 		return 0;
 	}
 
-	private static int B_ToString(ILuaState lua)
+	private static int B_ToString(LuaState lua)
 	{
 		lua.CheckAny(1);
 		lua.ToStringX(1);

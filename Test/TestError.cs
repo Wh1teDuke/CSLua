@@ -52,9 +52,9 @@ public static class TestError
             msg);
     }
 
-    private static int DoTraceBack(ILuaState L)
+    private static int DoTraceBack(LuaState L)
     {
-        L.PushString(LuaUtil.Traceback((LuaState)L));
+        L.PushString(LuaUtil.Traceback(L));
         return 1;
     }
     

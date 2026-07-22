@@ -11,9 +11,9 @@ public static class LuaTableLib
 	
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("concat", 	TBL_Concat),
 			new("maxn", 	TBL_MaxN),
@@ -36,12 +36,12 @@ public static class LuaTableLib
 		return 1;
 	}
 
-	private static int TBL_Concat(ILuaState lua)
+	private static int TBL_Concat(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TTABLE);
 		var sep = lua.OptString(2, "");
 		var i = lua.OptInt(3, 1);
-		var last = lua.OptInt(4, ((ILuaAuxLib)lua).Len(1));
+		var last = lua.OptInt(4, lua.Len(1));
 
 		var sb = new StringBuilder();
 		for (; i < last; ++i)
@@ -70,7 +70,7 @@ public static class LuaTableLib
 		return 1;
 	}
 
-	private static int TBL_MaxN(ILuaState lua)
+	private static int TBL_MaxN(LuaState lua)
 	{
 		var max = 0.0;
 		lua.CheckType(1, LuaType.LUA_TTABLE);
@@ -89,13 +89,13 @@ public static class LuaTableLib
 		return 1;
 	}
 
-	private static int AuxGetN(ILuaState lua, int n)
+	private static int AuxGetN(LuaState lua, int n)
 	{
 		lua.CheckType(n, LuaType.LUA_TTABLE);
-		return ((ILuaAuxLib)lua).Len(n);
+		return lua.Len(n);
 	}
 
-	private static int TBL_Insert(ILuaState lua)
+	private static int TBL_Insert(LuaState lua)
 	{
 		var e = AuxGetN(lua, 1) + 1; // first empty element
 		int pos; // where to insert new element
@@ -126,7 +126,7 @@ public static class LuaTableLib
 		return 0;
 	}
 
-	private static int TBL_Remove(ILuaState lua)
+	private static int TBL_Remove(LuaState lua)
 	{
 		var e = AuxGetN(lua, 1);
 		var pos = lua.OptInt(2, e);
@@ -143,7 +143,7 @@ public static class LuaTableLib
 		return 1;
 	}
 
-	private static int TBL_Pack(ILuaState lua)
+	private static int TBL_Pack(LuaState lua)
 	{
 		var n = lua.GetTop(); // number of elements to pack
 		lua.CreateTable(n, 1); // create result table
@@ -159,11 +159,11 @@ public static class LuaTableLib
 		return 1; // return table
 	}
 
-	private static int TBL_Unpack(ILuaState lua)
+	private static int TBL_Unpack(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TTABLE);
 		var i = lua.OptInt(2, 1);
-		var e = lua.OptInt(3, ((ILuaAuxLib)lua).Len(1));
+		var e = lua.OptInt(3, lua.Len(1));
 		if (i > e) return 0; // empty range
 		var n = e - i + 1; // number of elements
 		if (n <= 0 || !lua.CheckStack(n)) // n <= 0 means arith. overflow
@@ -176,13 +176,13 @@ public static class LuaTableLib
 
 	// quick sort ////////////////////////////////////////////////////////
 
-	private static void Set2(ILuaState lua, int i, int j)
+	private static void Set2(LuaState lua, int i, int j)
 	{
 		lua.RawSetI(1, i);
 		lua.RawSetI(1, j);
 	}
 
-	private static bool SortComp(ILuaState lua, int a, int b)
+	private static bool SortComp(LuaState lua, int a, int b)
 	{
 		if (!lua.IsNil(2)) // function?
 		{
@@ -199,7 +199,7 @@ public static class LuaTableLib
 		return lua.Compare(a, b, LuaEq.LUA_OPLT);
 	}
 
-	private static void AuxSort(ILuaState lua, int l, int u)
+	private static void AuxSort(LuaState lua, int l, int u)
 	{
 		while (l < u) // For tail recursion
 		{
@@ -275,7 +275,7 @@ public static class LuaTableLib
 		}  /* repeat the routine for the larger one */
 	}
 
-	private static int TBL_Sort(ILuaState lua)
+	private static int TBL_Sort(LuaState lua)
 	{
 		var n = AuxGetN(lua, 1);
 		lua.CheckStack(40, "");  /* assume array is smaller than 2^40 */
@@ -286,7 +286,7 @@ public static class LuaTableLib
 		return 0;
 	}
 
-	private static int TBL_Length(ILuaState lua)
+	private static int TBL_Length(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TTABLE);
 		lua.PushNil();

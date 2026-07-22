@@ -97,7 +97,7 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public CsClosure? AsCSClosure() => OValue as CsClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ILuaState? AsThread() => OValue as ILuaState;
+	public LuaState? AsThread() => OValue as LuaState;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public List<TValue>? AsList() => OValue as List<TValue>;
 
@@ -306,18 +306,18 @@ public sealed class LuaClosure(LuaProto p): BaseClosure
 
 public sealed class CsClosure: BaseClosure
 {
-	public readonly CsDelegate Fun;
+	public readonly Lua.CsDelegate Fun;
 	public readonly TValue[] Upvals;
 	public readonly string Name;
 
-	public CsClosure(CsDelegate fun, string name = "C#Closure")
+	public CsClosure(Lua.CsDelegate fun, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = [];
 		Name = name;
 	}
 
-	public CsClosure(CsDelegate fun, int len, string name = "C#Closure")
+	public CsClosure(Lua.CsDelegate fun, int len, string name = "C#Closure")
 	{
 		Fun = fun;
 		Upvals = new TValue[len];

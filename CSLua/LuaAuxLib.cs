@@ -3,64 +3,12 @@
 namespace CSLua;
 
 public readonly record struct NameFuncPair(
-	string Name, CsDelegate Func);
+	string Name, Lua.CsDelegate Func);
 
-public interface ILuaAuxLib
+public interface ILoadInfo
 {
-	void 	Where(int level);
-	int 	Error(string fmt, params ReadOnlySpan<object?> args);
-	void	CheckStack(int size, string? msg = null);
-	void 	CheckAny(int nArg);
-	void 	CheckType(int index, LuaType t);
-	double	CheckNumber(int nArg);
-	long	CheckInt64(int nArg);
-	int 	CheckInteger(int nArg);
-	bool 	CheckBoolean(int nArg);
-	string 	CheckString(int nArg);
-	LuaTable 	CheckTable(int nArg);
-	uint	CheckUnsigned(int nArg);
-	object	CheckUserData(int nArg);
-	List<TValue>	CheckList(int nArg);
-	LuaClosure	CheckLuaFunction(int nArg);
-	void 	ArgCheck(bool cond, int nArg, string extraMsg);
-	int 	ArgError(int nArg, string extraMsg);
-	string 	TypeName(int index);
-
-	string 	ToStringX(int index);
-	bool 	GetMetaField(int index, string method);
-	int 	GetSubTable(int index, string fname);
-
-	void 	Require(string moduleName, CsDelegate openFunc, bool global);
-	void 	OpenLibs(bool global = true);
-	void 	OpenSafeLibs(bool global = true);
-	void 	NewLibTable(ReadOnlySpan<NameFuncPair> define);
-	void	NewLib(ReadOnlySpan<NameFuncPair> define);
-	void 	SetFuncs(ReadOnlySpan<NameFuncPair> define, int nup);
-		
-	T 		Opt<T>(Func<int,T> f, int n, T def);
-	int		OptInt(int nArg, int def);
-	long		OptInt64(int nArg, long def);
-	bool	OptBoolean(int nArg, bool def);
-	string 	OptString(int nArg, string def);
-	bool 	CallMeta(int obj, string name);
-	void	Traceback(ILuaState otherLua, string? msg = null, int level = 0);
-	int		Len(int index);
-
-	ThreadStatus LoadBuffer(string s, string? name = null);
-	ThreadStatus LoadBufferX(string s, string? name = null, string? mode = null);
-	ThreadStatus LoadFile(string? filename);
-	ThreadStatus LoadFileX(string? filename, string? mode);
-
-	ThreadStatus LoadString(string s, string? name = null);
-	ThreadStatus LoadBytes(byte[] bytes, string name);
-	ThreadStatus DoString(string s, string? name = null);
-	ThreadStatus DoFile(string filename);
-
-	string	Gsub(string src, string pattern, string rep);
-
-	// reference system
-	int		RefTo(int t);
-	void	Unref(int t, int reference);
+	int ReadByte();
+	int PeekByte();
 }
 
 public struct StringLoadInfo(string s) : ILoadInfo

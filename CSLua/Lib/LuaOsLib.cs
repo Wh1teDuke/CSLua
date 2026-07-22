@@ -10,9 +10,9 @@ public static class LuaOSLib
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 	public static NameFuncPair SafeNameFuncPair => new (LIB_NAME, OpenSafeLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("clock", 		OS_Clock),
 			new("difftime",		OS_DiffTime),
@@ -27,7 +27,7 @@ public static class LuaOSLib
 		return 1;
 	}
 	
-	public static int OpenSafeLib(ILuaState lua)
+	public static int OpenSafeLib(LuaState lua)
 	{
 		Span<NameFuncPair> define = 
 		[
@@ -43,14 +43,14 @@ public static class LuaOSLib
 		return 1;
 	}
 	
-	private static int OS_Clock(ILuaState lua)
+	private static int OS_Clock(LuaState lua)
 	{
 		lua.PushNumber(
 			Process.GetCurrentProcess().TotalProcessorTime.TotalSeconds);
 		return 1;
 	}
 	
-	private static int OS_DiffTime(ILuaState lua)
+	private static int OS_DiffTime(LuaState lua)
 	{
 		var t1 = lua.ToNumber(1);
 		var t2 = lua.ToNumber(1);
@@ -58,13 +58,13 @@ public static class LuaOSLib
 		return 1;
 	}
 		
-	private static int OS_Sleep(ILuaState lua)
+	private static int OS_Sleep(LuaState lua)
 	{
 		Thread.Sleep(lua.ToInteger(1));
 		return 0;
 	}
 	
-	private static int OS_Rename(ILuaState lua)
+	private static int OS_Rename(LuaState lua)
 	{
 		var oldName = lua.CheckString(1);
 		var newName = lua.CheckString(2);
@@ -83,7 +83,7 @@ public static class LuaOSLib
 		}
 	}
 	
-	private static int OS_Remove(ILuaState lua)
+	private static int OS_Remove(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TSTRING);
 		var fileName = lua.ToString(1);
@@ -102,7 +102,7 @@ public static class LuaOSLib
 		}
 	}
 
-	private static int OS_Exit(ILuaState lua)
+	private static int OS_Exit(LuaState lua)
 	{
 		int? code = null;
 		var success = true;
@@ -122,7 +122,7 @@ public static class LuaOSLib
 		return 0;
 	}
 
-	private static int OS_SetLocale(ILuaState lua)
+	private static int OS_SetLocale(LuaState lua)
 	{
 		lua.PushNil();
 		return 1;

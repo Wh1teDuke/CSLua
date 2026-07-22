@@ -9,9 +9,9 @@ public static class LuaBitLib
 	
 	public static NameFuncPair NameFuncPair => new(LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("arshift", 	B_ArithShift),
 			new("band", 	B_And),
@@ -35,7 +35,7 @@ public static class LuaBitLib
 
 	private static uint Mask(int n) => ~((ALLONES << 1) << (n-1));
 
-	private static int B_Shift(ILuaState lua, uint r, int i)
+	private static int B_Shift(LuaState lua, uint r, int i)
 	{
 		if (i < 0) // shift right?
 		{
@@ -54,13 +54,13 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static int B_LeftShift(ILuaState lua) => 
+	private static int B_LeftShift(LuaState lua) => 
 		B_Shift(lua, lua.CheckUnsigned(1), lua.CheckInteger(2));
 
-	private static int B_RightShift(ILuaState lua) => 
+	private static int B_RightShift(LuaState lua) => 
 		B_Shift(lua, lua.CheckUnsigned(1), -lua.CheckInteger(2));
 
-	private static int B_ArithShift(ILuaState lua)
+	private static int B_ArithShift(LuaState lua)
 	{
 		var r = lua.CheckUnsigned(1);
 		var i = lua.CheckInteger(2);
@@ -75,7 +75,7 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static uint AndAux(ILuaState lua)
+	private static uint AndAux(LuaState lua)
 	{
 		var n = lua.GetTop();
 		var r = ~(uint)0;
@@ -84,21 +84,21 @@ public static class LuaBitLib
 		return Trim(r);
 	}
 
-	private static int B_And(ILuaState lua)
+	private static int B_And(LuaState lua)
 	{
 		var r = AndAux(lua);
 		lua.PushUnsigned(r);
 		return 1;
 	}
 
-	private static int B_Not(ILuaState lua)
+	private static int B_Not(LuaState lua)
 	{
 		var r = ~lua.CheckUnsigned(1);
 		lua.PushUnsigned(Trim(r));
 		return 1;
 	}
 
-	private static int B_Or(ILuaState lua)
+	private static int B_Or(LuaState lua)
 	{
 		var n = lua.GetTop();
 		uint r = 0;
@@ -108,7 +108,7 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static int B_Xor( ILuaState lua )
+	private static int B_Xor( LuaState lua )
 	{
 		var n = lua.GetTop();
 		uint r = 0;
@@ -118,14 +118,14 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static int B_Test(ILuaState lua)
+	private static int B_Test(LuaState lua)
 	{
 		var r = AndAux(lua);
 		lua.PushBoolean(r != 0);
 		return 1;
 	}
 
-	private static int FieldArgs( ILuaState lua, int farg, out int width )
+	private static int FieldArgs( LuaState lua, int farg, out int width )
 	{
 		var f = lua.CheckInteger(farg);
 		var w = lua.OptInt(farg + 1, 1);
@@ -137,7 +137,7 @@ public static class LuaBitLib
 		return f;
 	}
 
-	private static int B_Extract(ILuaState lua)
+	private static int B_Extract(LuaState lua)
 	{
 		var r = lua.CheckUnsigned(1);
 		var f = FieldArgs(lua, 2, out var w);
@@ -146,7 +146,7 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static int B_Rotate(ILuaState lua, int i)
+	private static int B_Rotate(LuaState lua, int i)
 	{
 		var r = lua.CheckUnsigned(1);
 		i &= (LUA_NBITS-1); // i = i % NBITS
@@ -156,13 +156,13 @@ public static class LuaBitLib
 		return 1;
 	}
 
-	private static int B_LeftRotate(ILuaState lua) => 
+	private static int B_LeftRotate(LuaState lua) => 
 		B_Rotate(lua, lua.CheckInteger(2));
 
-	private static int B_RightRotate(ILuaState lua) => 
+	private static int B_RightRotate(LuaState lua) => 
 		B_Rotate(lua, -lua.CheckInteger(2));
 
-	private static int B_Replace(ILuaState lua)
+	private static int B_Replace(LuaState lua)
 	{
 		var r = lua.CheckUnsigned(1);
 		var v = lua.CheckUnsigned(2);

@@ -7,9 +7,9 @@ public static class LuaCoroLib
 	
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("create", 	CO_Create),
 			new("resume", 	CO_Resume),
@@ -23,16 +23,16 @@ public static class LuaCoroLib
 		return 1;
 	}
 
-	private static int CO_Create(ILuaState lua)
+	private static int CO_Create(LuaState lua)
 	{
 		lua.CheckType(1, LuaType.LUA_TFUNCTION);
-		ILuaState newLua = lua.NewThread();
+		var newLua = lua.NewThread();
 		lua.PushValue(1); // Move function to top
 		lua.XMove(newLua, 1); // Move function from lua to newLua
 		return 1;
 	}
 
-	private static int AuxResume(ILuaState lua, ILuaState co, int nArg)
+	private static int AuxResume(LuaState lua, LuaState co, int nArg)
 	{
 		if (!co.CheckStack(nArg)) 
 		{
@@ -63,7 +63,7 @@ public static class LuaCoroLib
 		return -1;
 	}
 
-	private static int CO_Resume(ILuaState lua)
+	private static int CO_Resume(LuaState lua)
 	{
 		var co = lua.ToThread(1);
 		lua.ArgCheck(co != null, 1, "coroutine expected");
@@ -80,14 +80,14 @@ public static class LuaCoroLib
 		return r + 1; // return true + 'resume' returns
 	}
 
-	private static int CO_Running(ILuaState lua)
+	private static int CO_Running(LuaState lua)
 	{
 		var isMain = lua.PushThread();
 		lua.PushBoolean(isMain);
 		return 2;
 	}
 
-	private static int CO_Status(ILuaState lua)
+	private static int CO_Status(LuaState lua)
 	{
 		var co = (LuaState)lua.ToThread(1);
 		lua.ArgCheck(co != null, 1, "coroutine expected");
@@ -117,9 +117,9 @@ public static class LuaCoroLib
 		return 1;
 	}
 
-	private static int CO_AuxWrap(ILuaState lua)
+	private static int CO_AuxWrap(LuaState lua)
 	{
-		var co = lua.ToThread(lua.UpValueIndex(1));
+		var co = lua.ToThread(LuaState.UpValueIndex(1));
 		var r = AuxResume(lua, co, lua.GetTop());
 		if (r < 0)
 		{
@@ -135,13 +135,13 @@ public static class LuaCoroLib
 		return r;
 	}
 
-	private static int CO_Wrap(ILuaState lua)
+	private static int CO_Wrap(LuaState lua)
 	{
 		CO_Create(lua);
 		lua.PushCsDelegate(CO_AuxWrap, 1);
 		return 1;
 	}
 
-	private static int CO_Yield(ILuaState lua) =>
+	private static int CO_Yield(LuaState lua) =>
 		lua.Yield(lua.GetTop());
 }

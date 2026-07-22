@@ -10,9 +10,9 @@ public static class LuaEncLib
 	
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("encode", ENC_Encode),
 			new("decode", ENC_Decode),
@@ -26,7 +26,7 @@ public static class LuaEncLib
 		return 1;
 	}
 
-	private static int ENC_Encode(ILuaState lua)
+	private static int ENC_Encode(LuaState lua)
 	{
 		var s = lua.ToString(1);
 		var e = lua.ToString(2);
@@ -40,7 +40,7 @@ public static class LuaEncLib
 		return 1;
 	}
 
-	private static int ENC_Decode(ILuaState lua)
+	private static int ENC_Decode(LuaState lua)
 	{
 		var s = lua.ToString(1);
 		var e = lua.ToString(2);

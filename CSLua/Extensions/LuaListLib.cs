@@ -9,9 +9,9 @@ public static class LuaListLib
     
     internal static readonly CsClosure PairsCl = new (ListPairs);
 
-    public static int OpenLib(ILuaState lua)
+    public static int OpenLib(LuaState lua)
     {
-        Span<NameFuncPair> define =
+        ReadOnlySpan<NameFuncPair> define =
         [
             new("new",          ListNew),
             new("newoflength",  ListNewLength),
@@ -35,9 +35,9 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListNew(ILuaState lua)
+    private static int ListNew(LuaState lua)
     {
-        var L = (LuaState)lua;
+        var L = lua;
         var top = lua.GetTop();
         var list = new List<TValue>(Math.Max(16, top + 1));
 
@@ -51,7 +51,7 @@ public static class LuaListLib
         return 1;
     }
     
-    private static int ListNewLength(ILuaState lua)
+    private static int ListNewLength(LuaState lua)
     {
         var len = lua.CheckInteger(1);
         var list = new List<TValue>(len);
@@ -65,7 +65,7 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListDel(ILuaState lua)
+    private static int ListDel(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -86,7 +86,7 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListInsert(ILuaState lua)
+    private static int ListInsert(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -97,7 +97,7 @@ public static class LuaListLib
         return 0;
     }
 
-    private static int ListIndexOf(ILuaState lua)
+    private static int ListIndexOf(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -117,7 +117,7 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListContains(ILuaState lua)
+    private static int ListContains(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -136,7 +136,7 @@ public static class LuaListLib
         return 1;
     }
     
-    private static int ListAdd(ILuaState lua)
+    private static int ListAdd(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -151,7 +151,7 @@ public static class LuaListLib
         return 0;
     }
     
-    private static int ListAddAll(ILuaState lua)
+    private static int ListAddAll(LuaState lua)
     {
         var list1 = lua.CheckList(1);
         var top = lua.GetTop();
@@ -166,7 +166,7 @@ public static class LuaListLib
         return 0;
     }
 
-    private static int ListGet(ILuaState lua)
+    private static int ListGet(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -176,7 +176,7 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListSet(ILuaState lua)
+    private static int ListSet(LuaState lua)
     {
         var L = (LuaState)lua;
         var list = lua.CheckList(1);
@@ -188,35 +188,35 @@ public static class LuaListLib
         return 1;
     }
 
-    private static int ListLength(ILuaState lua)
+    private static int ListLength(LuaState lua)
     {
         var list = lua.CheckList(1);
         lua.PushInteger(list.Count);
         return 1;
     }
 
-    private static int ListSort(ILuaState lua)
+    private static int ListSort(LuaState lua)
     {
         var list = lua.CheckList(1);
         list.Sort();
         return 0;
     }
     
-    private static int ListClear(ILuaState lua)
+    private static int ListClear(LuaState lua)
     {
         var list = lua.CheckList(1);
         list.Clear();
         return 0;
     }
     
-    private static int ListIsEmpty(ILuaState lua)
+    private static int ListIsEmpty(LuaState lua)
     {
         var list = lua.CheckList(1);
         lua.PushBoolean(list.Count == 0);
         return 1;
     }
     
-    private static int ListNext(ILuaState lua)
+    private static int ListNext(LuaState lua)
     {
         var L = (LuaState)lua;
         lua.SetTop(2);
@@ -247,7 +247,7 @@ public static class LuaListLib
 
     private static readonly CsClosure NextClosure = new (ListNext);
     
-    private static int ListPairs(ILuaState lua)
+    private static int ListPairs(LuaState lua)
     {
         lua.CheckList(1);
         lua.PushCsClosure(NextClosure);

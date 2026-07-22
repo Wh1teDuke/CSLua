@@ -35,10 +35,10 @@ public static class LuaPkgLib
 	
 	public static NameFuncPair NameFuncPair => new(LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
 		// create `package' table
-		Span<NameFuncPair> pkg_define = 
+		ReadOnlySpan<NameFuncPair> pkg_define = 
 		[
 			new("loadlib", 		PKG_LoadLib),
 			new("searchpath",	PKG_SearchPath),
@@ -84,9 +84,9 @@ public static class LuaPkgLib
 		return 1; // return `package' table
 	}
 
-	private static void CreateSearchersTable(ILuaState lua)
+	private static void CreateSearchersTable(LuaState lua)
 	{
-		Span<CsDelegate> searchers = [SearcherPreload, SearcherLua];
+		Span<Lua.CsDelegate> searchers = [SearcherPreload, SearcherLua];
 		lua.CreateTable(searchers.Length, 0);
 		for (var i = 0; i < searchers.Length; ++i)
 		{
@@ -97,7 +97,7 @@ public static class LuaPkgLib
 	}
 
 	private static void SetPath(
-		ILuaState	lua
+		LuaState	lua
 		, string 	fieldName
 		, string 	envName1
 		, string	envName2
@@ -108,7 +108,7 @@ public static class LuaPkgLib
 		lua.SetField(-2, fieldName);
 	}
 
-	private static int SearcherPreload(ILuaState lua)
+	private static int SearcherPreload(LuaState lua)
 	{
 		var name = lua.CheckString(1);
 		lua.GetField(LuaDef.LUA_REGISTRYINDEX, "_PRELOAD");
@@ -118,11 +118,11 @@ public static class LuaPkgLib
 		return 1;
 	}
 
-	private static bool Readable(ILuaState state, string filename) => 
+	private static bool Readable(LuaState state, string filename) => 
 		LuaFile.Readable(state.BaseFolder, filename);
 
 	private static bool PushNextTemplate(
-		ILuaState lua, string path, ref int pos)
+		LuaState lua, string path, ref int pos)
 	{
 		while (pos < path.Length && path[pos] == LUA_PATH_SEP[0])
 			pos++; // skip separators
@@ -140,7 +140,7 @@ public static class LuaPkgLib
 	}
 
 	private static string? SearchPath(
-		ILuaState lua, string name, string path, string sep, string dirsep)
+		LuaState lua, string name, string path, string sep, string dirsep)
 	{
 		StringBuilder? sb = null; // to build error message
 		
@@ -165,9 +165,9 @@ public static class LuaPkgLib
 	}
 
 	private static string? FindFile(
-		ILuaState lua, string name, string pname, string dirsep)
+		LuaState lua, string name, string pname, string dirsep)
 	{
-		lua.GetField(lua.UpValueIndex(1), pname);
+		lua.GetField(LuaState.UpValueIndex(1), pname);
 		var path = lua.ToString(-1);
 		if (path == null)
 			lua.Error("'package.{0}' must be a string", pname);
@@ -175,7 +175,7 @@ public static class LuaPkgLib
 	}
 
 	private static int CheckLoad(
-		ILuaState lua, bool stat, string filename)
+		LuaState lua, bool stat, string filename)
 	{
 		if (stat) // module loaded successfully?
 		{
@@ -188,7 +188,7 @@ public static class LuaPkgLib
 			lua.ToString(1), filename, lua.ToString(-1));
 	}
 
-	private static int SearcherLua(ILuaState lua)
+	private static int SearcherLua(LuaState lua)
 	{
 		var name = lua.CheckString(1);
 		var filename = FindFile(lua, name, "path", LUA_LSUBSEP);
@@ -198,16 +198,16 @@ public static class LuaPkgLib
 			filename);
 	}
 
-	private static int LL_Module(ILuaState lua)
+	private static int LL_Module(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static void FindLoader(ILuaState lua, string name)
+	private static void FindLoader(LuaState lua, string name)
 	{
 		// will be at index 3
-		lua.GetField(lua.UpValueIndex(1), "searchers");
+		lua.GetField(LuaState.UpValueIndex(1), "searchers");
 		if(!lua.IsTable(3))
 			lua.Error("'package.searchers' must be a table");
 
@@ -239,7 +239,7 @@ public static class LuaPkgLib
 		}
 	}
 
-	private static int LL_Require(ILuaState lua)
+	private static int LL_Require(LuaState lua)
 	{
 		var name = lua.CheckString(1);
 		lua.SetTop(1);
@@ -269,19 +269,19 @@ public static class LuaPkgLib
 		return 1;
 	}
 
-	private static int PKG_LoadLib(ILuaState lua)
+	private static int PKG_LoadLib(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int PKG_SearchPath(ILuaState lua)
+	private static int PKG_SearchPath(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int PKG_SeeAll(ILuaState lua)
+	private static int PKG_SeeAll(LuaState lua)
 	{
 		// TODO
 		return 0;

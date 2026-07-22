@@ -60,7 +60,7 @@ public sealed class CallInfo
 	public int NumResults;
 	public CallStatus CallStatus;
 
-	public CsDelegate? ContinueFunc;
+	public Lua.CsDelegate? ContinueFunc;
 	public int Context;
 	public int ExtraIndex;
 	public int OldErrFunc;
@@ -92,7 +92,7 @@ public sealed class GlobalState(LuaState state)
 	public StkId Registry => new (ref _registry);
 }
 
-public sealed class LuaState : ILuaState
+public sealed class LuaState
 {
 	public readonly GlobalState	G;
 	public TValue[]			Stack;
@@ -135,12 +135,8 @@ public sealed class LuaState : ILuaState
 	private Queue<Instruction> InstructionHistory;
 #endif
 
-	private readonly ILua API;
-
 	public LuaState(GlobalState? g = null)
 	{
-		API = this;
-
 		// Initialized inside InitStack()
 		Stack = null!;
 		CI = null!;
@@ -326,8 +322,8 @@ public sealed class LuaState : ILuaState
 		return mt != null && mt.TryGetStr(GetTagMethodName(tm), out val);
 	}
 	
-	#region LuaAPI.cs
-	LuaState ILua.NewThread()
+	#region Luacs
+	internal LuaState NewThread()
 	{
 		var newLua = new LuaState(G);
 
@@ -409,7 +405,7 @@ public sealed class LuaState : ILuaState
 		return status;
 	}
 
-	DumpStatus ILua.Dump(LuaWriter writeFunc)
+	internal DumpStatus Dump(LuaWriter writeFunc)
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 
@@ -423,7 +419,7 @@ public sealed class LuaState : ILuaState
 		return DumpState.Dump(o.Proto, writeFunc, false);
 	}
 
-	ThreadStatus ILua.GetContext(out int context)
+	internal ThreadStatus GetContext(out int context)
 	{
 		if ((CI.CallStatus & CallStatus.CIST_YIELDED) != 0)
 		{
@@ -439,7 +435,7 @@ public sealed class LuaState : ILuaState
 		CallK(numArgs, numResults);
 
 	public void CallK(int numArgs, int numResults,
-		int context = 0, CsDelegate? continueFunc = null)
+		int context = 0, Lua.CsDelegate? continueFunc = null)
 	{
 		LuaUtil.ApiCheck(continueFunc == null || !CI.IsLua,
 			"Cannot use continuations inside hooks");
@@ -492,7 +488,7 @@ public sealed class LuaState : ILuaState
 
 	public ThreadStatus PCallK( 
 		int numArgs, int numResults, int errFunc = 0,
-		int context = 0, CsDelegate? continueFunc = null)
+		int context = 0, Lua.CsDelegate? continueFunc = null)
 	{
 		LuaUtil.ApiCheck(continueFunc == null || !CI.IsLua,
 			"Cannot use continuations inside hooks");
@@ -669,10 +665,9 @@ public sealed class LuaState : ILuaState
 	private static void ResumeWrap(ref ResumeParam param) => 
 		param.L.Resume(param.FirstArg);
 
-	ThreadStatus ILua.Resume(ILuaState from, int numArgs)
+	internal ThreadStatus Resume(LuaState? from, int numArgs)
 	{
-		var fromState = from as LuaState;
-		NumCSharpCalls = (fromState != null) ? fromState.NumCSharpCalls + 1 : 1;
+		NumCSharpCalls = (from != null) ? from.NumCSharpCalls + 1 : 1;
 		NumNonYieldable = 0; // Allow yields
 
 		LuaUtil.ApiCheckNumElems(this, (Status == ThreadStatus.LUA_OK) ? numArgs + 1 : numArgs);
@@ -707,14 +702,14 @@ public sealed class LuaState : ILuaState
 
 		NumNonYieldable = 1; // Do not allow yields
 		NumCSharpCalls--;
-		LuaUtil.Assert(NumCSharpCalls == (fromState?.NumCSharpCalls ?? 0));
+		LuaUtil.Assert(NumCSharpCalls == (from?.NumCSharpCalls ?? 0));
 		return status;
 	}
 
 	public int Yield(int numResults) => YieldK(numResults);
 
 	public int YieldK(
-		int numResults, int context = 0, CsDelegate? continueFunc = null)
+		int numResults, int context = 0, Lua.CsDelegate? continueFunc = null)
 	{
 		var ci = CI;
 		LuaUtil.ApiCheckNumElems(this, numResults);
@@ -785,7 +780,7 @@ public sealed class LuaState : ILuaState
 		--TopIndex;
 	}
 
-	void ILua.Insert(int index)
+	internal void Insert(int index)
 	{
 		if (!Index2Addr(index, out var p))
 			LuaUtil.InvalidIndex();
@@ -808,7 +803,7 @@ public sealed class LuaState : ILuaState
 		to.Set(fr);
 	}
 
-	void ILua.Replace(int index)
+	internal void Replace(int index)
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 		MoveTo(Ref(--TopIndex), index);
@@ -821,7 +816,7 @@ public sealed class LuaState : ILuaState
 		MoveTo(fr, toIndex);
 	}
 
-	void ILua.XMove(ILuaState to, int n)
+	internal void XMove(LuaState to, int n)
 	{
 		var toLua = (LuaState)to;
 		if (this == toLua) return;
@@ -846,10 +841,10 @@ public sealed class LuaState : ILuaState
 	private static void GrowStackWrap(ref GrowStackParam param) => 
 		param.L.GrowStack(param.Size);
 
-	private static readonly PFuncDelegate<GrowStackParam> DG_GrowStack =
+	private static readonly Lua.PFuncDelegate<GrowStackParam> DG_GrowStack =
 		GrowStackWrap;
 
-	bool ILua.CheckStack(int size)
+	internal bool CheckStack(int size)
 	{
 		bool res;
 
@@ -875,7 +870,7 @@ public sealed class LuaState : ILuaState
 		return res;
 	}
 
-	int ILua.Error()
+	internal int Error()
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 		var msg = ToString(-1)!;
@@ -883,7 +878,7 @@ public sealed class LuaState : ILuaState
 		return 0;
 	}
 
-	int ILua.UpValueIndex(int i) => LuaDef.LUA_REGISTRYINDEX - i;
+	internal static int UpValueIndex(int i) => LuaDef.LUA_REGISTRYINDEX - i;
 
 	private static string? AuxUpvalue(StkId addr, int n, out StkId val)
 	{
@@ -914,7 +909,7 @@ public sealed class LuaState : ILuaState
 		return null;
 	}
 
-	string? ILua.GetUpValue(int funcIndex, int n)
+	internal string? GetUpValue(int funcIndex, int n)
 	{
 		if (!Index2Addr(funcIndex, out var addr))
 			return null;
@@ -927,7 +922,7 @@ public sealed class LuaState : ILuaState
 		return result;
 	}
 
-	string? ILua.SetUpValue(int funcIndex, int n)
+	internal string? SetUpValue(int funcIndex, int n)
 	{
 		if (!Index2Addr(funcIndex, out var addr))
 			return null;
@@ -986,7 +981,7 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
-	string ILua.DebugGetInstructionHistory()
+	internal string DebugGetInstructionHistory()
 	{
 #if DEBUG_RECORD_INS
 		var sb = new System.Text.StringBuilder();
@@ -999,7 +994,7 @@ public sealed class LuaState : ILuaState
 #endif
 	}
 
-	void ILua.RawGet(int index)
+	internal void RawGet(int index)
 	{
 		if (!Index2Addr(index, out var addr))
 			throw new LuaException("Table expected");
@@ -1014,7 +1009,7 @@ public sealed class LuaState : ILuaState
 		below.Set(value);
 	}
 
-	void ILua.RawSetI(int index, int n)
+	internal void RawSetI(int index, int n)
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 		if (!Index2Addr(index, out var addr))
@@ -1024,7 +1019,7 @@ public sealed class LuaState : ILuaState
 		tbl.SetInt(n, Ref(--TopIndex));
 	}
 
-	void ILua.RawSet(int index)
+	internal void RawSet(int index)
 	{
 		LuaUtil.ApiCheckNumElems(this, 2);
 		if (!Index2Addr(index, out var addr))
@@ -1035,7 +1030,7 @@ public sealed class LuaState : ILuaState
 		TopIndex -= 2;
 	}
 
-	void ILua.GetField(int index, string key)
+	internal void GetField(int index, string key)
 	{
 		if (!Index2Addr(index, out var addr))
 			LuaUtil.InvalidIndex();
@@ -1056,7 +1051,7 @@ public sealed class LuaState : ILuaState
 		TopIndex -= 2;
 	}
 
-	void ILua.GetTable(int index)
+	internal void GetTable(int index)
 	{
 		if (!Index2Addr(index, out var addr))
 			LuaUtil.InvalidIndex();
@@ -1065,7 +1060,7 @@ public sealed class LuaState : ILuaState
 		GetTable(addr, below, below);
 	}
 
-	void ILua.SetTable(int index)
+	internal void SetTable(int index)
 	{
 		LuaUtil.ApiCheckNumElems(this, 2);
 		if (!Index2Addr(index, out var addr))
@@ -1097,9 +1092,8 @@ public sealed class LuaState : ILuaState
 			? LuaType.LUA_TNONE : addr.V.Type;
 	}
 
-	internal static string TypeName(LuaType t)
-	{
-		return t switch
+	internal static string TypeName(LuaType t) => // TODO: move statics to Lua.cs
+		t switch
 		{
 			LuaType.LUA_TNIL => "nil",
 			LuaType.LUA_TBOOLEAN => "boolean",
@@ -1116,9 +1110,6 @@ public sealed class LuaState : ILuaState
 			LuaType.LUA_TUPVAL => "upval",
 			_ => "no value"
 		};
-	}
-
-	string ILua.TypeName(LuaType t) => TypeName(t);
 
 	private static string ObjTypeName(StkId v) => 
 		TypeName(v.V.Type);
@@ -1150,7 +1141,7 @@ public sealed class LuaState : ILuaState
 	public bool IsList(int index) => Type(index) == LuaType.LUA_TLIST;
 	public bool IsFunction(int index) => Type(index) == LuaType.LUA_TFUNCTION;
 
-	bool ILua.Compare(int index1, int index2, LuaEq op)
+	internal bool Compare(int index1, int index2, LuaEq op)
 	{
 		if (!Index2Addr(index1, out var addr1))
 			LuaUtil.InvalidIndex();
@@ -1167,7 +1158,7 @@ public sealed class LuaState : ILuaState
 		}
 	}
 
-	bool ILua.RawEqual(int index1, int index2)
+	internal bool RawEqual(int index1, int index2)
 	{
 		if (!Index2Addr(index1, out var addr1))
 			return false;
@@ -1178,7 +1169,7 @@ public sealed class LuaState : ILuaState
 		return RawEqualObj(addr1, addr2);
 	}
 
-	int ILua.RawLen(int index)
+	internal int RawLen(int index)
 	{
 		if (!Index2Addr(index, out var addr))
 			LuaUtil.InvalidIndex();
@@ -1226,7 +1217,7 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
-	void ILua.PushUnsigned(uint n)
+	internal void PushUnsigned(uint n)
 	{
 		Top.V.SetDouble(n);
 		ApiIncrTop();
@@ -1269,7 +1260,7 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
-	public void PushCsDelegate(CsDelegate f, int n = 0)
+	public void PushCsDelegate(Lua.CsDelegate f, int n = 0)
 	{
 		if (n == 0)
 		{
@@ -1322,7 +1313,7 @@ public sealed class LuaState : ILuaState
 		ApiIncrTop();
 	}
 
-	bool ILua.PushThread()
+	internal bool PushThread()
 	{
 		Top.V.SetThread(this);
 		ApiIncrTop();
@@ -1331,7 +1322,7 @@ public sealed class LuaState : ILuaState
 
 	public void Pop(int n) => SetTop(-n - 1);
 	
-	bool ILua.GetMetaTable(int index)
+	internal bool GetMetaTable(int index)
 	{
 		if (!Index2Addr(index, out var addr))
 			LuaUtil.InvalidIndex();
@@ -1361,7 +1352,7 @@ public sealed class LuaState : ILuaState
 		return true;
 	}
 
-	bool ILua.SetMetaTable(int index)
+	internal bool SetMetaTable(int index)
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 
@@ -1409,7 +1400,7 @@ public sealed class LuaState : ILuaState
 		TopIndex -= 2;
 	}
 
-	public ILuaState GetThread(out int arg)
+	public LuaState GetThread(out int arg)
 	{
 		if (IsThread(1))
 		{
@@ -1439,7 +1430,7 @@ public sealed class LuaState : ILuaState
 		return addr.V.AsString();
 	}
 
-	double ILua.ToNumberX(int index, out bool isNum)
+	internal double ToNumberX(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr))
 		{
@@ -1473,9 +1464,9 @@ public sealed class LuaState : ILuaState
 		return 0;
 	}
 
-	public double ToNumber(int index) => API.ToNumberX(index, out _);
+	public double ToNumber(int index) => ToNumberX(index, out _);
 
-	int ILua.ToIntegerX(int index, out bool isNum)
+	internal int ToIntegerX(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr))
 		{
@@ -1509,15 +1500,15 @@ public sealed class LuaState : ILuaState
 		return 0;
 	}
 
-	public int ToInteger(int index) => API.ToIntegerX(index, out _);
+	public int ToInteger(int index) => ToIntegerX(index, out _);
 	
 	public bool IsNumber(int index)
 	{
-		API.ToIntegerX(index, out var isNum);
+		ToIntegerX(index, out var isNum);
 		return isNum;
 	}
 
-	uint ILua.ToUnsignedX(int index, out bool isNum)
+	uint ToUnsignedX(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr))
 		{
@@ -1551,8 +1542,7 @@ public sealed class LuaState : ILuaState
 		return 0;
 	}
 
-	uint ILua.ToUnsigned(int index) =>
-		API.ToUnsignedX(index, out _);
+	uint ToUnsigned(int index) => ToUnsignedX(index, out _);
 
 	public bool ToBoolean(int index) =>
 		Index2Addr(index, out var addr) && !IsFalse(addr);
@@ -1563,7 +1553,7 @@ public sealed class LuaState : ILuaState
 	public bool IsThread(int index) =>
 		Index2Addr(index, out var addr) && addr.V.IsThread();
 
-	long ILua.ToInt64X(int index, out bool isNum)
+	long ToInt64X(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr)) 
 		{
@@ -1582,7 +1572,7 @@ public sealed class LuaState : ILuaState
 	}
 
 	public long ToInt64(int index) =>
-		API.ToInt64X(index, out _);
+		ToInt64X(index, out _);
 
 	public object? ToObject(int index) => 
 		!Index2Addr(index, out var addr) ? null : addr.V.OValue;
@@ -1625,11 +1615,11 @@ public sealed class LuaState : ILuaState
 		return null;
 	}
 
-	public ILuaState ToThread(int index)
+	public LuaState? ToThread(int index)
 	{
 		if (!Index2Addr(index, out var addr))
-			return null!;
-		return (addr.V.IsThread() ? addr.V.AsThread() : null)!;
+			return null;
+		return addr.V.IsThread() ? addr.V.AsThread() : null;
 	}
 	
 	internal bool Index2Addr(int index, out StkId addr)
@@ -1760,8 +1750,7 @@ public sealed class LuaState : ILuaState
 	private static void Throw(ThreadStatus errCode, string msg) => 
 		throw new LuaRuntimeException(errCode, msg);
 
-	private ThreadStatus RawRunProtected<T>(
-		PFuncDelegate<T> func, ref T ud) where T: struct
+	private ThreadStatus RawRunProtected<T>(Lua.PFuncDelegate<T> func, ref T ud) where T: struct
 	{
 		var oldNumCSharpCalls = NumCSharpCalls;
 		var res = ThreadStatus.LUA_OK;
@@ -1800,8 +1789,7 @@ public sealed class LuaState : ILuaState
 		TopIndex = oldTop + 1;
 	}
 
-	private ThreadStatus PCall<T>(
-		PFuncDelegate<T> func, ref T ud, int oldTopIndex, int errFunc
+	private ThreadStatus PCall<T>(Lua.PFuncDelegate<T> func, ref T ud, int oldTopIndex, int errFunc
 		) where T: struct
 	{
 		var oldCIIndex = CI.Index;
@@ -2081,7 +2069,7 @@ public sealed class LuaState : ILuaState
 
 	public void Where(int level)
 	{
-		var ar = new LuaDebug();
+		var ar = new Lua.Debug();
 		if (GetStack(ar, level)) // Check function at level
 		{
 			GetInfo(ar, "Sl"); // Get info about it
@@ -2099,13 +2087,13 @@ public sealed class LuaState : ILuaState
 		Where(1);
 		PushString(string.Format(fmt, args));
 		Concat(2);
-		return API.Error();
+		return Error();
 	}
 
-	public void CheckStack(int size, string? msg = null)
+	public void CheckStack(int size, string? msg)
 	{
 		// Keep some extra space to run error routines, if needed
-		if (!API.CheckStack(size + LuaDef.LUA_MINSTACK))
+		if (!CheckStack(size + LuaDef.LUA_MINSTACK))
 		{
 			Error(msg != null ? $"stack overflow ({msg})" : "stack overflow");
 		}
@@ -2119,14 +2107,14 @@ public sealed class LuaState : ILuaState
 
 	public double CheckNumber(int nArg)
 	{
-		var d = API.ToNumberX(nArg, out var isNum);
+		var d = ToNumberX(nArg, out var isNum);
 		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
 		return d;
 	}
 
 	public int CheckInteger(int nArg)
 	{
-		var d = API.ToIntegerX(nArg, out var isNum);
+		var d = ToIntegerX(nArg, out var isNum);
 		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
 		return d;
 	}
@@ -2140,7 +2128,7 @@ public sealed class LuaState : ILuaState
 
 	public long CheckInt64(int nArg)
 	{
-		var v = API.ToInt64X(nArg, out var isNum);
+		var v = ToInt64X(nArg, out var isNum);
 		if (!isNum) TagError(nArg, LuaType.LUA_TINT64);
 		return v;
 	}
@@ -2161,14 +2149,14 @@ public sealed class LuaState : ILuaState
 
 	public uint CheckUnsigned(int nArg)
 	{
-		var d = API.ToUnsignedX(nArg, out var isNum);
+		var d = ToUnsignedX(nArg, out var isNum);
 		if (!isNum) TagError(nArg, LuaType.LUA_TNUMBER);
 		return d;
 	}
 
 	public object CheckUserData(int nArg)
 	{
-		var o = API.ToUserData(nArg);
+		var o = ToUserData(nArg);
 		if (o == null) TagError(nArg, LuaType.LUA_TUSERDATA);
 		return o!;
 	}
@@ -2189,7 +2177,7 @@ public sealed class LuaState : ILuaState
 
 	public T Opt<T>(Func<int,T> f, int n, T def)
 	{
-		var t = API.Type(n);
+		var t = Type(n);
 		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ? def : f(n);
 	}
 
@@ -2211,9 +2199,9 @@ public sealed class LuaState : ILuaState
 			def : CheckBoolean(nArg);
 	}
 
-	public string OptString(int nArg, string def)
+	public string? OptString(int nArg, string? def = null)
 	{
-		var t = API.Type(nArg);
+		var t = Type(nArg);
 		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
 			def : CheckString(nArg);
 	}
@@ -2240,7 +2228,7 @@ public sealed class LuaState : ILuaState
 
 	public int ArgError(int nArg, string extraMsg)
 	{
-		var ar = new LuaDebug();
+		var ar = new Lua.Debug();
 		if (!GetStack(ar, 0)) // no stack frame ?
 			return Error("Bad argument {0} ({1})", nArg, extraMsg);
 
@@ -2256,21 +2244,21 @@ public sealed class LuaState : ILuaState
 			nArg, ar.Name, extraMsg);
 	}
 
-	public string TypeName(int index) => API.TypeName(API.Type(index));
+	public string TypeName(int index) => TypeName(Type(index));
 
 	public bool GetMetaField(int obj, string name)
 	{
-		if (!API.GetMetaTable(obj)) // No metatable?
+		if (!GetMetaTable(obj)) // No metatable?
 			return false;
-		API.PushString(name);
-		API.RawGet(-2);
-		if (API.IsNil(-1))
+		PushString(name);
+		RawGet(-2);
+		if (IsNil(-1))
 		{
-			API.Pop(2);
+			Pop(2);
 			return false;
 		}
 
-		API.Remove(-2);
+		Remove(-2);
 		return true;
 	}
 
@@ -2285,7 +2273,7 @@ public sealed class LuaState : ILuaState
 		return true;
 	}
 
-	private void PushFuncName(LuaDebug ar)
+	private void PushFuncName(Lua.Debug ar)
 	{
 		if (ar.NameWhat.Length > 0 && ar.NameWhat[0] != '\0') // Is there a name?
 			PushString($"function '{ar.Name}'");
@@ -2295,7 +2283,7 @@ public sealed class LuaState : ILuaState
 		{
 			if (PushGlobalFuncName(ar))
 			{
-				PushString($"function '{API.ToString(-1)}'");
+				PushString($"function '{ToString(-1)}'");
 				Remove(-2); // Remove name
 			}
 			// !! Maybe is a function pushed from C#
@@ -2338,14 +2326,14 @@ public sealed class LuaState : ILuaState
 	}
 
 	public void Traceback(
-		ILuaState otherLua, string? msg = null, int level = 0) =>
+		LuaState otherLua, string? msg = null, int level = 0) =>
 		DoTraceback(otherLua, msg, level);
 
 	public string DoTraceback(
-		ILuaState otherLua, string? msg = null, int level = 0)
+		LuaState otherLua, string? msg = null, int level = 0)
 	{
 		var oLua = (LuaState)otherLua;
-		var ar = new LuaDebug();
+		var ar = new Lua.Debug();
 		var top = GetTop();
 		var numLevels = oLua.CountLevels();
 		var mark = (numLevels > LEVELS1 + LEVELS2) ? LEVELS1 : 0;
@@ -2379,7 +2367,7 @@ public sealed class LuaState : ILuaState
 	{
 		PushLen(index);
 
-		var l = API.ToIntegerX(-1, out var isNum);
+		var l = ToIntegerX(-1, out var isNum);
 		if (!isNum) Error("Object length is not a number");
 		Pop(1);
 		return l;
@@ -2422,7 +2410,7 @@ public sealed class LuaState : ILuaState
 		{
 			using var loadInfo = LuaFile.OpenFile(BaseFolder, filename);
 			loadInfo.SkipComment();
-			status = Load(loadInfo, API.ToString(-1)!, mode);
+			status = Load(loadInfo, ToString(-1)!, mode);
 		}
 		catch (LuaRuntimeException e)
 		{
@@ -2491,19 +2479,19 @@ public sealed class LuaState : ILuaState
 			case LuaType.LUA_TNUMBER:
 			case LuaType.LUA_TINT64:
 			case LuaType.LUA_TSTRING:
-				API.PushValue(index);
+				PushValue(index);
 				break;
 
 			case LuaType.LUA_TBOOLEAN:
-				API.PushString(API.ToBoolean(index) ? "true" : "false");
+				PushString(ToBoolean(index) ? "true" : "false");
 				break;
 
 			case LuaType.LUA_TNIL:
-				API.PushString("nil");
+				PushString("nil");
 				break;
 
 			default:
-				API.PushString($"{TypeName(index)}: {ToObject(index).GetHashCode():X}");
+				PushString($"{TypeName(index)}: {ToObject(index)!.GetHashCode():X}");
 				break;
 		}
 
@@ -2567,7 +2555,7 @@ public sealed class LuaState : ILuaState
 	}
 
 	public void Require(
-		string moduleName, CsDelegate openFunc, bool global)
+		string moduleName, Lua.CsDelegate openFunc, bool global)
 	{
 		PushCsDelegate(openFunc);
 		PushString(moduleName);
@@ -2585,14 +2573,14 @@ public sealed class LuaState : ILuaState
 
 	public int GetSubTable(int index, string fname)
 	{
-		API.GetField(index, fname);
-		if (API.IsTable(-1))
+		GetField(index, fname);
+		if (IsTable(-1))
 			return 1;
-		API.Pop(1);
-		index = API.AbsIndex(index);
-		API.NewTable();
-		API.PushValue(-1);
-		API.SetField(index, fname);
+		Pop(1);
+		index = AbsIndex(index);
+		NewTable();
+		PushValue(-1);
+		SetField(index, fname);
 		return 0;
 	}
 
@@ -2629,7 +2617,7 @@ public sealed class LuaState : ILuaState
 		{
 			if (Type(-2) == LuaType.LUA_TSTRING) // ignore non-string keys
 			{
-				if (API.RawEqual(objIndex, -1)) // found object?
+				if (RawEqual(objIndex, -1)) // found object?
 				{
 					Pop(1); // remove value (but keep name)
 					return true;
@@ -2639,7 +2627,7 @@ public sealed class LuaState : ILuaState
 				{
 					Remove(-2); // remove table (but keep name)
 					PushString(".");
-					API.Insert(-2); // place '.' between the two names
+					Insert(-2); // place '.' between the two names
 					ConcatAux(3);
 					return true;
 				}
@@ -2649,19 +2637,19 @@ public sealed class LuaState : ILuaState
 		return false; // not found
 	}
 
-	private bool PushGlobalFuncName(LuaDebug ar)
+	private bool PushGlobalFuncName(Lua.Debug ar)
 	{
-		var top = API.GetTop();
+		var top = GetTop();
 		GetInfo(ar, "f");
-		API.PushGlobalTable();
+		PushGlobalTable();
 		if (FindField(top + 1, 2))
 		{
-			API.Copy(-1, top + 1);
-			API.Pop(2);
+			Copy(-1, top + 1);
+			Pop(2);
 			return true;
 		}
 
-		API.SetTop(top); // remove function and global table
+		SetTop(top); // remove function and global table
 		return false;
 	}
 
@@ -2669,24 +2657,24 @@ public sealed class LuaState : ILuaState
 
 	public int RefTo(int t)
 	{
-		if (API.IsNil(-1))
+		if (IsNil(-1))
 		{
-			API.Pop(1); // Remove from stack
+			Pop(1); // Remove from stack
 			return LuaConstants.LUA_REFNIL; // `nil' has a unique fixed reference
 		}
 
-		t = API.AbsIndex(t);
-		API.RawGetI(t, FreeList); // get first free element
-		var reference = API.ToInteger(-1); // ref = t[freelist]
-		API.Pop(1); // remove it from stack
+		t = AbsIndex(t);
+		RawGetI(t, FreeList); // get first free element
+		var reference = ToInteger(-1); // ref = t[freelist]
+		Pop(1); // remove it from stack
 		if (reference != 0) // any free element?
 		{
-			API.RawGetI(t, reference); // remove it from list
-			API.RawSetI(t, FreeList); // t[freelist] = t[ref]
+			RawGetI(t, reference); // remove it from list
+			RawSetI(t, FreeList); // t[freelist] = t[ref]
 		}
 		else // no free elements
-			reference = API.RawLen(t) + 1; // get a new reference
-		API.RawSetI(t, reference);
+			reference = RawLen(t) + 1; // get a new reference
+		RawSetI(t, reference);
 		return reference;
 	}
 
@@ -2694,11 +2682,11 @@ public sealed class LuaState : ILuaState
 	{
 		if (reference < 0) return;
 
-		t = API.AbsIndex(t);
-		API.RawGetI(t, FreeList);
-		API.RawSetI(t, reference); // t[ref] = t[freelist]
-		API.PushInteger(reference);
-		API.RawSetI(t, FreeList); // t[freelist] = ref
+		t = AbsIndex(t);
+		RawGetI(t, FreeList);
+		RawSetI(t, reference); // t[ref] = t[freelist]
+		PushInteger(reference);
+		RawSetI(t, FreeList); // t[freelist] = ref
 	}
 	#endregion
 	#region LuaObject.cs
@@ -4094,8 +4082,8 @@ public sealed class LuaState : ILuaState
 		return !IsFalse(Top);
 	}
 	#endregion
-	#region LuaDebug.cs
-	public bool GetStack(LuaDebug ar, int level) => 
+	#region Lua.Debug.cs
+	public bool GetStack(Lua.Debug ar, int level) => 
 		GetStack(ref ar.ActiveCIIndex, level);
 
 	public bool GetStack(ref int activeCIIndex, int level)
@@ -4116,7 +4104,7 @@ public sealed class LuaState : ILuaState
 		return status;
 	}
 
-	public int GetInfo(LuaDebug ar, string what)
+	public int GetInfo(Lua.Debug ar, string what)
 	{
 		CallInfo? ci = null;
 		StkId func;
@@ -4149,7 +4137,7 @@ public sealed class LuaState : ILuaState
 	}
 
 	private int AuxGetInfo(
-		string what, LuaDebug ar, StkId func, CallInfo? ci)
+		string what, Lua.Debug ar, StkId func, CallInfo? ci)
 	{
 		var status = 1;
 		foreach (var c in what)
@@ -4199,7 +4187,7 @@ public sealed class LuaState : ILuaState
 					if (ar.NameWhat == null)
 					{
 						ar.NameWhat = ""; // Not Found
-						ar.Name = null!;
+						ar.Name = null;
 					}
 					break;
 				case 'L':
@@ -4286,7 +4274,7 @@ public sealed class LuaState : ILuaState
 		return "metamethod";
 	}
 
-	private static void FuncInfo(LuaDebug ar, StkId func)
+	private static void FuncInfo(Lua.Debug ar, StkId func)
 	{
 		LuaUtil.Assert(func.V.IsFunction());
 		if (func.V.IsLuaClosure())
@@ -4378,7 +4366,7 @@ public sealed class LuaState : ILuaState
 
 		// Cannot use PushString, because PushString is part of the API interface
 		// The ApiIncrTop function in the API interface will check if Top exceeds CI.Top, causing an error
-		// api.PushString(msg);
+		// PushString(msg);
 		O_PushString($"{src}:{line}: {msg}");
 	}
 

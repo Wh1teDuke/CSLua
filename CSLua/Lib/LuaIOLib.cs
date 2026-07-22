@@ -3,15 +3,15 @@
 
 namespace CSLua.Lib;
 
-public static class  LuaIOLib
+public static class LuaIOLib
 {
 	public const string LIB_NAME = "io";
 
 	public static NameFuncPair NameFuncPair => new(LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("close", 		IO_Close),
 			new("flush", 		IO_Flush),
@@ -30,67 +30,67 @@ public static class  LuaIOLib
 		return 1;
 	}
 
-	private static int IO_Close(ILuaState lua)
+	private static int IO_Close(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Flush(ILuaState lua)
+	private static int IO_Flush(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Input(ILuaState lua)
+	private static int IO_Input(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Lines(ILuaState lua)
+	private static int IO_Lines(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Open(ILuaState lua)
+	private static int IO_Open(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Output(ILuaState lua)
+	private static int IO_Output(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Popen(ILuaState lua)
+	private static int IO_Popen(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Read(ILuaState lua)
+	private static int IO_Read(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Tmpfile(ILuaState lua)
+	private static int IO_Tmpfile(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Type(ILuaState lua)
+	private static int IO_Type(LuaState lua)
 	{
 		// TODO
 		return 0;
 	}
 
-	private static int IO_Write(ILuaState lua)
+	private static int IO_Write(LuaState lua)
 	{
 		// TODO
 		return 0;

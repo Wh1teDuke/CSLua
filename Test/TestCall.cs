@@ -51,7 +51,7 @@ public sealed class TestCall
     }
 
     [Fact]
-    public void TestCSClosure1()
+    public void TestCsClosure1()
     {
         var L = new LuaState();
         L.PushCsDelegate(TestFunction);
@@ -67,7 +67,7 @@ public sealed class TestCall
         Assert.Equal(2, r);
         return;
 
-        int TestFunction(ILuaState L)
+        int TestFunction(LuaState L)
         {
             Assert.Equal(1, L.GetTop());
             Assert.Equal(LuaType.LUA_TNUMBER, L.Type(1));
@@ -79,7 +79,7 @@ public sealed class TestCall
     }
     
     [Fact]
-    public void TestCSClosure2()
+    public void TestCsClosure2()
     {
         var L = new LuaState();
         L.PushCsDelegate(TestFunction);
@@ -95,7 +95,7 @@ public sealed class TestCall
         Assert.Equal(2, r);
         return;
 
-        int TestFunction(ILuaState L)
+        int TestFunction(LuaState L)
         {
             Assert.Equal(2, L.GetTop());
             Assert.Equal(LuaType.LUA_TNUMBER, L.Type(1));
@@ -129,7 +129,7 @@ public sealed class TestCall
         Assert.Equal(id, id2);
         return;
         
-        int GetID(ILuaState L)
+        int GetID(LuaState L)
         {
             Assert.Equal(0, L.GetTop());
             L.PushInteger(id);
@@ -158,7 +158,7 @@ public sealed class TestCall
         Assert.Equal(id, id2);
         return;
         
-        int GetID(ILuaState L)
+        int GetID(LuaState L)
         {
             Assert.Equal(1, L.GetTop());
             Assert.Equal(LuaType.LUA_TTABLE, L.Type(1));

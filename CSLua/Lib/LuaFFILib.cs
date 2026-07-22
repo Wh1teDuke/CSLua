@@ -14,9 +14,9 @@ public static class LuaFFILib
 	
 	public static NameFuncPair NameFuncPair => new (LIB_NAME, OpenLib);
 
-	public static int OpenLib(ILuaState lua)
+	public static int OpenLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("clear_assembly_list",	FFI_ClearAssemblyList),
 			new("add_assembly",			FFI_AddAssembly),
@@ -47,13 +47,13 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_ClearAssemblyList(ILuaState lua)
+	private static int FFI_ClearAssemblyList(LuaState lua)
 	{
 		AssemblyList.Clear();
 		return 0;
 	}
 
-	private static int FFI_AddAssembly(ILuaState lua)
+	private static int FFI_AddAssembly(LuaState lua)
 	{
 		var name = lua.ToString(1);
 		try
@@ -68,13 +68,13 @@ public static class LuaFFILib
 		return 0;
 	}
 
-	private static int FFI_ClearUsingList(ILuaState lua)
+	private static int FFI_ClearUsingList(LuaState lua)
 	{
 		UsingList.Clear();
 		return 0;
 	}
 
-	private static int FFI_Using(ILuaState lua)
+	private static int FFI_Using(LuaState lua)
 	{
 		var name = lua.ToString(1);
 		UsingList.Add(name);
@@ -82,7 +82,7 @@ public static class LuaFFILib
 	}
 
 	// Return 'ReturnType', 'FuncName', 'ParameterTypes'
-	private static int FFI_ParseSignature(ILuaState lua)
+	private static int FFI_ParseSignature(LuaState lua)
 	{
 		var signature = lua.ToString(1);
 		var result = FuncSignatureParser.Parse(signature);
@@ -106,7 +106,7 @@ public static class LuaFFILib
 		return 3;
 	}
 
-	private static int FFI_GetType(ILuaState lua)
+	private static int FFI_GetType(LuaState lua)
 	{
 		var typename = lua.ToString(1);
 		var t = GetType(typename);
@@ -117,7 +117,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_GetConstructor(ILuaState lua)
+	private static int FFI_GetConstructor(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1);
 		var n = lua.RawLen(2);
@@ -135,7 +135,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int GetMethodAux(ILuaState lua, BindingFlags flags)
+	private static int GetMethodAux(LuaState lua, BindingFlags flags)
 	{
 		var t = (Type)lua.ToUserData(1);
 		var mName = lua.ToString(2);
@@ -162,7 +162,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_GetMethod(ILuaState lua)
+	private static int FFI_GetMethod(LuaState lua)
 	{
 		return GetMethodAux(lua,
 			BindingFlags.Instance |
@@ -170,7 +170,7 @@ public static class LuaFFILib
 			BindingFlags.InvokeMethod);
 	}
 
-	private static int FFI_GetStaticMethod( ILuaState lua )
+	private static int FFI_GetStaticMethod( LuaState lua )
 	{
 		return GetMethodAux( lua,
 			BindingFlags.Static |
@@ -178,7 +178,7 @@ public static class LuaFFILib
 			BindingFlags.InvokeMethod );
 	}
 
-	private static int FFI_CallMethod(ILuaState lua)
+	private static int FFI_CallMethod(LuaState lua)
 	{
 		var ffiMethod = (FFIMethodBase)lua.ToUserData(1);
 		if (ffiMethod != null)
@@ -202,7 +202,7 @@ public static class LuaFFILib
 		return 0;
 	}
 
-	private static int FFI_GetField(ILuaState lua)
+	private static int FFI_GetField(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
@@ -215,7 +215,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_GetFieldValue(ILuaState lua)
+	private static int FFI_GetFieldValue(LuaState lua)
 	{
 		var fInfo = (FieldInfo)lua.ToUserData(1)!;
 		var inst = lua.ToUserData(2);
@@ -225,7 +225,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_SetFieldValue(ILuaState lua)
+	private static int FFI_SetFieldValue(LuaState lua)
 	{
 		var finfo = (FieldInfo)lua.ToUserData(1)!;
 		var inst = lua.ToUserData(2)!;
@@ -235,7 +235,7 @@ public static class LuaFFILib
 		return 0;
 	}
 
-	private static int FFI_GetProp(ILuaState lua)
+	private static int FFI_GetProp(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
@@ -248,7 +248,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_GetStaticProp(ILuaState lua)
+	private static int FFI_GetStaticProp(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
 		var name = lua.ToString(2);
@@ -261,7 +261,7 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_GetPropValue(ILuaState lua)
+	private static int FFI_GetPropValue(LuaState lua)
 	{
 		var pinfo = (PropertyInfo)lua.ToUserData(1)!;
 		var inst = lua.ToUserData(2);
@@ -271,11 +271,11 @@ public static class LuaFFILib
 		return 1;
 	}
 
-	private static int FFI_SetPropValue(ILuaState lua)
+	private static int FFI_SetPropValue(LuaState lua)
 	{
-		var pinfo = (PropertyInfo)lua.ToUserData(1);
-		var inst = lua.ToUserData(2);
-		var t = (Type)lua.ToUserData(4);
+		var pinfo = (PropertyInfo)lua.ToUserData(1)!;
+		var inst = lua.ToUserData(2)!;
+		var t = (Type)lua.ToUserData(4)!;
 		var value = LuaStackUtil.ToRawValue(lua, 3, t);
 		pinfo.SetValue(inst, value, null);
 		return 0;
@@ -318,7 +318,7 @@ public static class LuaFFILib
 
 	private static class LuaStackUtil
 	{
-		public static int PushRawValue(ILuaState lua, object o, Type t)
+		public static int PushRawValue(LuaState lua, object o, Type t)
 		{
 			switch (t.FullName)
 			{
@@ -388,7 +388,7 @@ public static class LuaFFILib
 			}
 		}
 
-		public static object ToRawValue(ILuaState lua, int index, Type t)
+		public static object ToRawValue(LuaState lua, int index, Type t)
 		{
 			switch (t.FullName)
 			{
@@ -460,7 +460,7 @@ public static class LuaFFILib
 				_parameterTypes[i] = parameters[i].ParameterType;
 		}
 
-		public int Call(ILuaState lua)
+		public int Call(LuaState lua)
 		{
 			const int firstParamPos = 3;
 			var n = lua.GetTop();
@@ -481,21 +481,21 @@ public static class LuaFFILib
 		private readonly MethodBase 	_method;
 		private readonly Type[] 		_parameterTypes;
 
-		protected virtual int PushReturnValue(ILuaState lua, object o) => 0;
+		protected virtual int PushReturnValue(LuaState lua, object o) => 0;
 	}
 
 	private sealed class FFIMethodInfo(MethodInfo mInfo) : FFIMethodBase(mInfo)
 	{
 		private readonly Type _returnType = mInfo.ReturnParameter.ParameterType;
 
-		protected override int PushReturnValue(ILuaState lua, object o) =>
+		protected override int PushReturnValue(LuaState lua, object o) =>
 			LuaStackUtil.PushRawValue(lua, o, _returnType);
 	}
 
 	private sealed class FFIConstructorInfo(
 		ConstructorInfo cInfo) : FFIMethodBase(cInfo)
 	{
-		protected override int PushReturnValue(ILuaState lua, object o)
+		protected override int PushReturnValue(LuaState lua, object o)
 		{
 			lua.PushLightUserData(o);
 			return 1;

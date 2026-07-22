@@ -6,220 +6,217 @@ namespace CSLua.Extensions;
 
 public static class LuaExtensions
 {
-    public static int PopInteger(this ILuaState L)
+    extension(LuaState L)
     {
-        var i = L.ToInteger(-1);
-        L.Pop(1);
-        return i;
-    }
-	
-    public static long PopInt64(this ILuaState L)
-    {
-        var i = L.ToInt64(-1);
-        L.Pop(1);
-        return i;
-    }
-	
-    public static double PopNumber(this ILuaState L)
-    {
-        var i = L.ToNumber(-1);
-        L.Pop(1);
-        return i;
-    }
-
-    public static bool? PopBool(this ILuaState L)
-    {
-        var i = L.ToBoolean(-1);
-        L.Pop(1);
-        return i;
-    }
-
-    public static string? PopString(this ILuaState L)
-    {
-        var i = L.ToString(-1);
-        if (i != null) L.Pop(1);
-        return i;
-    }
-    
-    public static LuaTable PopTable(this ILuaState L)
-    {
-        var i = (LuaTable)L.ToObject(-1);
-        L.Pop(1);
-        return i;
-    }
-
-    public static object? PopUserData(this ILuaState L)
-    {
-        var i = L.ToUserData(-1);
-        if (i != null) L.Pop(1);
-        return i;
-    }
-    
-    public static ILuaState? PopThread(this ILuaState L)
-    {
-        var t = L.ToThread(-1);
-        if (t != null) L.Pop(1);
-        return t;
-    }
-    
-    public static LuaClosure? PopLuaClosure(this ILuaState L)
-    {
-        var t = L.ToLuaClosure(-1);
-        if (t != null) L.Pop(1);
-        return t;
-    }
-    
-    public static void SetGlobalInteger(this ILuaState L, string name, int i)
-    {
-        L.PushInteger(i);
-        L.SetGlobal(name);
-    }
-
-    public static int? GetGlobalInteger(this ILuaState L, string name)
-    {
-        L.GetGlobal(name);
-        return L.PopInteger();
-    }
-	
-    public static void SetGlobalNumber(this ILuaState L, string name, double i)
-    {
-        L.PushNumber(i);
-        L.SetGlobal(name);
-    }
-
-    public static double GetGlobalNumber(this ILuaState L, string name)
-    {
-        L.GetGlobal(name);
-        return L.PopNumber();
-    }
-    
-    public static bool? GetGlobalBool(this ILuaState L, string name)
-    {
-        L.GetGlobal(name);
-        return L.PopBool();
-    }
-    
-    public static bool? TryGetBool(this ILuaState L, int index) => 
-        !L.IsBool(index) ? null : L.ToBoolean(-1);
-
-    public static bool? TryPopBool(this ILuaState L)
-    {
-        var r = TryGetBool(L, -1);
-        if (r.HasValue) L.Pop(1);
-        return r;
-    }
-    
-    public static double? TryGetNumber(this ILuaState L, int index)
-    {
-        return !L.IsNumber(index) ? null : L.ToNumber(-1);
-    }
-    
-    public static double? TryPopNumber(this ILuaState L)
-    {
-        var r = TryGetNumber(L, -1);
-        if (r.HasValue) L.Pop(1);
-        return r;
-    }
-
-    public static bool PrintAnyError(this ILuaState L) => 
-        PrintAnyError(L, L.Status);
-    
-    public static string PopErrorMsg(this ILuaState L)
-    {
-        var err = L.ToStringX(-1);
-        L.Pop(-1);
-        return err;
-    }
-
-    public static bool PrintAnyError(this ILuaState L, ThreadStatus status)
-    {
-        if (status != ThreadStatus.LUA_OK)
+        public int PopInteger()
         {
-            PrintError(L);
+            var i = L.ToInteger(-1);
+            L.Pop(1);
+            return i;
+        }
+
+        public long PopInt64()
+        {
+            var i = L.ToInt64(-1);
+            L.Pop(1);
+            return i;
+        }
+
+        public double PopNumber()
+        {
+            var i = L.ToNumber(-1);
+            L.Pop(1);
+            return i;
+        }
+
+        public bool? PopBool()
+        {
+            var i = L.ToBoolean(-1);
+            L.Pop(1);
+            return i;
+        }
+
+        public string? PopString()
+        {
+            var i = L.ToString(-1);
+            if (i != null) L.Pop(1);
+            return i;
+        }
+
+        public LuaTable PopTable()
+        {
+            var i = (LuaTable)L.ToObject(-1)!;
+            L.Pop(1);
+            return i;
+        }
+
+        public object? PopUserData()
+        {
+            var i = L.ToUserData(-1);
+            if (i != null) L.Pop(1);
+            return i;
+        }
+
+        public LuaState? PopThread()
+        {
+            var t = L.ToThread(-1);
+            if (t != null) L.Pop(1);
+            return t;
+        }
+
+        public LuaClosure? PopLuaClosure()
+        {
+            var t = L.ToLuaClosure(-1);
+            if (t != null) L.Pop(1);
+            return t;
+        }
+
+        public void SetGlobalInteger(string name, int i)
+        {
+            L.PushInteger(i);
+            L.SetGlobal(name);
+        }
+
+        public int? GetGlobalInteger(string name)
+        {
+            L.GetGlobal(name);
+            return L.PopInteger();
+        }
+
+        public void SetGlobalNumber(string name, double i)
+        {
+            L.PushNumber(i);
+            L.SetGlobal(name);
+        }
+
+        public double GetGlobalNumber(string name)
+        {
+            L.GetGlobal(name);
+            return L.PopNumber();
+        }
+
+        public bool? GetGlobalBool(string name)
+        {
+            L.GetGlobal(name);
+            return L.PopBool();
+        }
+
+        public bool? TryGetBool(int index) => 
+            !L.IsBool(index) ? null : L.ToBoolean(-1);
+
+        public bool? TryPopBool()
+        {
+            var r = L.TryGetBool(-1);
+            if (r.HasValue) L.Pop(1);
+            return r;
+        }
+
+        public double? TryGetNumber(int index)
+        {
+            return !L.IsNumber(index) ? null : L.ToNumber(-1);
+        }
+
+        public double? TryPopNumber()
+        {
+            var r = L.TryGetNumber(-1);
+            if (r.HasValue) L.Pop(1);
+            return r;
+        }
+
+        public bool PrintAnyError() => L.PrintAnyError(L.Status);
+
+        public string PopErrorMsg()
+        {
+            var err = L.ToStringX(-1);
+            L.Pop(-1);
+            return err;
+        }
+
+        public bool PrintAnyError(ThreadStatus status)
+        {
+            if (status != ThreadStatus.LUA_OK)
+            {
+                L.PrintError();
+                return true;
+            }
+
+            return false;
+        }
+
+        public void PrintError()
+        {
+            var err = L.PopErrorMsg();
+            Console.WriteLine("Error!: " + err);
+        }
+
+        public void RegisterFunction(string name, Lua.CsDelegate callBack)
+        {
+            L.PushCsDelegate(callBack);
+            L.SetGlobal(name);
+        }
+
+        public void DeleteGlobal(string name)
+        {
+            L.GetGlobal(name);
+            L.PushNil();
+            L.SetGlobal(name);
+            L.Pop(-1);
+        }
+
+        public void DeleteField(string name, string field)
+        {
+            L.GetGlobal(name);
+            L.PushNil();
+            L.SetField(-2, field);
+            L.Pop(-1);
+        }
+
+        private void EvalX(string s, BaseClosure? errorHandler = null)
+        {
+            ThreadStatus status;
+		
+            if (errorHandler == null)
+                status = L.DoString(s);
+
+            else
+            {
+                L.PushClosure(errorHandler);
+                var errIndex = L.GetTop();
+                status = L.LoadString(s);
+
+                if (status == ThreadStatus.LUA_OK) 
+                    status = L.PCall(0, LuaDef.LUA_MULTRET, errIndex);
+            }
+		
+            if (status == ThreadStatus.LUA_OK) return;
+
+            var msg = L.ToString(-1)!;
+            L.Pop(1);
+            throw new LuaRuntimeException(status, msg);
+        }
+
+        public void Eval(string s, BaseClosure? onError = null) =>
+            L.EvalX(s, onError);
+
+        public void Eval(string s, Lua.CsDelegate onError) =>
+            L.EvalX(s, new CsClosure(onError));
+
+        private void PushClosure(BaseClosure c)
+        {
+            if (c is LuaClosure closure) L.PushLuaClosure(closure);
+            else L.PushCsClosure((CsClosure)c);
+        }
+
+        public bool TestStack(ReadOnlySpan<LuaType> args)
+        {
+            if (L.GetTop() != args.Length) return false;
+            var i = 1;
+            foreach (var arg in args)
+            {
+                if (L.Type(i++) != arg) return false;
+            }
+
             return true;
         }
-
-        return false;
-    }
-    
-    public static void PrintError(this ILuaState L)
-    {
-        var err = PopErrorMsg(L);
-        Console.WriteLine("Error!: " + err);
-    }
-
-    public static void RegisterFunction(
-        this ILua L, string name, CsDelegate callBack)
-    {
-        L.PushCsDelegate(callBack);
-        L.SetGlobal(name);
-    }
-
-    public static void DeleteGlobal(this ILua L, string name)
-    {
-        L.GetGlobal(name);
-        L.PushNil();
-        L.SetGlobal(name);
-        L.Pop(-1);
-    }
-    
-    public static void DeleteField(this ILua L, string name, string field)
-    {
-        L.GetGlobal(name);
-        L.PushNil();
-        L.SetField(-2, field);
-        L.Pop(-1);
-    }
-    
-    
-    private static void EvalX(
-        this ILuaState L, string s, BaseClosure? errorHandler = null)
-    {
-        ThreadStatus status;
-		
-        if (errorHandler == null)
-            status = L.DoString(s);
-
-        else
-        {
-            L.PushClosure(errorHandler);
-            var errIndex = L.GetTop();
-            status = L.LoadString(s);
-
-            if (status == ThreadStatus.LUA_OK) 
-                status = L.PCall(0, LuaDef.LUA_MULTRET, errIndex);
-        }
-		
-        if (status == ThreadStatus.LUA_OK) return;
-
-        var msg = L.ToString(-1)!;
-        L.Pop(1);
-        throw new LuaRuntimeException(status, msg);
-    }
-    
-    public static void Eval(
-            this ILuaState L, string s, BaseClosure? onError = null) =>
-        L.EvalX(s, onError);
-	
-    public static void Eval(
-            this ILuaState L, string s, CsDelegate onError) =>
-        L.EvalX(s, new CsClosure(onError));
-    
-    private static void PushClosure(this ILua L, BaseClosure c)
-    {
-        if (c is LuaClosure closure) L.PushLuaClosure(closure);
-        else L.PushCsClosure((CsClosure)c);
-    }
-    
-    public static bool TestStack(this ILua L, ReadOnlySpan<LuaType> args)
-    {
-        if (L.GetTop() != args.Length) return false;
-        var i = 1;
-        foreach (var arg in args)
-        {
-            if (L.Type(i++) != arg) return false;
-        }
-
-        return true;
     }
 }

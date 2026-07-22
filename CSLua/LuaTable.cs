@@ -182,7 +182,7 @@ public sealed class LuaTable
 		Set(new StkId(ref k), new StkId(ref v));
 	}
 
-	public void Set(string key, CsDelegate val) =>
+	public void Set(string key, Lua.CsDelegate val) =>
 		Set(key, new CsClosure(val));
 
 	public void Set(string key, CsClosure val)

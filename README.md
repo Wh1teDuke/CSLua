@@ -23,7 +23,7 @@ public void Test()
     Assert.Equal(1, b);
 }
 
-private static int FromCS(ILuaState L)
+private static int FromCS(LuaState L)
 {
     var a = L.ToInteger(1);
     var b = L.ToInteger(2);
