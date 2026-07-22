@@ -9,12 +9,12 @@ public static class LuaConf
 
 #pragma warning disable 0429
 	public const int LUAI_MAXSTACK = (LUAI_BITSINT >= 32)
-			? 1000000
-			: 15000;
+			? 1_000_000
+			: 15_000;
 #pragma warning restore 0429
 
 	// reserve some space for error handling
-	public const int LUAI_FIRSTPSEUDOIDX = (-LUAI_MAXSTACK - 1000);
+	public const int LUAI_FIRSTPSEUDOIDX = (-LUAI_MAXSTACK - 1_000);
 
 	public const string LUA_SIGNATURE = "\eLua";
 	public static string LUA_DIRSEP => Path.DirectorySeparatorChar.ToString();
@@ -55,12 +55,6 @@ public static class LuaDef
 	public const string LUA_LOADED = "_LOADED";
 
 	public const int BASE_CI_SIZE = 8;
-}
-
-public static class LuaConstants
-{
-	public const int LUA_NOREF = -2;
-	public const int LUA_REFNIL = -1;
 }
 
 public enum ClosureType: byte { LUA, CSHARP }

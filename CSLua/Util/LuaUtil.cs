@@ -101,17 +101,12 @@ public static class LuaUtil
 		return false;
 	}
 
-	private static bool IsXDigit(char c)
-	{
-		if (char.IsDigit(c))
-			return true;
-
-		return c switch
+	private static bool IsXDigit(char c) =>
+		char.IsDigit(c) || c switch
 		{
 			>= 'a' and <= 'f' or >= 'A' and <= 'F' => true,
 			_ => false
 		};
-	}
 
 	private static double ReadHexa(ReadOnlySpan<char> s, ref int pos, double r, out int count)
 	{

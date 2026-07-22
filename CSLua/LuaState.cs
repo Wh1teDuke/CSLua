@@ -320,7 +320,7 @@ public sealed class LuaState
 		return mt != null && mt.TryGetStr(GetTagMethodName(tm), out val);
 	}
 	
-	#region Luacs
+	#region Lua.cs
 	internal LuaState NewThread()
 	{
 		var newLua = new LuaState(G);
@@ -411,10 +411,9 @@ public sealed class LuaState
 		if (!below.V.IsFunction() || !below.V.IsLuaClosure())
 			return DumpStatus.ERROR;
 
-		var o = below.V.AsLuaClosure();
-		if (o == null) return DumpStatus.ERROR;
-
-		return DumpState.Dump(o.Proto, writeFunc, false);
+		return below.V.AsLuaClosure() is not {} o
+			? DumpStatus.ERROR 
+			: DumpState.Dump(o.Proto, writeFunc, false);
 	}
 
 	internal ThreadStatus GetContext(out int context)
@@ -2474,7 +2473,7 @@ public sealed class LuaState
 
 	public void OpenLibs(bool global = true)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			LuaBaseLib.NameFuncPair,
 			//
@@ -2499,7 +2498,7 @@ public sealed class LuaState
 	
 	public void OpenSafeLibs(bool global = true)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			LuaBaseLib.SafeNameFuncPair,
 			//
@@ -2634,7 +2633,7 @@ public sealed class LuaState
 		if (IsNil(-1))
 		{
 			Pop(1); // Remove from stack
-			return LuaConstants.LUA_REFNIL; // `nil' has a unique fixed reference
+			return Lua.Constants.LUA_REFNIL; // `nil' has a unique fixed reference
 		}
 
 		t = AbsIndex(t);
@@ -2664,9 +2663,9 @@ public sealed class LuaState
 	}
 	#endregion
 	#region LuaObject.cs
-	private static double Arith(LuaOp op, double v1, double v2)
-	{
-		return op switch
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static double Arith(LuaOp op, double v1, double v2) =>
+		op switch
 		{
 			LuaOp.LUA_OPADD => v1 + v2,
 			LuaOp.LUA_OPSUB => v1 - v2,
@@ -2677,7 +2676,6 @@ public sealed class LuaState
 			LuaOp.LUA_OPUNM => -v1,
 			_ => throw new NotImplementedException()
 		};
-	}
 
 	private static bool IsFalse(StkId v)
 	{
@@ -3757,9 +3755,9 @@ public sealed class LuaState
 		return false;
 	}
 
-	private static LuaOp TMS2OP(TMS op)
-	{
-		return op switch
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static LuaOp TMS2OP(TMS op) =>
+		op switch
 		{
 			TMS.TM_ADD => LuaOp.LUA_OPADD,
 			TMS.TM_SUB => LuaOp.LUA_OPSUB,
@@ -3770,7 +3768,6 @@ public sealed class LuaState
 			TMS.TM_MOD => LuaOp.LUA_OPMOD,
 			_ => throw new NotImplementedException(op.ToString())
 		};
-	}
 
 	private void CallTM(
 		StkId f, StkId p1, StkId p2, StkId p3, bool hasRes)

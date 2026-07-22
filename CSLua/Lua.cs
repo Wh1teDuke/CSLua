@@ -23,6 +23,12 @@ public static class Lua
 
 	internal delegate void PFuncDelegate<T>(ref T ud) where T: struct;
 	
+	public static class Constants
+	{
+		public const int LUA_NOREF = -2;
+		public const int LUA_REFNIL = -1;
+	}
+	
 	public enum Type
 	{
 		LUA_TNONE = -1,
