@@ -1,4 +1,4 @@
-name: Publish SpessaSharp NuGet
+name: Publish CSLua NuGet
 
 on: [workflow_dispatch]
 
