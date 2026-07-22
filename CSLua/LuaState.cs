@@ -50,7 +50,7 @@ public enum CallStatus
 	CIST_TAIL		= (1<<6),	/* call was tail called */
 }
 
-public sealed class CallInfo
+public sealed class CallInfo // TODO Struct
 {
 	public int Index;
 
@@ -255,9 +255,8 @@ public sealed class LuaState
 		TM_CALL, TM_ITER,
 	}
 
-	private static string GetTagMethodName(TMS tm)
-	{
-		return tm switch
+	private static string GetTagMethodName(TMS tm) =>
+		tm switch
 		{
 			TMS.TM_INDEX => "__index",
 			TMS.TM_NEWINDEX => "__newindex",
@@ -279,7 +278,6 @@ public sealed class LuaState
 			TMS.TM_ITER => "__iter",
 			_ => throw new ArgumentOutOfRangeException(nameof(tm), tm, null)
 		};
-	}
 
 	private static bool TryGetTM(LuaTable? mt, TMS tm, out StkId val)
 	{
@@ -1789,8 +1787,9 @@ public sealed class LuaState
 		TopIndex = oldTop + 1;
 	}
 
-	private ThreadStatus PCall<T>(Lua.PFuncDelegate<T> func, ref T ud, int oldTopIndex, int errFunc
-		) where T: struct
+	private ThreadStatus PCall<T>(
+		Lua.PFuncDelegate<T> func,
+		ref T ud, int oldTopIndex, int errFunc) where T: struct
 	{
 		var oldCIIndex = CI.Index;
 		var oldNumNonYieldable= NumNonYieldable;
@@ -2181,23 +2180,17 @@ public sealed class LuaState
 		return t is LuaType.LUA_TNONE or LuaType.LUA_TNIL ? def : f(n);
 	}
 
-	public int OptInt(int nArg, int def)
-	{
-		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+	public int OptInt(int nArg, int def) =>
+		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
 			def : CheckInteger(nArg);
-	}
 
-	public long OptInt64(int nArg, long def)
-	{
-		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+	public long OptInt64(int nArg, long def) =>
+		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
 			def : CheckInt64(nArg);
-	}
 
-	public bool OptBoolean(int nArg, bool def)
-	{
-		return Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
+	public bool OptBoolean(int nArg, bool def) =>
+		Type(nArg) is LuaType.LUA_TNONE or LuaType.LUA_TNIL ?
 			def : CheckBoolean(nArg);
-	}
 
 	public string? OptString(int nArg, string? def = null)
 	{
@@ -2275,7 +2268,7 @@ public sealed class LuaState
 
 	private void PushFuncName(Lua.Debug ar)
 	{
-		if (ar.NameWhat.Length > 0 && ar.NameWhat[0] != '\0') // Is there a name?
+		if (ar.NameWhat?.Length > 0 && ar.NameWhat[0] != '\0') // Is there a name?
 			PushString($"function '{ar.Name}'");
 		else if (ar.What.Length > 0 && ar.What[0] == 'm') // Main?
 			PushString("main chunk");
@@ -4422,19 +4415,24 @@ public sealed class LuaState
 	private void KName(LuaProto proto, int pc, int c, out string? name)
 	{
 		if (Instruction.ISK(c)) 
-		{ // is 'c' a constant
+		{ 
+			// is 'c' a constant
 			var val = proto.K[Instruction.INDEXK(c)];
 			if (val.IsString()) 
-			{ // literal constant?
+			{ 
+				// literal constant?
 				name = val.AsString();
 				return;
 			}
 			// else no reasonable name found
 		}
 		else 
-		{ // 'c' is a register
+		{ 
+			// 'c' is a register
 			var what = GetObjName(proto, pc, c, out name);
-			if (what == "constant") { // found a constant name
+			if (what == "constant") 
+			{ 
+				// found a constant name
 				return; // 'name' already filled
 			}
 			// else no reasonable name found
@@ -4515,14 +4513,16 @@ public sealed class LuaState
 
 		switch (op)
 		{
-			case OpCode.OP_MOVE: {
+			case OpCode.OP_MOVE: 
+			{
 				var b = ins.GETARG_B(); // move from 'b' to 'a'
 				if (b < ins.GETARG_A())
 					return GetObjName(proto, pc, b, out name);
 				break;
 			}
 			case OpCode.OP_GETTABUP:
-			case OpCode.OP_GETTABLE: {
+			case OpCode.OP_GETTABLE: 
+			{
 				var k = ins.GETARG_C();
 				var t = ins.GETARG_B();
 				var vn = (op == OpCode.OP_GETTABLE)
@@ -4532,13 +4532,15 @@ public sealed class LuaState
 				return (vn == LuaDef.LUA_ENV) ? "global" : "field";
 			}
 
-			case OpCode.OP_GETUPVAL: {
+			case OpCode.OP_GETUPVAL: 
+			{
 				name = UpValueName(proto, ins.GETARG_B());
 				return "upvalue";
 			}
 
 			case OpCode.OP_LOADK:
-			case OpCode.OP_LOADKX: {
+			case OpCode.OP_LOADKX: 
+			{
 				var b = (op == OpCode.OP_LOADK)
 					? ins.GETARG_Bx()
 					: proto.Code[pc + 1].GETARG_Ax();
@@ -4551,7 +4553,8 @@ public sealed class LuaState
 				break;
 			}
 
-			case OpCode.OP_SELF: {
+			case OpCode.OP_SELF: 
+			{
 				var k = ins.GETARG_C(); // key index
 				KName(proto, pc, k, out name);
 				return "method";

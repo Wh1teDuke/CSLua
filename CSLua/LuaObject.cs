@@ -75,13 +75,13 @@ public struct TValue : IEquatable<TValue>
 	public bool IsCsClosure() => OValue is CsClosure;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-
 	public ClosureType? GetClosureType()
 	{
 		if (!IsLuaClosure()) return null;
 		return IsLuaClosure()? ClosureType.LUA : ClosureType.CSHARP;
 	}
 	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public long AsInt64() =>
 		BitConverter.DoubleToInt64Bits(NValue);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,7 +137,7 @@ public struct TValue : IEquatable<TValue>
 	{
 		Type = LuaType.LUA_TINT64;
 		NValue = BitConverter.Int64BitsToDouble(v);
-		OValue = null!;
+		OValue = null;
 	}
 
 	public void SetString(string v) 
@@ -239,6 +239,9 @@ public readonly ref struct StkId(ref TValue v)
 		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";
 		return $"StkId - {LuaState.TypeName(V.Type)} - {detail}";
 	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(StkId v) => v.V;
 }
 
 public record struct LocVar(string VarName, int StartPc, int EndPc);
@@ -266,12 +269,15 @@ public sealed class LuaProto
 	public string? Name = null;
 	public string? RootName = null;
 
-	private LuaClosure? _pure;
-
 	public int GetFuncLine(int pc) => 
 		(0 <= pc && pc < LineInfo.Count) ? LineInfo[pc] : 0;
 
-	public LuaClosure Pure => _pure ??= new LuaClosure(this);
+	public readonly LuaClosure Pure;
+
+	public LuaProto()
+	{
+		Pure = new LuaClosure(this);
+	}
 }
 	
 public sealed class LuaUpValue
