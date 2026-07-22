@@ -1,6 +1,6 @@
 ![logo](cslua_logo.png "CSLua")
 
-Lua 5.2 implemented in pure C#. For more examples, check out the [`Test` folder](Test/).
+Lua 5.2 implemented in pure C#. Hard forked from [UniLua](https://github.com/xebecnan/UniLua). For more examples, see the [`Test` folder](Test/).
 ```cs
 public void Test()
 {
