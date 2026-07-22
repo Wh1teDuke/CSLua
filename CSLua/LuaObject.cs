@@ -85,6 +85,7 @@ public struct TValue : IEquatable<TValue>
 	public long AsInt64() =>
 		BitConverter.DoubleToInt64Bits(NValue);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// TODO AsBool/Int64 should return optional for consistency
 	public bool AsBool() => AsInt64() != BOOLEAN_FALSE;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public string? AsString() => OValue as string;

@@ -86,7 +86,7 @@ public static class LuaOSLib
 	private static int OS_Remove(LuaState lua)
 	{
 		lua.CheckType(1, Lua.Type.LUA_TSTRING);
-		var fileName = lua.ToString(1);
+		var fileName = lua.ToString(1)!;
 
 		try
 		{

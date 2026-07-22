@@ -28,8 +28,8 @@ public static class LuaEncLib
 
 	private static int ENC_Encode(LuaState lua)
 	{
-		var s = lua.ToString(1);
-		var e = lua.ToString(2);
+		var s = lua.ToString(1)!;
+		var e = lua.ToString(2)!;
 		if (e != EncUtf8)
 			throw new LuaException("Unsupported encoding:" + e);
 
@@ -42,8 +42,8 @@ public static class LuaEncLib
 
 	private static int ENC_Decode(LuaState lua)
 	{
-		var s = lua.ToString(1);
-		var e = lua.ToString(2);
+		var s = lua.ToString(1)!;
+		var e = lua.ToString(2)!;
 		if (e != EncUtf8)
 			throw new LuaException("unsupported encoding:" + e);
 

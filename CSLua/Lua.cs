@@ -12,11 +12,11 @@ public static class Lua
 		public bool			IsVarArg;
 		public int			NumParams;
 		public bool			IsTailCall;
-		public string		Source;
+		public string?		Source;
 		public int			LineDefined;
 		public int			LastLineDefined;
-		public string		What;
-		public string		ShortSrc;
+		public string?		What;
+		public string?		ShortSrc;
 	}
 
 	public delegate int CsDelegate(LuaState state);

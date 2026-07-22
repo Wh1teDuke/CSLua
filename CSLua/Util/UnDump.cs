@@ -108,7 +108,7 @@ public sealed class BinaryBytesReader(ILoadInfo loadinfo)
 	public string ReadString()
 	{
 		var n = ReadSizeT();
-		if (n == 0) return null;
+		if (n == 0) return "";// TODO not sure if this is right null;
 
 		var bytes = ReadBytes(n);
 

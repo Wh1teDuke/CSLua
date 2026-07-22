@@ -131,7 +131,7 @@ public static class LuaBaseLib
 
 	public static int B_DoFile(LuaState lua)
 	{
-		var filename = lua.OptString(1, null);
+		var filename = lua.OptString(1);
 		lua.SetTop(1);
 		if (lua.LoadFile(filename) != ThreadStatus.LUA_OK)
 			lua.Error();
@@ -174,8 +174,8 @@ public static class LuaBaseLib
 
 	public static int B_LoadFile(LuaState lua)
 	{
-		var fName = lua.OptString(1, null);
-		var mode = lua.OptString(2, null);
+		var fName = lua.OptString(1);
+		var mode = lua.OptString(2);
 		var env = (!lua.IsNone(3) ? 3 : 0); // 'env' index or 0 if no 'env'
 		var status = lua.LoadFileX(fName, mode);
 		return LoadAux(lua, status, env);

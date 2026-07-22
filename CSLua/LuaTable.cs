@@ -10,8 +10,8 @@ public sealed class LuaTable
 	public uint NoTagMethodFlags;
 
 	private readonly LuaState L;
-	private TValue[] _arrayPart = null!;
-	private HNode[] _hashPart = null!;
+	private TValue[] _arrayPart = null!; // InitLuaTable();
+	private HNode[] _hashPart = null!; // InitLuaTable();
 	private int _lastFree;
 	private int _arraySize;
 	private int _hashSize;

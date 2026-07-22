@@ -947,11 +947,8 @@ public sealed class LuaState
 
 	public bool Next(int index)
 	{
-		if (!Index2Addr(index, out var addr))
-			throw new LuaException("Table expected");
-
-		var tbl = addr.V.AsTable();
-		if (tbl == null)
+		if (!Index2Addr(index, out var addr) ||
+		    addr.V.AsTable() is not {} tbl)
 			throw new LuaException("Table expected");
 
 		var key = Ref(TopIndex - 1);
@@ -1083,11 +1080,12 @@ public sealed class LuaState
 		}
 	}
 
-	public Lua.Type Type(int index)
-	{
-		return !Index2Addr(index, out var addr) 
+	public Lua.Type Type(int index) =>
+		!Index2Addr(index, out var addr)
 			? Lua.Type.LUA_TNONE : addr.V.Type;
-	}
+
+	public string? AsString(int index) => 
+		!Index2Addr(index, out var addr) ? null : addr.V.AsString();
 
 	private static string ObjTypeName(StkId v) => 
 		Lua.TypeName(v.V.Type);
@@ -1380,10 +1378,10 @@ public sealed class LuaState
 
 	public LuaState GetThread(out int arg)
 	{
-		if (IsThread(1))
+		if (AsThread(1) is { } thread)
 		{
 			arg = 1;
-			return ToThread(1);
+			return thread;
 		}
 
 		arg = 0;
@@ -1531,7 +1529,10 @@ public sealed class LuaState
 	public bool IsThread(int index) =>
 		Index2Addr(index, out var addr) && addr.V.IsThread();
 
-	long ToInt64X(int index, out bool isNum)
+	public LuaState? AsThread(int index) => 
+		!Index2Addr(index, out var addr) ? null : addr.V.AsThread();
+
+	internal long ToInt64X(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr)) 
 		{
@@ -1643,8 +1644,7 @@ public sealed class LuaState
 		LuaUtil.Assert(func.V.IsCsClosure());
 
 		var clcs = func.V.AsCSClosure()!;
-		if (index > clcs.Upvals.Length)
-			return false;
+		if (index > clcs.Upvals.Length) return false;
 
 		addr = clcs.Ref(index - 1);
 		return true;
@@ -2072,10 +2072,8 @@ public sealed class LuaState
 	public void CheckStack(int size, string? msg)
 	{
 		// Keep some extra space to run error routines, if needed
-		if (!CheckStack(size + LuaDef.LUA_MINSTACK))
-		{
-			Error(msg != null ? $"stack overflow ({msg})" : "stack overflow");
-		}
+		if (CheckStack(size + LuaDef.LUA_MINSTACK)) return;
+		Error(msg != null ? $"stack overflow ({msg})" : "stack overflow");
 	}
 
 	public void CheckAny(int nArg)
@@ -2172,11 +2170,18 @@ public sealed class LuaState
 		Type(nArg) is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckBoolean(nArg);
 
-	public string? OptString(int nArg, string? def = null)
+	public string OptString(int nArg, string def)
 	{
 		var t = Type(nArg);
 		return t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
 			def : CheckString(nArg);
+	}
+	
+	public string? OptString(int nArg)
+	{
+		var t = Type(nArg);
+		return t is Lua.Type.LUA_TNONE or Lua.Type.LUA_TNIL ?
+			null : CheckString(nArg);
 	}
 
 	private int TypeError(int index, string typeName)
@@ -2191,6 +2196,7 @@ public sealed class LuaState
 
 	public void CheckType(int index, Lua.Type t)
 	{
+		// TODO CheckType that returns value too
 		if (Type(index) != t) TagError(index, t);
 	}
 
@@ -2250,9 +2256,9 @@ public sealed class LuaState
 	{
 		if (ar.NameWhat?.Length > 0 && ar.NameWhat[0] != '\0') // Is there a name?
 			PushString($"function '{ar.Name}'");
-		else if (ar.What.Length > 0 && ar.What[0] == 'm') // Main?
+		else if (ar.What?.Length > 0 && ar.What[0] == 'm') // Main?
 			PushString("main chunk");
-		else if (ar.What.Length > 0 && ar.What[0] == 'C')
+		else if (ar.What?.Length > 0 && ar.What[0] == 'C')
 		{
 			if (PushGlobalFuncName(ar))
 			{
@@ -2677,14 +2683,8 @@ public sealed class LuaState
 			_ => throw new NotImplementedException()
 		};
 
-	private static bool IsFalse(StkId v)
-	{
-		if (v.V.IsNil())
-			return true;
-		if (v.V.IsBoolean() && v.V.AsBool() == false)
-			return true;
-		return false;
-	}
+	private static bool IsFalse(StkId v) => 
+		v.V.IsNil() || v.V.IsBoolean() && !v.V.AsBool();
 
 	private static bool ToString(StkId o) => 
 		o.V.IsString() || ToStringX(o);

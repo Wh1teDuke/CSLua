@@ -732,8 +732,8 @@ public static class LuaStrLib
 
 	private static int GmatchAux(LuaState lua)
 	{
-		var src = lua.ToString(LuaState.UpValueIndex(1));
-		var pattern = lua.ToString(LuaState.UpValueIndex(2));
+		var src = lua.ToString(LuaState.UpValueIndex(1))!;
+		var pattern = lua.ToString(LuaState.UpValueIndex(2))!;
 
 		var ms = new MatchState(lua, src, pattern)
 		{
@@ -771,7 +771,7 @@ public static class LuaStrLib
 	private static void Add_S(MatchState ms, StringBuilder b, int s, int e) 
 	{
 		var news = ms.Lua.ToString(3);
-		for (var i = 0; i < news.Length; i++) 
+		for (var i = 0; i < news?.Length; i++) 
 		{
 			if (news[i] != L_ESC)
 				b.Append(news[i]);
@@ -797,21 +797,20 @@ public static class LuaStrLib
 		// ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 		switch (lua.Type(3)) {
 			case Lua.Type.LUA_TNUMBER:
-			case Lua.Type.LUA_TSTRING: {
+			case Lua.Type.LUA_TSTRING: 
 				Add_S(ms, b, s, e);
 				return;
-			}
-			case Lua.Type.LUA_TFUNCTION: {
+			case Lua.Type.LUA_TFUNCTION: 
+			{
 				lua.PushValue(3);
 				var n = PushCaptures(lua, ms, s, e);
 				lua.Call(n, 1);
 				break;
 			}
-			case Lua.Type.LUA_TTABLE: {
+			case Lua.Type.LUA_TTABLE: 
 				PushOneCapture(ms, 0, s, e);
 				lua.GetTable(3);
 				break;
-			}
 			default: break;
 		}
 		if (lua.ToBoolean(-1)==false) {  /* nil or false? */

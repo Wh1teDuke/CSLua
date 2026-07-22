@@ -2,6 +2,8 @@
 #define API_CHECK
 #define LUA_ASSERT
 
+using System.Runtime.CompilerServices;
+
 namespace CSLua.Util;
 
 using DebugS = System.Diagnostics.Debug;
@@ -18,6 +20,7 @@ public static class LuaUtil
 	private static void Throw(params ReadOnlySpan<string?> msgs) => 
 		throw new LuaException(string.Join("", msgs));
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert(bool condition)
 	{
 #if LUA_ASSERT
@@ -26,6 +29,7 @@ public static class LuaUtil
 #endif
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert(bool condition, string message)
 	{
 #if LUA_ASSERT
@@ -44,6 +48,7 @@ public static class LuaUtil
 #endif
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void ApiCheck(bool condition, string message)
 	{
 #if LUA_ASSERT && API_CHECK
@@ -51,6 +56,7 @@ public static class LuaUtil
 #endif
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void ApiCheckNumElems(LuaState lua, int n)
 	{
 #if LUA_ASSERT
@@ -59,6 +65,7 @@ public static class LuaUtil
 #endif
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void InvalidIndex()
 	{
 #if LUA_ASSERT

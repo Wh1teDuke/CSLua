@@ -68,8 +68,8 @@ public static class LuaDebugLib
 				return 1;
 			}
 		}
-		else if (L.Type(arg + 1) == Lua.Type.LUA_TSTRING)
-			what = L.ToString(arg + 1);
+		else if (L.AsString(arg + 1) is {} str)
+			what = str;
 		else if (L.Type(arg + 1) == Lua.Type.LUA_TFUNCTION)
 		{
 			what = ">" + what;

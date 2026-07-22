@@ -89,9 +89,9 @@ public static class LuaCoroLib
 
 	private static int CO_Status(LuaState lua)
 	{
-		var co = (LuaState)lua.ToThread(1);
+		var co = lua.ToThread(1);
 		lua.ArgCheck(co != null, 1, "coroutine expected");
-		if ((LuaState)lua == co!)
+		if (lua == co)
 			lua.PushString("running");
 		// ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 		else switch (co!.Status)
@@ -119,7 +119,7 @@ public static class LuaCoroLib
 
 	private static int CO_AuxWrap(LuaState lua)
 	{
-		var co = lua.ToThread(LuaState.UpValueIndex(1));
+		var co = lua.ToThread(LuaState.UpValueIndex(1))!;
 		var r = AuxResume(lua, co, lua.GetTop());
 		if (r < 0)
 		{

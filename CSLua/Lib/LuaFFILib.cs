@@ -55,7 +55,7 @@ public static class LuaFFILib
 
 	private static int FFI_AddAssembly(LuaState lua)
 	{
-		var name = lua.ToString(1);
+		var name = lua.ToString(1)!;
 		try
 		{
 			var assembly = Assembly.Load(name);
@@ -76,7 +76,7 @@ public static class LuaFFILib
 
 	private static int FFI_Using(LuaState lua)
 	{
-		var name = lua.ToString(1);
+		var name = lua.ToString(1)!;
 		UsingList.Add(name);
 		return 0;
 	}
@@ -84,7 +84,7 @@ public static class LuaFFILib
 	// Return 'ReturnType', 'FuncName', 'ParameterTypes'
 	private static int FFI_ParseSignature(LuaState lua)
 	{
-		var signature = lua.ToString(1);
+		var signature = lua.ToString(1)!;
 		var result = FuncSignatureParser.Parse(signature);
 		if (result.ReturnType != null)
 			lua.PushString(result.ReturnType);
@@ -108,7 +108,7 @@ public static class LuaFFILib
 
 	private static int FFI_GetType(LuaState lua)
 	{
-		var typename = lua.ToString(1);
+		var typename = lua.ToString(1)!;
 		var t = GetType(typename);
 		if (t != null)
 			lua.PushLightUserData(t);
@@ -119,17 +119,17 @@ public static class LuaFFILib
 
 	private static int FFI_GetConstructor(LuaState lua)
 	{
-		var t = (Type)lua.ToUserData(1);
+		var t = (Type)lua.ToUserData(1)!;
 		var n = lua.RawLen(2);
 		var types = new Type[n];
 		for (var i = 0; i < n; ++i)
 		{
 			lua.RawGetI(2, i + 1);
-			types[i] = (Type)lua.ToUserData(-1);
+			types[i] = (Type)lua.ToUserData(-1)!;
 			lua.Pop(1);
 		}
 
-		var cInfo = t.GetConstructor(types);
+		var cInfo = t.GetConstructor(types)!;
 		var ffiMethod = new FFIConstructorInfo(cInfo);
 		lua.PushLightUserData(ffiMethod);
 		return 1;
@@ -137,14 +137,14 @@ public static class LuaFFILib
 
 	private static int GetMethodAux(LuaState lua, BindingFlags flags)
 	{
-		var t = (Type)lua.ToUserData(1);
-		var mName = lua.ToString(2);
+		var t = (Type)lua.ToUserData(1)!;
+		var mName = lua.ToString(2)!;
 		var n = lua.RawLen(3);
 		var types = new Type[n];
 		for (var i=0; i < n; ++i)
 		{
 			lua.RawGetI( 3, i+1 );
-			types[i] = (Type)lua.ToUserData(-1);
+			types[i] = (Type)lua.ToUserData(-1)!;
 			lua.Pop(1);
 		}
 		var minfo = t.GetMethod(mName,
@@ -180,8 +180,7 @@ public static class LuaFFILib
 
 	private static int FFI_CallMethod(LuaState lua)
 	{
-		var ffiMethod = (FFIMethodBase)lua.ToUserData(1);
-		if (ffiMethod != null)
+		if (lua.ToUserData(1) is FFIMethodBase ffiMethod)
 		{
 			try
 			{
@@ -205,7 +204,7 @@ public static class LuaFFILib
 	private static int FFI_GetField(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
-		var name = lua.ToString(2);
+		var name = lua.ToString(2)!;
 		var fInfo = t.GetField(name,
 			BindingFlags.Instance |
 			BindingFlags.Public);
@@ -238,7 +237,7 @@ public static class LuaFFILib
 	private static int FFI_GetProp(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
-		var name = lua.ToString(2);
+		var name = lua.ToString(2)!;
 		var pInfo = t.GetProperty(name,
 			BindingFlags.Instance |
 			BindingFlags.Public);
@@ -251,7 +250,7 @@ public static class LuaFFILib
 	private static int FFI_GetStaticProp(LuaState lua)
 	{
 		var t = (Type)lua.ToUserData(1)!;
-		var name = lua.ToString(2);
+		var name = lua.ToString(2)!;
 		var pinfo = t.GetProperty(name,
 			BindingFlags.Static |
 			BindingFlags.Public);
@@ -388,18 +387,17 @@ public static class LuaFFILib
 			}
 		}
 
-		public static object ToRawValue(LuaState lua, int index, Type t)
+		public static object? ToRawValue(LuaState lua, int index, Type t)
 		{
 			switch (t.FullName)
 			{
 				case "System.Boolean":
 					return lua.ToBoolean(index);
 
-				case "System.Char": {
+				case "System.Char":
+				{
 					var s = lua.ToString(index);
-					if (string.IsNullOrEmpty(s))
-						return null;
-					return s[0];
+					return string.IsNullOrEmpty(s) ? null : s[0];
 				}
 
 				case "System.Byte":
@@ -421,10 +419,10 @@ public static class LuaFFILib
 					return (uint)lua.ToNumber(index);
 
 				case "System.Int64":
-					return (long)lua.ToUserData(index);
+					return lua.ToInt64(index);
 
 				case "System.UInt64":
-					return (ulong)lua.ToUserData(index);
+					return (ulong)lua.ToInt64(index);
 
 				case "System.Single":
 					return (float)lua.ToNumber(index);
@@ -433,17 +431,16 @@ public static class LuaFFILib
 					return lua.ToNumber(index);
 
 				case "System.Decimal":
-					return (decimal)lua.ToUserData(index);
+					return (decimal)lua.ToUserData(index)!;
 
 				case "System.String":
-					return lua.ToString(index);
+					return lua.ToString(index)!;
 
 				case "System.Object":
-					return lua.ToUserData(index);
+					return lua.ToUserData(index)!;
 
-				default: {
-					return lua.ToUserData(index);
-				}
+				default: 
+					return lua.ToUserData(index)!;
 			}
 		}
 	}
@@ -471,10 +468,10 @@ public static class LuaFFILib
 			{
 				var index = firstParamPos + i;
 				var paramType = _parameterTypes[i];
-				parameters[i] = LuaStackUtil.ToRawValue(lua, index, paramType);
+				parameters[i] = LuaStackUtil.ToRawValue(lua, index, paramType)!;
 			}
 
-			var r = _method.Invoke(inst, parameters);
+			var r = _method.Invoke(inst, parameters)!;
 			return PushReturnValue(lua, r);
 		}
 
@@ -509,7 +506,7 @@ public static class LuaFFILib
 //////////////////////////////////////////////////////////////////////
 	private sealed class FuncSignature
 	{
-		public string FuncName;
+		public string FuncName = "";
 		public string? ReturnType;
 		public string[]? ParameterTypes;
 	}
