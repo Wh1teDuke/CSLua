@@ -224,7 +224,7 @@ public sealed class LuaTable
 
 		var n = GetHashNode(key);
 		// Check whether 'key' is somewhere in the chain
-		for (;;) 
+		while (true)
 		{
 			if (L.RawEqualObj(n!.PtrKey, key))
 				return _arraySize + n.Index;

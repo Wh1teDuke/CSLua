@@ -447,7 +447,7 @@ public sealed class LLex
 			SaveAndNext();
 		}
 
-		for (;;)
+		while (true)
 		{
 			if (_current == expo[0] || _current == expo[1])
 			{

@@ -23,7 +23,7 @@ public static class LuaExtensions
         }
 
         public double PopNumber()
-        {
+        { // TODO: Return double? for consistency
             var i = L.ToNumber(-1);
             L.Pop(1);
             return i;

@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -67,5 +66,4 @@
     <ItemGroup>
       <Folder Include="suite\" />
     </ItemGroup>
-
 </Project>

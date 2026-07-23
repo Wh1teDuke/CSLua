@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using CSLua.Util;
-using NotImplementedException = System.NotImplementedException;
+
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 // ReSharper disable InconsistentNaming
 
@@ -48,7 +48,7 @@ public readonly record struct Instruction(uint Val)
 			case OpMode.iAx:
 				return $"{op,-9} {MYK(ax)}";
 			default:
-				throw new NotImplementedException();
+				throw new Exception("Impossible");
 		}
 	}
 
@@ -761,6 +761,7 @@ public static class Coder
 		t.Kind = ExpKind.VINDEXED;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool HasJumps(ExpDesc e) => e.ExitTrue != e.ExitFalse;
 
 	private static int CodeLabel(FuncState fs, int a, int b, int jump)
@@ -976,11 +977,14 @@ public static class Coder
 
 	public static void SetReturns(FuncState fs, ExpDesc e, int nResults)
 	{
-		if (e.Kind == ExpKind.VCALL) { // expression is an open function call?
+		if (e.Kind == ExpKind.VCALL) 
+		{ 
+			// expression is an open function call?
 			var pi = fs.GetCode(e);
 			pi.Value = pi.Value.SETARG_C(nResults + 1);
 		}
-		else if (e.Kind == ExpKind.VVARARG) {
+		else if (e.Kind == ExpKind.VVARARG) 
+		{
 			var pi = fs.GetCode(e);
 			pi.Value = pi.Value.SETARG_B(nResults + 1).SETARG_A(fs.FreeReg);
 			ReserveRegs(fs, 1);
@@ -1031,7 +1035,7 @@ public static class Coder
 			}
 
 			default:
-				throw new NotImplementedException("invalid var kind to store");
+				throw new Exception("invalid var kind to store");
 		}
 		FreeExp(fs, e);
 	}

@@ -255,6 +255,7 @@ public sealed class LuaState
 		TM_CALL, TM_ITER,
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static string GetTagMethodName(TMS tm) =>
 		tm switch
 		{
@@ -333,8 +334,8 @@ public sealed class LuaState
 		return newLua;
 	}
 
-	private readonly record struct LoadParameter(
-		LuaState L, ILoadInfo LoadInfo, string? Name, string? Mode);
+	private readonly record struct LoadParameter<T>(
+		LuaState L, T LoadInfo, string? Name, string? Mode) where T: ILoadInfo;
 
 	private void CheckMode(string? given, string expected)
 	{
@@ -346,7 +347,7 @@ public sealed class LuaState
 		}
 	}
 
-	private static void Load(ref LoadParameter param)
+	private static void Load<T>(ref LoadParameter<T> param) where T: ILoadInfo
 	{
 		var L = param.L;
 
@@ -386,7 +387,7 @@ public sealed class LuaState
 		T loadInfo, string? name = null, string? mode = null
 		) where T: struct, ILoadInfo
 	{
-		var param  = new LoadParameter(this, loadInfo, name, mode);
+		var param  = new LoadParameter<T>(this, loadInfo, name, mode);
 		var status = PCall(Load, ref param, TopIndex, ErrFunc);
 		if (status != ThreadStatus.LUA_OK) return status;
 

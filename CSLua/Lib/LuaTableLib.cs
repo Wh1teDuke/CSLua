@@ -233,7 +233,7 @@ public static class LuaTableLib
 			/* a[l] <= P == a[u-1] <= a[u], only need to sort from l+1 to u-2 */
 			i = l;
 			var j = u - 1;
-			for (;;) 
+			while (true) 
 			{  /* invariant: a[l..i] <= P <= a[j..u] */
 				/* repeat ++i until a[i] >= P */
 				lua.RawGetI(1, ++i);

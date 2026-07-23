@@ -84,7 +84,7 @@ public enum BinOpr
 
 public enum UnOpr { MINUS, NOT, LEN, NOUNOPR, }
 
-public sealed class ExpDesc
+public sealed class ExpDesc // TODO struct
 {
 	public ExpKind Kind;
 
@@ -128,7 +128,7 @@ public record struct LabelDesc(
 
 public sealed class LHSAssign
 {
-	public LHSAssign? 	Prev, Next;
+	public LHSAssign? Prev, Next;
 	public readonly ExpDesc	Exp = new();
 }
 
@@ -200,6 +200,7 @@ public sealed class Parser
 		fs.Lexer = _lexer;
 		fs.Prev = _curFunc;
 		
+		// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 		if (_curFunc != null)
 			fs.Proto.Parent = _curFunc.Proto;
 
@@ -243,15 +244,13 @@ public sealed class Parser
 		CloseFunc();
 	}
 
-	private bool BlockFollow(bool withUntil)
-	{
-		return _lexer.Token.TokenType switch
+	private bool BlockFollow(bool withUntil) =>
+		_lexer.Token.TokenType switch
 		{
 			TK.ELSE or TK.ELSEIF or TK.END or TK.EOS => true,
 			TK.UNTIL => withUntil,
 			_ => false
 		};
-	}
 
 	private bool TestNext(int tokenType)
 	{
@@ -524,20 +523,17 @@ public sealed class Parser
 			UndefGoto(_pendingGotos[block.FirstGoto]); // error
 	}
 
-	private static UnOpr GetUnOpr(int op)
-	{
-		return op switch
+	private static UnOpr GetUnOpr(int op) =>
+		op switch
 		{
 			(int)TK.NOT => UnOpr.NOT,
 			'-' => UnOpr.MINUS,
 			'#' => UnOpr.LEN,
 			_ => UnOpr.NOUNOPR
 		};
-	}
 
-	private static BinOpr GetBinOpr(int op)
-	{
-		return op switch
+	private static BinOpr GetBinOpr(int op) =>
+		op switch
 		{
 			'+' => BinOpr.ADD,
 			'-' => BinOpr.SUB,
@@ -564,11 +560,9 @@ public sealed class Parser
 			(int)TK.CONCATEQ => BinOpr.CONCAT,
 			_ => BinOpr.NOBINOPR
 		};
-	}
 
-	private static int GetBinOprLeftPrior(BinOpr opr)
-	{
-		return opr switch
+	private static int GetBinOprLeftPrior(BinOpr opr) =>
+		opr switch
 		{
 			BinOpr.ADD => 6,
 			BinOpr.SUB => 6,
@@ -588,11 +582,9 @@ public sealed class Parser
 			BinOpr.NOBINOPR => throw new LuaParserException("GetBinOprLeftPrior(NOBINOPR)"),
 			_ => throw new LuaException("Unknown BinOpr: " + opr)
 		};
-	}
 
-	private static int GetBinOprRightPrior(BinOpr opr)
-	{
-		return opr switch
+	private static int GetBinOprRightPrior(BinOpr opr) =>
+		opr switch
 		{
 			BinOpr.ADD => 6,
 			BinOpr.SUB => 6,
@@ -612,7 +604,6 @@ public sealed class Parser
 			BinOpr.NOBINOPR => throw new LuaParserException("GetBinOprRightPrior(NOBINOPR)"),
 			_ => throw new LuaException("Unknown BinOpr: " + opr)
 		};
-	}
 
 	private const int UnaryPrior = 8;
 
@@ -732,7 +723,7 @@ public sealed class Parser
 		Coder.PatchToHere(fs, condExit);
 	}
 
-	// repeatstat -> REPEAT block UNTIL cond
+	// RepeatStat -> REPEAT block UNTIL cond
 	private void RepeatStat(int line)
 	{
 		var fs = _curFunc;
@@ -765,7 +756,7 @@ public sealed class Parser
 		return e.Info;
 	}
 
-	// forbody -> DO block
+	// ForBody -> DO block
 	private void ForBody(int t, int line, int nVars, bool isNum)
 	{
 		var fs = _curFunc;
@@ -1713,7 +1704,8 @@ public sealed class Parser
 		// is `parlist' not empty?
 		if (_lexer.Token.Val1 != ')')
 		{
-			do {
+			do 
+			{
 				// ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 				switch (_lexer.Token.TokenType)
 				{
@@ -1850,21 +1842,26 @@ public sealed class Parser
 		var fs = _curFunc;
 		var line = _lexer.LineNumber;
 		PrimaryExp(e);
-		for (;;)
+		while (true)
 		{
 			switch (_lexer.Token.Val1)
 			{
-				case '.': // fieldsel
+				case '.': 
+					// fieldsel
 					FieldSel(e);
 					break;
-				case '[': { // `[' exp1 `]'
+				case '[': 
+				{ 
+					// `[' exp1 `]'
 					var key = new ExpDesc();
 					Coder.Exp2AnyRegUp(fs, e);
 					YIndex(key);
 					Coder.Indexed(fs, e, key);
 					break;
 				}
-				case ':': { // `:' NAME funcargs
+				case ':': 
+				{ 
+					// `:' NAME funcargs
 					var key = new ExpDesc();
 					_lexer.Next();
 					CodeString(key, CheckName());
@@ -1874,7 +1871,8 @@ public sealed class Parser
 				}
 				case '(':
 				case (int)TK.STRING:
-				case '{': // funcargs
+				case '{': 
+					// funcargs
 					Coder.Exp2NextReg(_curFunc, e);
 					FuncArgs(e, line);
 					break;
