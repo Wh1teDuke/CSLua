@@ -246,7 +246,6 @@ public sealed class LuaState
 	public void DumpStack(int baseIndex, string tag = "") => 
 		LuaOutput.WriteLine(DumpStackToString(baseIndex, tag));
 	
-	
 	// grep `NoTagMethodFlags' if num of TMS >= 32
 	private enum TMS
 	{
@@ -259,24 +258,24 @@ public sealed class LuaState
 	private static string GetTagMethodName(TMS tm) =>
 		tm switch
 		{
-			TMS.TM_INDEX => "__index",
-			TMS.TM_NEWINDEX => "__newindex",
-			TMS.TM_GC => "__gc",
-			TMS.TM_MODE => "__mode",
-			TMS.TM_LEN => "__len",
-			TMS.TM_EQ => "__eq",
-			TMS.TM_ADD => "__add",
-			TMS.TM_SUB => "__sub",
-			TMS.TM_MUL => "__mul",
-			TMS.TM_DIV => "__div",
-			TMS.TM_MOD => "__mod",
-			TMS.TM_POW => "__pow",
-			TMS.TM_UNM => "__unm",
-			TMS.TM_LT => "__lt",
-			TMS.TM_LE => "__le",
-			TMS.TM_CONCAT => "__concat",
-			TMS.TM_CALL => "__call",
-			TMS.TM_ITER => "__iter",
+			TMS.TM_INDEX =>		"__index",
+			TMS.TM_NEWINDEX =>	"__newindex",
+			TMS.TM_GC =>		"__gc",
+			TMS.TM_MODE =>		"__mode",
+			TMS.TM_LEN =>		"__len",
+			TMS.TM_EQ =>		"__eq",
+			TMS.TM_ADD =>		"__add",
+			TMS.TM_SUB =>		"__sub",
+			TMS.TM_MUL =>		"__mul",
+			TMS.TM_DIV =>		"__div",
+			TMS.TM_MOD =>		"__mod",
+			TMS.TM_POW =>		"__pow",
+			TMS.TM_UNM =>		"__unm",
+			TMS.TM_LT =>		"__lt",
+			TMS.TM_LE =>		"__le",
+			TMS.TM_CONCAT =>	"__concat",
+			TMS.TM_CALL =>		"__call",
+			TMS.TM_ITER =>		"__iter",
 			_ => throw new ArgumentOutOfRangeException(nameof(tm), tm, null)
 		};
 
@@ -2759,7 +2758,7 @@ public sealed class LuaState
 			LuaOp.LUA_OPMOD => v1 - Math.Floor(v1 / v2) * v2,
 			LuaOp.LUA_OPPOW => Math.Pow(v1, v2),
 			LuaOp.LUA_OPUNM => -v1,
-			_ => throw new NotImplementedException()
+			_ => throw new Exception("Impossible"),
 		};
 
 	private static bool IsFalse(StkId v) => 
@@ -3017,9 +3016,9 @@ public sealed class LuaState
 					var rkb = env.RKB;
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
-						ra.V.SetDouble(rkb.V.NValue + rkc.V.NValue);
+						ra.SetDouble(rkb.V.NValue + rkc.V.NValue);
 					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
-						ra.V.SetInt64(rkb.V.AsInt64() + rkc.V.AsInt64());
+						ra.SetInt64(rkb.V.AsInt64() + rkc.V.AsInt64());
 					else
 						Arith(ra, rkb, rkc, TMS.TM_ADD);
 
@@ -3032,9 +3031,9 @@ public sealed class LuaState
 					var rkb = env.RKB;
 					var rkc = env.RKC;
 					if (rkb.V.IsNumber() && rkc.V.IsNumber())
-						ra.V.SetDouble(rkb.V.NValue - rkc.V.NValue);
+						ra.SetDouble(rkb.V.NValue - rkc.V.NValue);
 					else if (rkb.V.IsInt64() && rkc.V.IsInt64())
-						ra.V.SetInt64(rkb.V.AsInt64() - rkc.V.AsInt64());
+						ra.SetInt64(rkb.V.AsInt64() - rkc.V.AsInt64());
 					else
 						Arith(ra, rkb, rkc, TMS.TM_SUB);
 					env.Base = ci.BaseIndex;
@@ -3736,45 +3735,73 @@ public sealed class LuaState
 	private void ConcatAux(int total)
 	{
 		LuaUtil.Assert(total >= 2);
-		var sb = new StringBuilder();
+		var sb = new StringBuilder(64);
 
 		do
 		{
 			var n = 2;
 			var lhs = Ref(TopIndex - 2);
 			var rhs = Ref(TopIndex - 1);
-			if (!(lhs.V.IsString() || lhs.V.IsNumber()) || !ToString(rhs))
+			if (!ValidConcatType(lhs.V.Type) || !ToString(rhs))
 			{
 				if (!CallBinTM(lhs, rhs, lhs, TMS.TM_CONCAT))
 					ConcatError(lhs, rhs);
 			}
-			else if (rhs.V.AsString()!.Length == 0)
+			else if (rhs.V.AsString()?.Length == 0)
 				ToString(lhs);
-			else if (lhs.V.IsString() && lhs.V.AsString()!.Length == 0)
+			else if (lhs.V.AsString()?.Length == 0)
 				lhs.V.CopyFrom(rhs);
 			else
 			{
-				sb.Clear();
-				n = 0;
+				// n starts at 2 because we already validated the top 2 items (lhs & rhs).
+				// Scan down the stack to find the total number of concatenable items.
 				for (; n < total; ++n)
 				{
 					var cur = Ref(TopIndex - (n + 1));
-
-					if (cur.V.IsString())
-						sb.Insert(0, cur.V.AsString());
-					else if (cur.V.IsNumber())
-						sb.Insert(0, cur.V.NValue);
-					else
-						break;
+					if (!ValidConcatType(cur.V.Type)) break;
 				}
 
-				var dest = Ref(TopIndex - n);
-				dest.V.SetString(sb.ToString());
+				sb.Clear();
+				var startIndex = TopIndex - n;
+
+				for (var i = 0; i < n; ++i)
+				{
+					var cur = Ref(startIndex + i);
+					switch (cur.V.Type)
+					{
+						// Patch: bool concat
+						case Lua.Type.LUA_TBOOLEAN:
+							sb.Append(cur.V.AsBool() ? "true" : "false");
+							break;
+						case Lua.Type.LUA_TSTRING:
+							sb.Append(cur.V.AsString());
+							break;
+						case Lua.Type.LUA_TINT64:
+							sb.Append(cur.V.AsInt64());
+							break;
+						case Lua.Type.LUA_TNUMBER:
+							sb.Append(cur.V.NValue);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+
+				var dest = Ref(startIndex);
+				dest.SetString(sb.ToString());
 			}
 			total -= n - 1;
 			TopIndex -= (n - 1);
 		} while (total > 1);
 	}
+	
+	// Patch: bool concat
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool ValidConcatType(Lua.Type t) => t is
+		Lua.Type.LUA_TSTRING or
+		Lua.Type.LUA_TNUMBER or
+		Lua.Type.LUA_TINT64 or
+		Lua.Type.LUA_TBOOLEAN;
 
 	private void DoJump(CallInfo ci, Instruction i, int e)
 	{
@@ -3831,6 +3858,13 @@ public sealed class LuaState
 				CultureInfo.InvariantCulture));
 			return true;	
 		}
+
+		// Patch: bool concat
+		if (v.V.IsBoolean())
+		{
+			v.SetString(v.V.AsBool() ? "true" : "false");
+			return true;
+		}
 		
 		return false;
 	}
@@ -3884,6 +3918,13 @@ public sealed class LuaState
 		return true;
 	}
 
+	/// <summary>
+	/// Arithmetic operation
+	/// </summary>
+	/// <param name="ra">Result dir</param>
+	/// <param name="rb">Addend 1</param>
+	/// <param name="rc">Addend 2</param>
+	/// <param name="op">Operation to perform</param>
 	private void Arith(StkId ra, StkId rb, StkId rc, TMS op)
 	{
 		var nb = TValue.Nil();
@@ -3898,7 +3939,16 @@ public sealed class LuaState
 		}
 		else if (!CallBinTM(rb, rc, ra, op))
 		{
-			ArithError(rb, rc);
+			// Patch: string concatenation with +
+			if (op == TMS.TM_ADD &&
+			    ((rb.V.IsString() && ValidConcatType(rc.V.Type)) ||
+			     (rc.V.IsString() && ValidConcatType(rb.V.Type))))
+			{
+				rNb.V.CopyFrom(rb); rNc.V.CopyFrom(rc);
+				ToStringX(rNb);		ToStringX(rNc);
+				ra.SetString(rNb.V.AsString() + rNc.V.AsString());
+			}
+			else ArithError(rb, rc);
 		}
 	}
 

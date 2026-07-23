@@ -3,6 +3,7 @@
 #define LUA_ASSERT
 
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace CSLua.Util;
 
@@ -11,6 +12,28 @@ using NumberStyles = System.Globalization.NumberStyles;
 
 public static class LuaUtil
 {
+	private static readonly ThreadLocal<StringBuilder> Sb =
+		new (() => new StringBuilder(128));
+	
+	internal static StringBuilder StrBuilder
+	{
+		get
+		{
+			var result = Sb.Value!;
+			return result.Length != 0 
+				? throw new Exception("LuaUtil.StrBuilder in use") 
+				: result;
+		}
+	}
+
+	internal static string StrBuilderToString()
+	{
+		var sb = Sb.Value!;
+		var result = sb.ToString();
+		sb.Clear();
+		return result;
+	}
+
 	public static readonly CsClosure TracebackErrHandler = new (lua =>
 	{
 		lua.Traceback(lua, lua.ToString(-1), 1);

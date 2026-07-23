@@ -115,14 +115,14 @@ public static class LuaStrLib
 	private static int Str_Char(LuaState lua)
 	{
 		var n = lua.GetTop();
-		var sb = new StringBuilder();
+		var sb = LuaUtil.StrBuilder;
 		for (var i = 1; i <= n; ++i)
 		{
 			var c = lua.CheckInteger(i);
 			lua.ArgCheck((char)c == c, i, "value out of range");
 			sb.Append((char)c);
 		}
-		lua.PushString(sb.ToString());
+		lua.PushString(LuaUtil.StrBuilderToString());
 		return 1;
 	}
 

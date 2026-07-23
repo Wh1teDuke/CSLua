@@ -73,13 +73,11 @@ public sealed class LuaTable
 	{
 		value = StkId.Nil;
 		var h = key.GetHashCode();
-		for (var node = GetHashNode(h); node != null; node = node.Next) 
+		for (var node = GetHashNode(h); node != null; node = node.Next)
 		{
-			if (node.Key.IsString() && node.Key.AsString() == key)
-			{
-				value = node.PtrVal;
-				return true;
-			}
+			if (!node.Key.IsString() || node.Key.AsString() != key) continue;
+			value = node.PtrVal;
+			return true;
 		}
 
 		return false;

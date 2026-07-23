@@ -17,11 +17,10 @@ public sealed class TestString
     [Fact]
     public void TestConcat2()
     {
-        // TODO: overload '+' for string concatenation
-        const int LoopCount = 5_000;
+        const int loopCount = 5_000;
         
         var str1 = "";
-        for (var i = 0; i < LoopCount; i++) str1 += i;
+        for (var i = 0; i < loopCount; i++) str1 += i;
         
         var L = Lua.New();
         L.DoString("""
@@ -35,7 +34,7 @@ public sealed class TestString
                    """);
         
         L.GetGlobal("AddLoop");
-        L.PushNumber(LoopCount);
+        L.PushNumber(loopCount);
         L.Call(1, 1);
         
         var str2 = L.Status != ThreadStatus.LUA_OK 

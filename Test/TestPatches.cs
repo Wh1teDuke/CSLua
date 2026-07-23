@@ -8,7 +8,7 @@ public sealed class TestPatches
     [Fact]
     public void TestNE()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("return false ~= true");
         Assert.Equal(Lua.Type.LUA_TBOOLEAN, L.Type(-1));
         Assert.True(L.PopBool());
@@ -20,7 +20,7 @@ public sealed class TestPatches
     [Fact]
     public void TestCompoundAssignment()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("local foo = 1; foo += 1; return foo;");
         Assert.Equal(2, L.PopInteger());
         
@@ -52,7 +52,7 @@ public sealed class TestPatches
     [Fact]
     public void TestNumUnderscore()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("return 1_000;");
         Assert.Equal(1000, L.PopInteger());
     }
@@ -60,7 +60,7 @@ public sealed class TestPatches
     [Fact]
     public void TestContinue1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                local foo = 0
                for i = 1, 10 do
@@ -76,7 +76,7 @@ public sealed class TestPatches
     [Fact]
     public void TestContinue2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
 
         var r1 = L.DoFile(Path.Join("lua", "continue_valid.lua"));
@@ -88,7 +88,7 @@ public sealed class TestPatches
     {
         // Self-iterating Objects
         // http://lua-users.org/files/wiki_insecure/power_patches/5.2/jh-lua-iter-5.2.patch
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
 
         L.Eval("""
@@ -100,5 +100,57 @@ public sealed class TestPatches
                 """);
         var i = L.PopInteger()!;
         Assert.Equal(10, i);
+    }
+
+    [Fact]
+    public void TestStringConcatPlus1()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("return 'foo' + 'bar'");
+        var foobar = L.PopString();
+        Assert.Equal("foobar", foobar);
+    }
+    
+    [Fact]
+    public void TestStringConcatPlus2()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("""
+               local res = 'foo'
+               res += 'bar'
+               return res
+               """);
+        var foobar = L.PopString();
+        Assert.Equal("foobar", foobar);
+    }
+    
+    [Fact]
+    public void TestStringConcatPlus3()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("return 'foo' + true");
+        var foobar = L.PopString();
+        Assert.Equal("footrue", foobar);
+    }
+
+    [Fact]
+    public void TestConcatBool1()
+    {
+        var L = Lua.New();
+        L.Eval("return 'foo' .. true");
+        var foobar = L.PopString();
+        Assert.Equal("footrue", foobar);
+    }
+    
+    [Fact]
+    public void TestConcatBool2()
+    {
+        var L = Lua.New();
+        L.Eval("return true .. false");
+        var foobar = L.PopString();
+        Assert.Equal("truefalse", foobar);
     }
 }

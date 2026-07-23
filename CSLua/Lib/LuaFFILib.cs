@@ -559,7 +559,7 @@ public static class LuaFFILib
 
 		private string TypeName()
 		{
-			var sb = new StringBuilder();
+			var sb = LuaUtil.StrBuilder;
 			while (Lexer.Token.TokenType == TK.NAME)
 			{
 				sb.Append(CheckName());
@@ -569,7 +569,7 @@ public static class LuaFFILib
 
 				sb.Append('.');
 			}
-			return sb.ToString();
+			return LuaUtil.StrBuilderToString();
 		}
 
 		private void ReturnType()

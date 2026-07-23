@@ -3,8 +3,6 @@ using CSLua.Util;
 
 namespace CSLua.Lib;
 
-using StringBuilder = System.Text.StringBuilder;
-
 public static class LuaBaseLib
 {
 	public const string LIB_NAME = "_G";
@@ -434,15 +432,10 @@ public static class LuaBaseLib
 
 	public static int B_Ipairs(LuaState lua) => 
 		PairsMeta(lua, "__ipairs", true, IPairsClosure);
-	
-	private static readonly ThreadLocal<StringBuilder> Sb =
-		new (() => new StringBuilder());
 
 	public static int B_Print(LuaState lua)
 	{
-		if (Sb.Value is not {} sb) throw new Exception("Impossible");
-		sb.Clear();
-		
+		var sb = LuaUtil.StrBuilder;
 		var n = lua.GetTop();
 		lua.GetGlobal("tostring");
 		for (var i = 1; i <= n; ++i)
@@ -461,6 +454,7 @@ public static class LuaBaseLib
 		foreach (var chunk in sb.GetChunks())
 			LuaOutput.Write(chunk.Span);
 		LuaOutput.WriteLine("");
+		sb.Clear();
 
 		return 0;
 	}

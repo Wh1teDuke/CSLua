@@ -34,9 +34,9 @@ public static class LuaEncLib
 			throw new LuaException("Unsupported encoding:" + e);
 
 		var bytes = Encoding.UTF8.GetBytes(s);
-		var sb = new StringBuilder();
+		var sb = LuaUtil.StrBuilder;
 		foreach (var t in bytes) sb.Append((char)t);
-		lua.PushString(sb.ToString());
+		lua.PushString(LuaUtil.StrBuilderToString());
 		return 1;
 	}
 

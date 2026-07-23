@@ -4,11 +4,12 @@
 #define LUA_COMPAT_LOADERS
 
 
+using System.Text;
+using CSLua.Util;
+
 // ReSharper disable InconsistentNaming
 
 namespace CSLua.Lib;
-
-using StringBuilder = System.Text.StringBuilder;
 
 public static class LuaPkgLib
 {
@@ -157,10 +158,11 @@ public static class LuaPkgLib
 				return filename; // return that file name
 			lua.PushString($"\n\tno file '{filename}'");
 			lua.Remove(-2); // remove file name
-			sb ??= new StringBuilder();
+			sb ??= LuaUtil.StrBuilder;
 			sb.Append(lua.ToString(-1)); // Concatenate error msg. entry
 		}
 		lua.PushString(sb?.ToString() ?? string.Empty); // Create error message
+		sb?.Clear();
 		return null;
 	}
 
