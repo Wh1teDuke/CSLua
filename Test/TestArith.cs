@@ -48,4 +48,53 @@ public sealed class TestArith
         Assert.False(r3);
         Assert.False(r4);
     }
+
+    [Fact]
+    public void Test3()
+    {
+        const int LoopCount = 50_000;
+        var sum1 = 0;
+        for (var i = 1; i <= LoopCount; i++) sum1 += i;
+        
+        var L = new LuaState();
+        L.DoString($"""
+                   local count = {LoopCount}
+                   local sum = 0
+                   for i = 1, count do
+                       sum = sum + i
+                   end
+                   return sum
+                   """);
+        var sum2 = L.PopNumber();
+        Assert.Equal(sum1, sum2);
+    }
+    
+    [Fact]
+    public void Test4()
+    {
+        const int LoopCount = 50_000;
+        var sum1 = 0;
+        for (var i = 1; i <= LoopCount; i++) sum1 += i;
+        
+        var L = new LuaState();
+        L.DoString("""
+                   function AddLoop(count)
+                       local sum = 0
+                       for i = 1, count do
+                           sum = sum + i
+                       end
+                       return sum
+                   end
+                   """);
+        
+        L.GetGlobal("AddLoop");
+        L.PushNumber(LoopCount);
+        L.Call(1, 1);
+        
+        var sum2 = L.Status != ThreadStatus.LUA_OK 
+            ? throw new Exception(L.PopErrorMsg()) 
+            : L.PopNumber();
+
+        Assert.Equal(sum1, sum2);
+    }
 }
