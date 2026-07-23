@@ -2589,7 +2589,6 @@ public sealed class LuaState
 			LuaCoroLib.NameFuncPair,
 			LuaDebugLib.SafeNameFuncPair,
 			LuaEncLib.NameFuncPair,
-			//LuaFFILib.NameFuncPair,
 			//LuaIOLib.NameFuncPair,
 			LuaMathLib.NameFuncPair,
 			LuaOSLib.SafeNameFuncPair,
