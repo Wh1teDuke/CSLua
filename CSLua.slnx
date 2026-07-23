@@ -2,4 +2,8 @@
   <Project Path="Benchmark/Benchmark.csproj" />
   <Project Path="CSLua/CSLua.csproj" />
   <Project Path="Test/Test.csproj" />
+  <!-- Github -->
+  <Folder Name="/.github/">
+    <File Path=".github\workflows\nuget.yaml" />
+  </Folder>
 </Solution>
