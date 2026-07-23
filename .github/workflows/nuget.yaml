@@ -16,13 +16,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
+      - name: Remove logo from README
+        run: sed -i '/!\[logo\]/d' README.md
+            
       - name: Pack
         run: dotnet pack CSLua/CSLua.csproj --configuration Release --output ./nupkg
 
