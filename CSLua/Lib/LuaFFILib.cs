@@ -63,7 +63,7 @@ public static class LuaFFILib
 		}
 		catch (Exception)
 		{
-			ULDebug.LogError("Assembly not found:" + name);
+			LuaOutput.ErrorWriteLine("Assembly not found:" + name);
 		}
 		return 0;
 	}

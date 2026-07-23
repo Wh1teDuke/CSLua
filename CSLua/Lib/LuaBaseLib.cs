@@ -345,6 +345,7 @@ public static class LuaBaseLib
 			var negative = false;
 			lua.ArgCheck(numBase is >= 2 and <= 36, 2,
 				"base out of range");
+
 			s = s.Trim(' ', '\f', '\n', '\r', '\t', '\v');
 			s += '\0'; // guard
 			var pos = 0;
@@ -416,8 +417,8 @@ public static class LuaBaseLib
 		return 1;
 	}
 
-	public static readonly CsClosure PairsClosure = new (B_Next);
-	public static readonly CsClosure IPairsClosure = new (IpairsAux);
+	private static readonly CsClosure PairsClosure = new (B_Next);
+	private static readonly CsClosure IPairsClosure = new (IpairsAux);
 
 	public static int B_Pairs(LuaState lua) => 
 		PairsMeta(lua, "__pairs", false, PairsClosure);
@@ -433,10 +434,15 @@ public static class LuaBaseLib
 
 	public static int B_Ipairs(LuaState lua) => 
 		PairsMeta(lua, "__ipairs", true, IPairsClosure);
+	
+	private static readonly ThreadLocal<StringBuilder> Sb =
+		new (() => new StringBuilder());
 
 	public static int B_Print(LuaState lua)
 	{
-		var sb = new StringBuilder();
+		if (Sb.Value is not {} sb) throw new Exception("Impossible");
+		sb.Clear();
+		
 		var n = lua.GetTop();
 		lua.GetGlobal("tostring");
 		for (var i = 1; i <= n; ++i)
@@ -451,7 +457,11 @@ public static class LuaBaseLib
 			sb.Append(s);
 			lua.Pop(1);
 		}
-		ULDebug.Log(sb.ToString());
+
+		foreach (var chunk in sb.GetChunks())
+			LuaOutput.Write(chunk.Span);
+		LuaOutput.WriteLine("");
+
 		return 0;
 	}
 

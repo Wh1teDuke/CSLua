@@ -2,23 +2,19 @@
 
 internal sealed class ByteStringBuilder
 {
-	private readonly LinkedList<byte[]> _bufList = [];
+	private readonly List<byte[]> _bufList = [];
 	private int	_totalLength;
 	
 	public override string ToString()
 	{
-		if (_totalLength <= 0)
-			return string.Empty;
+		if (_totalLength <= 0) return string.Empty;
 
 		var result = new char[_totalLength];
-		var node = _bufList.First;
 		var i = 0;
-		while (node != null)
-		{
-			var buf = node.Value;
-			foreach (var t in buf) result[i++] = (char)t;
-			node = node.Next;
-		}
+		
+		foreach (var t in _bufList.SelectMany(buf => buf))
+			result[i++] = (char)t;
+
 		return new string(result);
 	}
 
@@ -26,7 +22,7 @@ internal sealed class ByteStringBuilder
 	{
 		var buf = new byte[length];
 		Array.Copy(bytes, start, buf, 0, length);
-		_bufList.AddLast(buf);
+		_bufList.Add(buf);
 		_totalLength += length;
 		return this;
 	}

@@ -8,7 +8,7 @@ public sealed class TestTable
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                local t = {foo = "foo", bar = "bar"}
                return t;
@@ -28,7 +28,7 @@ public sealed class TestTable
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                 local t = {};
                 t.foo = "bar";
@@ -41,7 +41,7 @@ public sealed class TestTable
     [Fact]
     public void Test3()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                 local t = {};
                 t.foo = "bar";
@@ -54,7 +54,7 @@ public sealed class TestTable
     [Fact]
     public void Test4()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                 local t = {};
                 t.foo = {["bar"]="bar"};
@@ -72,7 +72,7 @@ public sealed class TestTable
     [Fact]
     public void TestBigTable1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                 local t = {};
                 for i = 1, 10_000 do
@@ -86,7 +86,24 @@ public sealed class TestTable
         {
             var optTVal1 = t.TryGet("key" + i);
             var val = Assert.NotNull(optTVal1);
-            Assert.Equal(i, (int)val.NValue);
+            Assert.Equal(i, val.NValue);
         }
+    }
+
+    [Fact]
+    public void TestIter1()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("""
+               local t = {}
+               for i = 1, 100 do
+                 t["key" .. i] = i
+               end
+               assert(table.length(t) == 100)
+               for i, k in pairs(t) do
+                 assert(k == t[i])
+               end
+               """);
     }
 }

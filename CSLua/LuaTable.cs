@@ -346,8 +346,8 @@ public sealed class LuaTable
 
 		public void CopyFrom(HNode o)
 		{
-			Key.SetObj(o.PtrKey);
-			Val.SetObj(o.PtrVal);
+			Key.CopyFrom(o.PtrKey);
+			Val.CopyFrom(o.PtrVal);
 			Next = o.Next;
 		}
 	}
@@ -573,22 +573,22 @@ public sealed class LuaTable
 
 	private void DumpParts()
 	{
-		ULDebug.Log("------------------ [DumpParts] enter -----------------------");
-		ULDebug.Log("<< Array Part >>");
+		LuaOutput.WriteLine("------------------ [DumpParts] enter -----------------------");
+		LuaOutput.WriteLine("<< Array Part >>");
 		for (var i = 0; i < _arraySize; ++i) 
 		{
 			var n = _arrayPart[i];
-			ULDebug.Log($"i:{i} val:{n}");
+			LuaOutput.WriteLine($"i:{i} val:{n}");
 		}
-		ULDebug.Log("<< Hash Part >>");
+		LuaOutput.WriteLine("<< Hash Part >>");
 		for (var i = 0; i < _hashSize; ++i) 
 		{
 			var n = _hashPart[i];
 			var next = n.Next?.Index ?? -1;
-			ULDebug.Log(
+			LuaOutput.WriteLine(
 				$"i:{i} index:{n.Index} key:{n.Key} val:{n.Val} next:{next}");
 		}
-		ULDebug.Log("++++++++++++++++++ [DumpParts] leave +++++++++++++++++++++++");
+		LuaOutput.WriteLine("++++++++++++++++++ [DumpParts] leave +++++++++++++++++++++++");
 	}
 	
 	private StkId NewTableKey(StkId k)
@@ -631,7 +631,7 @@ public sealed class LuaTable
 			}
 		}
 
-		node.Key.SetObj(k);
+		node.Key.CopyFrom(k);
 		LuaUtil.Assert(node.Val.IsNil());
 		return node.PtrVal;
 	}

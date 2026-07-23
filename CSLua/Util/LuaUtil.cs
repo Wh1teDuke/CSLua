@@ -75,6 +75,12 @@ public static class LuaUtil
 	
 	public static bool Str2Decimal(ReadOnlySpan<char> s, out double result)
 	{
+		// Fast path
+		if (!s.EndsWith('\0') &&
+		    double.TryParse(s, out result) &&
+		    !double.IsNaN(result))
+			return true;
+		
 		result = 0.0;
 
 		if (s.Contains('n') || s.Contains('N')) // reject `inf' and `nan'

@@ -10,7 +10,7 @@ public struct TValue : IEquatable<TValue>
 	private const long BOOLEAN_FALSE = 0;
 	private const long BOOLEAN_TRUE = 1;
 
-	public object? OValue;
+	public object? OValue; // TODO consider stringbuilder for strings
 	public double NValue;
 	public Lua.Type Type;
 
@@ -23,16 +23,13 @@ public struct TValue : IEquatable<TValue>
 		{
 			var hashCode = (int)Type;
 			hashCode = (hashCode * 397) ^ NValue.GetHashCode();
-			hashCode = (hashCode * 397) ^ OValue?.GetHashCode() ?? 0;
+			hashCode = (hashCode * 397) ^ (OValue?.GetHashCode() ?? 0);
 			return hashCode;
 		}
 	}
 
-	public bool Equals(TValue o)
-	{
-		if (Type != o.Type) return false;
-
-		return Type switch
+	public bool Equals(TValue o) =>
+		Type == o.Type && Type switch
 		{
 			Lua.Type.LUA_TNIL => true,
 			Lua.Type.LUA_TBOOLEAN => AsBool() == o.AsBool(),
@@ -42,7 +39,6 @@ public struct TValue : IEquatable<TValue>
 			Lua.Type.LUA_TSTRING => AsString() == o.AsString(),
 			_ => ReferenceEquals(OValue, o.OValue)
 		};
-	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator==(TValue lhs, TValue rhs) => lhs.Equals(rhs);
@@ -75,12 +71,12 @@ public struct TValue : IEquatable<TValue>
 	public bool IsCsClosure() => OValue is CsClosure;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ClosureType? GetClosureType()
-	{
-		if (!IsLuaClosure()) return null;
-		return IsLuaClosure()? ClosureType.LUA : ClosureType.CSHARP;
-	}
-	
+	public ClosureType? GetClosureType() => 
+		!IsLuaClosure() 
+			? null 
+			: IsLuaClosure() 
+				? ClosureType.LUA : ClosureType.CSHARP;
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public long AsInt64() =>
 		BitConverter.DoubleToInt64Bits(NValue);
@@ -116,7 +112,7 @@ public struct TValue : IEquatable<TValue>
 		OValue = null!;
 	}
 
-	public void SetObj(StkId v) 
+	public void CopyFrom(StkId v) 
 	{
 		Type = v.V.Type;
 		NValue = v.V.NValue; OValue = v.V.OValue;
@@ -247,8 +243,26 @@ public readonly ref struct StkId(ref TValue v)
 
 	public readonly ref TValue V = ref v;
 
-	public void Set(StkId other) => V.SetObj(other);
-	public void Set(TValue other) => V.SetObj(new StkId(ref other));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Set(StkId other) => V.CopyFrom(other);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Set(TValue other) => V.CopyFrom(new StkId(ref other));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetDouble(double v) => V.SetDouble(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetInt64(long v) => V.SetInt64(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetString(string v) => V.SetString(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetTable(LuaTable v) => V.SetTable(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetThread(LuaState v) => V.SetThread(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetUserData(object v) => V.SetUserData(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetLuaClosure(LuaClosure v) => V.SetLuaClosure(v);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetCSClosure(CsClosure v) => V.SetCSClosure(v);
 
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 	internal unsafe TValue* PtrIndex => (TValue*)Unsafe.AsPointer(ref V);
@@ -291,10 +305,7 @@ public sealed class LuaProto
 
 	public readonly LuaClosure Pure;
 
-	public LuaProto()
-	{
-		Pure = new LuaClosure(this);
-	}
+	public LuaProto() => Pure = new LuaClosure(this);
 }
 	
 public sealed class LuaUpValue

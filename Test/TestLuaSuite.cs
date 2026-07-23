@@ -26,7 +26,7 @@ public sealed class TestLuaSuite
 
     private static void Run(string file)
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         
         if (file == "strings.lua")

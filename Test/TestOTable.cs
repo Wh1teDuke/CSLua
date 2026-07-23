@@ -93,7 +93,7 @@ public sealed class TestOTable
     }
 
     [Fact]
-    public void TestPairs1()
+    public void TestIPairs1()
     {
         var L = new LuaState();
         L.OpenLibs();
@@ -108,7 +108,7 @@ public sealed class TestOTable
 
                local res = 0
 
-               for i, v in otable.pairs(tab1) do
+               for i, v in otable.ipairs(tab1) do
                  assert(otable.getat(tab1, i) == v)
                  res += v
                end
@@ -121,8 +121,8 @@ public sealed class TestOTable
     }
 
     [Fact]
-    public void TestPairsOrder()
-    {
+    public void TestIPairsOrder()
+    { // TODO: Test when otable.set or any other method receive an invalidad table
         var L = new LuaState();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
@@ -147,14 +147,36 @@ public sealed class TestOTable
                  list.add(list1, v)
                end
                
-               for i, v in otable.pairs(tab1) do
+               for i, v in otable.ipairs(tab1) do
                  assert(list1[i] == v)
                end
                """);
     }
+
+    [Fact]
+    public void TestPairBug1()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Open(LuaOrderedTableLib.NameFuncPair, false);
+        L.Eval("""
+                local otable = require 'otable'
+                local tab1 = otable.new()
+                otable.set(tab1, "a", 10)
+                otable.set(tab1, "b", 20)
+
+                local key_check = {}
+                for k, v in otable.pairs(tab1) do
+                    key_check[k] = v
+                end
+
+                assert(key_check["a"] == 10, "Expected string key 'a' was lost!")
+                assert(key_check["b"] == 20, "Expected string key 'b' was lost!")
+                """);
+    }
     
     [Fact]
-    public void TestPairsDelOrder()
+    public void TestIPairsDelOrder()
     {
         var L = new LuaState();
         L.OpenLibs();
@@ -170,7 +192,7 @@ public sealed class TestOTable
                otable.remove(tab1, "b")
 
                local lastidx = -1
-               for i, v in otable.pairs(tab1) do
+               for i, v in otable.ipairs(tab1) do
                  assert(i > lastidx)
                  lastidx = i
                end

@@ -8,7 +8,7 @@ public sealed class TestList
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
 
@@ -36,7 +36,7 @@ public sealed class TestList
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
 
@@ -56,7 +56,7 @@ public sealed class TestList
     [Fact]
     public void TestNext1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -81,7 +81,7 @@ public sealed class TestList
     [Fact]
     public void TestPairs1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -105,7 +105,7 @@ public sealed class TestList
     [Fact]
     public void TestPairs2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -129,7 +129,7 @@ public sealed class TestList
     [Fact]
     public void TestAddAll1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -156,7 +156,7 @@ public sealed class TestList
     [Fact]
     public void TestGetter1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -173,7 +173,7 @@ public sealed class TestList
     [Fact]
     public void TestSetter1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -191,7 +191,7 @@ public sealed class TestList
     [Fact]
     public void TestLen1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         
@@ -208,7 +208,7 @@ public sealed class TestList
     [Fact]
     public void TestInsert1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaListLib.NameFuncPair, false);
         

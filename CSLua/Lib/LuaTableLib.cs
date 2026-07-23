@@ -288,6 +288,7 @@ public static class LuaTableLib
 
 	private static int TBL_Length(LuaState lua)
 	{
+		// TODO: cache
 		lua.CheckType(1, Lua.Type.LUA_TTABLE);
 		lua.PushNil();
 		var count = 0;

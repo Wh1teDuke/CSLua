@@ -244,7 +244,7 @@ public sealed class LuaState
 	}
 
 	public void DumpStack(int baseIndex, string tag = "") => 
-		ULDebug.Log(DumpStackToString(baseIndex, tag));
+		LuaOutput.WriteLine(DumpStackToString(baseIndex, tag));
 	
 	
 	// grep `NoTagMethodFlags' if num of TMS >= 32
@@ -398,7 +398,7 @@ public sealed class LuaState
 		{
 			G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 			cl.Upvals[0] = new LuaUpValue();
-			cl.Upvals[0].Value.SetObj(gt);
+			cl.Upvals[0].Value.CopyFrom(gt);
 		}
 
 		return status;
@@ -787,7 +787,7 @@ public sealed class LuaState
 		index += index <= 0 ? TopIndex : CI.FuncIndex;
 		while (i > index) 
 		{
-			Stack[i].SetObj(Ref(i - 1));
+			Stack[i].CopyFrom(Ref(i - 1));
 			i--;
 		}
 		p.Set(Top);
@@ -1253,7 +1253,7 @@ public sealed class LuaState
 			var index = TopIndex - n;
 			TopIndex = index;
 			for (var i = 0; i < n; ++i)
-				cscl.Upvals[i].SetObj(Ref(index + i));
+				cscl.Upvals[i].CopyFrom(Ref(index + i));
 
 			Top.V.SetCSClosure(cscl);
 		}
@@ -1262,7 +1262,7 @@ public sealed class LuaState
 
 	public void PushTValue(TValue val)
 	{
-		Top.V.SetObj(new StkId(ref val));
+		Top.V.CopyFrom(new StkId(ref val));
 		ApiIncrTop();
 	}
 
@@ -1720,7 +1720,7 @@ public sealed class LuaState
 		{
 			if (upval.StackIndex < level) break;
 			
-			upval.Value.SetObj(upval.StkId);
+			upval.Value.CopyFrom(upval.StkId);
 			upval.StackIndex = -1;
 
 			upval = upval.Next;
@@ -1754,7 +1754,8 @@ public sealed class LuaState
 	private static void Throw(ThreadStatus errCode, string msg) => 
 		throw new LuaRuntimeException(errCode, msg);
 
-	private ThreadStatus RawRunProtected<T>(Lua.PFuncDelegate<T> func, ref T ud) where T: struct
+	private ThreadStatus RawRunProtected<T>(
+		Lua.PFuncDelegate<T> func, ref T ud) where T: struct
 	{
 		var oldNumCSharpCalls = NumCSharpCalls;
 		var res = ThreadStatus.LUA_OK;
@@ -2008,7 +2009,7 @@ public sealed class LuaState
 		// Open a hole inside the stack at 'func'
 		var funcIndex = Index(func);
 		for (var i = TopIndex; i > funcIndex; --i) 
-			Stack[i].SetObj(Ref(i - 1));
+			Stack[i].CopyFrom(Ref(i - 1));
 
 		IncrTop();
 		func = Ref(funcIndex);
@@ -2075,7 +2076,7 @@ public sealed class LuaState
 	public void Where(int level)
 	{
 		var ar = new Lua.Debug();
-		if (GetStack(ar, level)) // Check function at level
+		if (GetStack(ar, level))	// Check function at level
 		{
 			GetInfo(ar, "Sl"); // Get info about it
 			if (ar.CurrentLine > 0) // Is there info?
@@ -2102,80 +2103,132 @@ public sealed class LuaState
 		Error(msg != null ? $"stack overflow ({msg})" : "stack overflow");
 	}
 
-	public void CheckAny(int nArg)
+	public void CheckAny(int n)
 	{
-		if (Type(nArg) == Lua.Type.LUA_TNONE)
-			ArgError(nArg, "Value expected");
+		if (Type(n) == Lua.Type.LUA_TNONE)
+			ArgError(n, "Value expected");
 	}
 
-	public double CheckNumber(int nArg)
+	/// <summary>
+	/// Returns the double at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <remarks>The method will cast or parse a string value if necessary</remarks>
+	/// <returns></returns>
+	public double CheckNumber(int n)
 	{
-		var d = ToNumberX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
+		var d = ToNumberX(n, out var isNum);
+		if (!isNum) TagError(n, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
-	public int CheckInteger(int nArg)
+	/// <summary>
+	/// Returns the integer at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <remarks>The method will cast or parse a string value if necessary</remarks>
+	/// <returns></returns>
+	public int CheckInteger(int n)
 	{
-		var d = ToIntegerX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
+		var d = ToIntegerX(n, out var isNum);
+		if (!isNum) TagError(n, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
-	public bool CheckBoolean(int nArg)
+	/// <summary>
+	/// Returns the bool at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public bool CheckBoolean(int n)
 	{
-		if (Type(nArg) != Lua.Type.LUA_TBOOLEAN)
-			TagError(nArg, Lua.Type.LUA_TBOOLEAN);
-		return ToBoolean(nArg);
+		if (Type(n) != Lua.Type.LUA_TBOOLEAN)
+			TagError(n, Lua.Type.LUA_TBOOLEAN);
+		return ToBoolean(n);
 	}
 
-	public long CheckInt64(int nArg)
+	/// <summary>
+	/// Returns the long at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public long CheckInt64(int n)
 	{
-		var v = ToInt64X(nArg, out var isNum);
-		if (!isNum) TagError(nArg, Lua.Type.LUA_TINT64);
+		var v = ToInt64X(n, out var isNum);
+		if (!isNum) TagError(n, Lua.Type.LUA_TINT64);
 		return v;
 	}
 
-	public string CheckString(int nArg)
+	/// <summary>
+	/// Returns the string at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public string CheckString(int n)
 	{
-		var s = ToString(nArg);
-		if (s == null) TagError(nArg, Lua.Type.LUA_TSTRING);
-		return s!;
+		var s = ToString(n);
+		if (s == null) TagError(n, Lua.Type.LUA_TSTRING);
+		return s!; // TagError throws
 	}
 
-	public LuaTable CheckTable(int nArg)
+	/// <summary>
+	/// Returns the uint at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public LuaTable CheckTable(int n)
 	{
-		var s = ToTable(nArg);
-		if (s == null) TagError(nArg, Lua.Type.LUA_TTABLE);
-		return s!;
+		var s = ToTable(n);
+		if (s == null) TagError(n, Lua.Type.LUA_TTABLE);
+		return s!; // TagError throws
 	}
 
-	public uint CheckUnsigned(int nArg)
+	/// <summary>
+	/// Returns the uint at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public uint CheckUnsigned(int n)
 	{
-		var d = ToUnsignedX(nArg, out var isNum);
-		if (!isNum) TagError(nArg, Lua.Type.LUA_TNUMBER);
+		var d = ToUnsignedX(n, out var isNum);
+		if (!isNum) TagError(n, Lua.Type.LUA_TNUMBER);
 		return d;
 	}
 
-	public object CheckUserData(int nArg)
+	/// <summary>
+	/// Returns the object at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public object CheckUserData(int n)
 	{
-		var o = ToUserData(nArg);
-		if (o == null) TagError(nArg, Lua.Type.LUA_TUSERDATA);
-		return o!;
+		var o = ToUserData(n);
+		if (o == null) TagError(n, Lua.Type.LUA_TUSERDATA);
+		return o!; // TagError throws
 	}
 
+	/// <summary>
+	/// Returns the List at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="narg">1-based index stack position</param>
+	/// <returns></returns>
 	public List<TValue> CheckList(int narg)
 	{
 		var o = ToList(narg);
 		if (o == null) TagError(narg, Lua.Type.LUA_TLIST);
-		return o!;
+		return o!; // TagError throws
 	}
 
-	public LuaClosure CheckLuaFunction(int narg)
+	/// <summary>
+	/// Returns the LuaClosure at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public LuaClosure CheckLuaFunction(int n)
 	{
-		var o = ToLuaClosure(narg);
-		if (o == null) TagError(narg, Lua.Type.LUA_TFUNCTION);
-		return o!;
+		var o = ToLuaClosure(n);
+		if (o == null) TagError(n, Lua.Type.LUA_TFUNCTION);
+		return o!; // TagError throws
 	}
 
 	public T Opt<T>(Func<int,T> f, int n, T def)
@@ -3110,7 +3163,7 @@ public sealed class LuaState
 					ULDebug.Log("[VM] ==== OP_EQ expectEq:" + expectEq);
 					ULDebug.Log("[VM] ==== OP_EQ (lhs.V == rhs.V):" + (lhs.V == rhs.V));
 #endif
-					if((lhs.V == rhs.V) != expectEq)
+					if((EqualObj(lhs, rhs, false)) != expectEq)
 					{
 						ci.SavedPc.Index += 1; // skip next jump instruction
 					}
@@ -3233,7 +3286,7 @@ public sealed class LuaState
 						var nIndex = nci.FuncIndex;
 						var oIndex = oci.FuncIndex;
 						while (nIndex < lim) 
-							Stack[oIndex++].SetObj(Ref(nIndex++));
+							Stack[oIndex++].CopyFrom(Ref(nIndex++));
 
 						oci.BaseIndex = oIndex + (nci.BaseIndex - nIndex); // correct base
 						oci.TopIndex = oIndex + (TopIndex - nIndex); // correct top
@@ -3341,10 +3394,10 @@ public sealed class LuaState
 						}
 						else
 						{
-							Stack[cbi].SetObj(tm);
+							Stack[cbi].CopyFrom(tm);
 						}
 
-						Stack[cbi + 1].SetObj(ra);
+						Stack[cbi + 1].CopyFrom(ra);
 						TopIndex = cbi + 2;
 						// PROTECT
 						Call(Ref(cbi), 3, true);
@@ -3354,15 +3407,15 @@ public sealed class LuaState
 						rai = env.RAIndex;
 						//ra = env.RA;
 						cbi = rai + 3;
-						Stack[rai + 2].SetObj(Ref(cbi + 2));
-						Stack[rai + 1].SetObj(Ref(cbi + 1));
-						Stack[rai].SetObj(Ref(cbi));
+						Stack[rai + 2].CopyFrom(Ref(cbi + 2));
+						Stack[rai + 1].CopyFrom(Ref(cbi + 1));
+						Stack[rai].CopyFrom(Ref(cbi));
 						TopIndex = rai + 3;
 					}
 					
-					Stack[cbi + 2].SetObj(Ref(rai + 2));
-					Stack[cbi + 1].SetObj(Ref(rai + 1));
-					Stack[cbi].SetObj(Ref(rai));
+					Stack[cbi + 2].CopyFrom(Ref(rai + 2));
+					Stack[cbi + 1].CopyFrom(Ref(rai + 1));
+					Stack[cbi].CopyFrom(Ref(rai));
 
 					var callBase = Ref(cbi);
 					TopIndex = cbi + 3; // func. +2 args (state and index)
@@ -3476,7 +3529,7 @@ public sealed class LuaState
 					for (var j = 0; j < b; ++j) 
 					{
 						if (j < n)
-							Stack[p++].SetObj(Ref(q++));
+							Stack[p++].CopyFrom(Ref(q++));
 						else
 							Stack[p++].SetNil();
 					}
@@ -3499,7 +3552,7 @@ public sealed class LuaState
 
 	private static void NotImplemented(Instruction i)
 	{
-		ULDebug.LogError("[VM] ==================================== Not Implemented Instruction: " + i);
+		LuaOutput.ErrorWriteLine("[VM] ==================================== Not Implemented Instruction: " + i);
 		// throw new NotImplementedException();
 	}
 
@@ -3595,7 +3648,7 @@ public sealed class LuaState
 				tbl.TryGet(key, out var oldVal);
 				if (!oldVal.V.IsNil())
 				{
-					tbl.Set(key, val);
+					oldVal.Set(val);
 					return;
 				}
 
@@ -3683,6 +3736,7 @@ public sealed class LuaState
 	private void ConcatAux(int total)
 	{
 		LuaUtil.Assert(total >= 2);
+		var sb = new StringBuilder();
 
 		do
 		{
@@ -3697,10 +3751,10 @@ public sealed class LuaState
 			else if (rhs.V.AsString()!.Length == 0)
 				ToString(lhs);
 			else if (lhs.V.IsString() && lhs.V.AsString()!.Length == 0)
-				lhs.V.SetObj(rhs);
+				lhs.V.CopyFrom(rhs);
 			else
 			{
-				var sb = new StringBuilder();
+				sb.Clear();
 				n = 0;
 				for (; n < total; ++n)
 				{
@@ -3896,12 +3950,12 @@ public sealed class LuaState
 			return string.CompareOrdinal(lhs.V.AsString(), rhs.V.AsString()) <= 0;
 
 		// First try 'le'
-		var res = CallOrderTM(rhs, rhs, TMS.TM_LE, out var error);
+		var res = CallOrderTM(lhs, rhs, TMS.TM_LE, out var error);
 		if (!error) return res;
 
 		// else try 'lt'
 		res = CallOrderTM(rhs, lhs, TMS.TM_LT, out error);
-		if (!error) return res;
+		if (!error) return !res;
 
 		OrderError(rhs, rhs);
 		return false;
@@ -4384,8 +4438,8 @@ public sealed class LuaState
 				Throw(ThreadStatus.LUA_ERRERR, msg);
 
 			var below = Ref(TopIndex - 1);
-			Top.V.SetObj(below);
-			below.V.SetObj(errFunc);
+			Top.V.CopyFrom(below);
+			below.V.CopyFrom(errFunc);
 			IncrTop();
 
 			Call(below, 1, false);

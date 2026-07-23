@@ -25,6 +25,7 @@ public static class LuaOrderedTableLib
             new("isempty",      OTableIsEmpty),
             new("next",         OTableNext),
             new("pairs", 	    OTablePairs),
+            new("ipairs", 	    OTableIPairs),
         ];
 
         lua.NewLib(define);
@@ -108,7 +109,7 @@ public static class LuaOrderedTableLib
         var otable = GetTable(lua, 1);
         GetValue(lua, 2, out var key);
         var val = otable[key.V];
-        ((LuaState)lua).PushTValue(val);
+        lua.PushTValue(val);
         return 1;
     }
     
@@ -117,7 +118,7 @@ public static class LuaOrderedTableLib
         var otable = GetTable(lua, 1);
         var index = lua.CheckInteger(2);
         var val = otable.GetAt(index).Value;
-        ((LuaState)lua).PushTValue(val);
+        lua.PushTValue(val);
         return 1;
     }
 
@@ -154,7 +155,7 @@ public static class LuaOrderedTableLib
         return 1;
     }
 
-    private static int OTableNext(LuaState lua)
+    private static int OTableINext(LuaState lua)
     {
         var L = lua;
         lua.SetTop(2);
@@ -171,7 +172,7 @@ public static class LuaOrderedTableLib
         if (index < otable.Count - 1)
         {
             index++;
-            key.V.SetDouble(index);
+            key.SetDouble(index);
             var val = otable.GetAt(index).Value;
             L.Top.Set(val);
             L.ApiIncrTop();
@@ -182,13 +183,51 @@ public static class LuaOrderedTableLib
         lua.PushNil();
         return 1;
     }
+    
+    private static int OTableNext(LuaState lua)
+    {
+        var L = lua;
+        lua.SetTop(2);
+
+        var otable = GetTable(lua, 1);
+        var key = L.Ref((L.TopIndex - 1));
+        var index = 0;
+
+        if (!key.V.IsNil())
+        {
+            var currentIndex = otable.IndexOf(key.V);
+            if (currentIndex == -1) return 0;
+            index = currentIndex + 1;
+        }
+
+        if (index < otable.Count)
+        {
+            var kvp = otable.GetAt(index);
+            L.PushTValue(kvp.Key);
+            L.PushTValue(kvp.Value);
+            return 2;
+        }
+
+        return 0;
+    }
 
     private static readonly CsClosure NextClosure = new (OTableNext);
+    private static readonly CsClosure INextClosure = new (OTableINext);
 
     private static int OTablePairs(LuaState lua)
     {
         GetTable(lua, 1);
         lua.PushCsClosure(NextClosure);
+        lua.PushValue(1);
+        lua.PushNil();
+
+        return 3;
+    }
+    
+    private static int OTableIPairs(LuaState lua)
+    {
+        GetTable(lua, 1);
+        lua.PushCsClosure(INextClosure);
         lua.PushValue(1);
         lua.PushNil();
 

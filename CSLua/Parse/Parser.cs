@@ -1163,7 +1163,7 @@ public sealed class Parser
 		// ULDebug.Log(Lexer.Token);
 		if (_lexer.Token.Kind != TokenKind.Named)
 		{
-			ULDebug.LogError(_lexer.LineNumber + ":" + _lexer.Token);
+			LuaOutput.ErrorWriteLine(_lexer.LineNumber + ":" + _lexer.Token);
 			_lexer.SyntaxError(
 				"Syntax error: Expected function name, got " + _lexer.Token);
 		}

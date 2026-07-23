@@ -8,7 +8,7 @@ public sealed class TestString
     [Fact]
     public void TestConcat1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("return 'foo' .. 'bar'");
         var foobar = L.PopString();
         Assert.Equal("foobar", foobar);
@@ -23,7 +23,7 @@ public sealed class TestString
         var str1 = "";
         for (var i = 0; i < LoopCount; i++) str1 += i;
         
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString("""
                    function AddLoop(count)
                        local sum = ""
