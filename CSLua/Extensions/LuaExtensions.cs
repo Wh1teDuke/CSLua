@@ -78,7 +78,13 @@ public static class LuaExtensions
             return t;
         }
 
-        public void SetGlobalInteger(string name, int i)
+        public void SetGlobal(string name, Lua.CsDelegate closure)
+        {
+            L.PushCsDelegate(closure);
+            L.SetGlobal(name);
+        }
+
+        public void SetGlobal(string name, int i)
         {
             L.PushInteger(i);
             L.SetGlobal(name);
@@ -90,7 +96,7 @@ public static class LuaExtensions
             return L.PopInteger();
         }
 
-        public void SetGlobalNumber(string name, double i)
+        public void SetGlobal(string name, double i)
         {
             L.PushNumber(i);
             L.SetGlobal(name);
@@ -100,6 +106,12 @@ public static class LuaExtensions
         {
             L.GetGlobal(name);
             return L.PopNumber();
+        }
+
+        public void SetGlobal(string name, bool value)
+        {
+            L.PushBoolean(value);
+            L.SetGlobal(name);
         }
 
         public bool? GetGlobalBool(string name)
@@ -118,10 +130,8 @@ public static class LuaExtensions
             return r;
         }
 
-        public double? TryGetNumber(int index)
-        {
-            return !L.IsNumber(index) ? null : L.ToNumber(-1);
-        }
+        public double? TryGetNumber(int index) => 
+            !L.IsNumber(index) ? null : L.ToNumber(-1);
 
         public double? TryPopNumber()
         {

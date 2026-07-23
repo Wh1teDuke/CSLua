@@ -301,7 +301,7 @@ public sealed class TestStack
         var L = new LuaState();
         var i1 = 1;
         
-        L.SetGlobalInteger("foo", i1);
+        L.SetGlobal("foo", i1);
         Assert.Equal(0, L.GetTop());
         
         var i2 = L.GetGlobalInteger("foo");
@@ -315,7 +315,7 @@ public sealed class TestStack
         var L = new LuaState();
         var i1 = 1.0;
         
-        L.SetGlobalNumber("foo", i1);
+        L.SetGlobal("foo", i1);
         Assert.Equal(0, L.GetTop());
         
         var i2 = L.GetGlobalNumber("foo");

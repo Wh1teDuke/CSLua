@@ -43,9 +43,7 @@ public sealed class TestExample
     {
         var L = Lua.New();
         L.OpenLibs(); // or L.OpenSafeLibs();
-        
-        L.PushCsDelegate(AddFromCs);
-        L.SetGlobal("AddFromCS");
+        L.SetGlobal("AddFromCS", AddFromCs);
         
         L.DoString(
             """
