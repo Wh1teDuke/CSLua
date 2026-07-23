@@ -526,21 +526,17 @@ public sealed class LLex
 			switch (t)
 			{
 				case '\n':
-				case '\r': {
+				case '\r': 
 					_IncLineNumber();
 					continue;
-				}
 
-				case '-': {
+				case '-': 
 					_Next();
 					if (_current != '-')
 					{
-						if (_current == '=')
-						{
-							_Next();
-							return LuaToken.Of(TK.SUBEQ);
-						}
-						return LuaToken.Literal(t);
+						if (_current != '=') return LuaToken.Literal(t);
+						_Next();
+						return LuaToken.Of(TK.SUBEQ);
 					}
 
 					// else is a long comment
@@ -558,10 +554,8 @@ public sealed class LLex
 					}
 
 					// else is a short comment
-					while (!CurrentIsNewLine() && _current != EOZ)
-						_Next();
+					SkipCommentSingleLine();
 					continue;
-				}
 				
 				case '+': 
 					_Next();
@@ -577,7 +571,35 @@ public sealed class LLex
 				
 				case '/': 
 					_Next();
+
+					// Patch C style comments
+					if (_current == '/')
+					{
+						_Next();
+						SkipCommentSingleLine();
+						continue;
+					}
+
+					// Patch C style long comment
+					if (_current == '*')
+					{
+						_Next();
+						while (_current != EOZ)
+						{
+							var isStar = _current == '*';
+							_Next();
+							if (isStar && _current == '/')
+							{
+								_Next();
+								break;
+							}
+						}
+						ClearSaved();
+						continue;
+					}
+					
 					if (_current != '=') return LuaToken.Literal(t);
+
 					_Next();
 					return LuaToken.Of(TK.DIVEQ);
 				
@@ -599,7 +621,8 @@ public sealed class LLex
 					_Next();
 					return LuaToken.Of(TK.BOREQ);
 
-				case '[': {
+				case '[': 
+				{
 					var sep = _SkipSep();
 					if (sep >= 0) {
 						var semInfo = _ReadLongString(sep);
@@ -648,7 +671,8 @@ public sealed class LLex
 					_ReadString();
 					return LuaToken.String(GetTokenString());
 
-				case '.': {
+				case '.': 
+				{
 					SaveAndNext();
 					if (_current == '.')
 					{
@@ -689,8 +713,9 @@ public sealed class LLex
 					if (_CurrentIsAlpha() || _current == '_')
 					{
 						do { SaveAndNext(); } 
-						while (_CurrentIsAlpha() || CurrentIsDigit() ||
-						    _current == '_');
+						while (_CurrentIsAlpha() || 
+								CurrentIsDigit() ||
+								_current == '_');
 
 						LuaUtil.Assert(_savedCount > 0);
 						var identifier = _GetSavedSpan();
@@ -705,6 +730,12 @@ public sealed class LLex
 					return LuaToken.Literal(c);
 				}
 			}
+		}
+		
+		void SkipCommentSingleLine()
+		{
+			while (!CurrentIsNewLine() && _current != EOZ)
+				_Next();
 		}
 	}
 }

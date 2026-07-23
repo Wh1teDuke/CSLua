@@ -163,4 +163,36 @@ public sealed class TestPatches
         var foobar = L.PopString();
         Assert.Equal("truefalse", foobar);
     }
+
+    [Fact]
+    public void TestComment()
+    {
+        var L = Lua.New();
+        L.Eval("""
+               // Foo
+               local a = 1 // Foo
+               // Bar
+               local b = 2 // Bar
+               // Baz
+               return a + b
+               """);
+        var res = L.PopInteger();
+        Assert.Equal(3, res);
+    }
+    [Fact]
+    public void TestMulti1()
+    {
+        var L = Lua.New();
+        L.Eval("""
+               /* Foo
+               */
+               local a = 1 /* Foo
+               -- Bar*/
+               local b = 2 /* Bar
+               -- Baz*/
+               return a + b
+               """);
+        var res = L.PopInteger();
+        Assert.Equal(3, res);
+    }
 }

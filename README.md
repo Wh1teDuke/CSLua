@@ -57,6 +57,11 @@ local concat = 'foo' .. true -- footrue
 ```lua
 local concat = 'foo' + true -- footrue
 ```
+* **C-style comments**:
+```lua
+local foo=1 // Call the police
+local bar=2 /* Now */
+```
 
 > [!WARNING]
 > While this library is functional, expect some bugs. Some of lua's tests were disabled due to differences in the implementation or incomplete standard library. You can find them by grepping **CSLUA_FAIL** in the [test/suite folder](Test/suite). Don't expect a stable API.
