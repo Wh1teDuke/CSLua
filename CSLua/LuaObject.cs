@@ -207,6 +207,13 @@ public struct TValue : IEquatable<TValue>
 		return result;
 	}
 	
+	public static TValue Of(double value)
+	{
+		var result = new TValue();
+		result.SetDouble(value);
+		return result;
+	}
+	
 	public static TValue Of(long value)
 	{
 		var result = new TValue();
@@ -220,6 +227,17 @@ public struct TValue : IEquatable<TValue>
 		result.SetBool(value);
 		return result;
 	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(double value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(bool value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(long value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(string value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(StkId v) => v.V;
 }
 
 public readonly ref struct StkId(ref TValue v)
@@ -230,6 +248,7 @@ public readonly ref struct StkId(ref TValue v)
 	public readonly ref TValue V = ref v;
 
 	public void Set(StkId other) => V.SetObj(other);
+	public void Set(TValue other) => V.SetObj(new StkId(ref other));
 
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 	internal unsafe TValue* PtrIndex => (TValue*)Unsafe.AsPointer(ref V);
@@ -240,9 +259,6 @@ public readonly ref struct StkId(ref TValue v)
 		var detail = V.IsString() ? V.AsString()!.Replace("\n", "»") : "...";
 		return $"StkId - {Lua.TypeName(V.Type)} - {detail}";
 	}
-	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static implicit operator TValue(StkId v) => v.V;
 }
 
 public record struct LocVar(string VarName, int StartPc, int EndPc);

@@ -10,7 +10,7 @@ public sealed class TestOTable
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
 

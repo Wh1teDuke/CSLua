@@ -156,7 +156,7 @@ public static class LuaOrderedTableLib
 
     private static int OTableNext(LuaState lua)
     {
-        var L = (LuaState)lua;
+        var L = lua;
         lua.SetTop(2);
 
         var otable = GetTable(lua, 1);
@@ -173,7 +173,7 @@ public static class LuaOrderedTableLib
             index++;
             key.V.SetDouble(index);
             var val = otable.GetAt(index).Value;
-            L.Top.Set(new StkId(ref val));
+            L.Top.Set(val);
             L.ApiIncrTop();
             return 2;
         }
@@ -206,7 +206,7 @@ public static class LuaOrderedTableLib
 
     private static void GetValue(LuaState lua, int index, out StkId id)
     {
-        if (!((LuaState)lua).Index2Addr(index, out id))
+        if (!lua.Index2Addr(index, out id))
             lua.Error("Can't access variable");
     }
 }
