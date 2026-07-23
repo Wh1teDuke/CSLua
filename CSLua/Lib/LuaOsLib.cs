@@ -29,7 +29,7 @@ public static class LuaOSLib
 	
 	public static int OpenSafeLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("clock", 		OS_Clock),
 			new("difftime",		OS_DiffTime),

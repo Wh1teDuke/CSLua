@@ -73,7 +73,7 @@ public static class LuaPkgLib
 		lua.PushGlobalTable();
 		lua.PushValue(-2); // set 'package' as upvalue for next lib
 
-		Span<NameFuncPair> loadLibFuncs =
+		ReadOnlySpan<NameFuncPair> loadLibFuncs =
 		[
 			new("module",  LL_Module),
 			new("require", LL_Require),
@@ -86,7 +86,7 @@ public static class LuaPkgLib
 
 	private static void CreateSearchersTable(LuaState lua)
 	{
-		Span<Lua.CsDelegate> searchers = [SearcherPreload, SearcherLua];
+		ReadOnlySpan<Lua.CsDelegate> searchers = [SearcherPreload, SearcherLua];
 		lua.CreateTable(searchers.Length, 0);
 		for (var i = 0; i < searchers.Length; ++i)
 		{

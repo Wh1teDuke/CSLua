@@ -1,12 +1,42 @@
 using CSLua;
 using CSLua.Extensions;
+using CSLua.Util;
 
 // ReSharper disable All
 
 namespace Test;
 
-public sealed class TestPushPop
+public sealed class TestStack
 {
+    [Fact]
+    public void TestValid1Index()
+    {
+        var L = Lua.New();
+        L.PushInteger(123);
+        L.PushInteger(456);
+        var first   = L.ToInteger(1);
+        var second  = L.ToInteger(2);
+        
+        Assert.Equal(123, first);
+        Assert.Equal(456, second);
+    }
+
+    [Fact]
+    public void TestInvalid0Index()
+    {
+        try
+        {
+            var L = Lua.New();
+            L.PushInteger(123);
+            L.ToInteger(0);
+            Assert.Fail("LuaException expected");
+        }
+        catch (LuaException e)
+        {
+            Assert.Equal("Assert failed! invalid index", e.Message);
+        }
+    }
+    
     [Fact]
     public void TestPushInteger()
     {

@@ -47,7 +47,7 @@ public static class LuaBaseLib
 	
 	public static int OpenSafeLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("assert", 			B_Assert),
 			//new("collectgarbage",	B_CollectGarbage),

@@ -737,12 +737,12 @@ public sealed class LuaState
 		return 0;
 	}
 	
-	public int AbsIndex(int index)
-	{
-		return index is > 0 or <= LuaDef.LUA_REGISTRYINDEX
-			? index : TopIndex - CI.FuncIndex + index;
-	}
+	public int AbsIndex(int index) =>
+		index is > 0 or <= LuaDef.LUA_REGISTRYINDEX
+			? index
+			: TopIndex - CI.FuncIndex + index;
 
+	/// <summary>Returns the top index of the stack</summary>
 	public int GetTop() => TopIndex - (CI.FuncIndex + 1);
 
 	public void SetTop(int index)
@@ -1278,12 +1278,16 @@ public sealed class LuaState
 	public void PushGlobalTable() => 
 		RawGetI(LuaDef.LUA_REGISTRYINDEX, LuaDef.LUA_RIDX_GLOBALS);
 
+	/// <summary>Pushes a light user data (object) to the top of the stack</summary>
+	/// <param name="o">The value to push</param>
 	public void PushLightUserData(object o)
 	{
 		Top.V.SetUserData(o);
 		ApiIncrTop();
 	}
 
+	/// <summary>Pushes a long value to the top of the stack</summary>
+	/// <param name="o">The value to push</param>
 	public void PushInt64(long o)
 	{
 		Top.V.SetInt64(o);
@@ -1297,6 +1301,10 @@ public sealed class LuaState
 		return G.MainThread == this;
 	}
 
+	/// <summary>
+	/// Pop x number of variables from the stack
+	/// </summary>
+	/// <param name="n">Number of variables to pop</param>
 	public void Pop(int n) => SetTop(-n - 1);
 	
 	internal bool GetMetaTable(int index)
@@ -1451,6 +1459,7 @@ public sealed class LuaState
 			return 0;
 		}
 
+		// TODO: switch on type
 		if (addr.V.IsNumber()) 
 		{
 			isNum = true;
@@ -1477,15 +1486,31 @@ public sealed class LuaState
 		return 0;
 	}
 
+	/// <summary>
+	/// Returns the 1-based index integer from the stack
+	/// </summary>
+	/// <param name="index">The 1-based index</param>
+	/// <remarks>
+	/// If the variable at the position is not an integer,
+	/// the engine will try to cast to it or even parse it.
+	/// </remarks>
+	/// <seealso cref="IsNumber"/>
+	/// <returns></returns>
 	public int ToInteger(int index) => ToIntegerX(index, out _);
 	
+	/// <summary>
+	/// Test if the variable at <paramref name="index"/> is a double or can be converted to one
+	/// </summary>
+	/// <param name="index">The 1-based stack index of the variable</param>
+	/// <returns></returns>
 	public bool IsNumber(int index)
 	{
 		ToIntegerX(index, out var isNum);
 		return isNum;
 	}
 
-	uint ToUnsignedX(int index, out bool isNum)
+	// TODO Expose
+	internal uint ToUnsignedX(int index, out bool isNum)
 	{
 		if (!Index2Addr(index, out var addr))
 		{
@@ -1519,7 +1544,7 @@ public sealed class LuaState
 		return 0;
 	}
 
-	uint ToUnsigned(int index) => ToUnsignedX(index, out _);
+	public uint ToUnsigned(int index) => ToUnsignedX(index, out _);
 
 	public bool ToBoolean(int index) =>
 		Index2Addr(index, out var addr) && !IsFalse(addr);

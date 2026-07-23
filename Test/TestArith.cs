@@ -8,7 +8,7 @@ public sealed class TestArith
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                r1 = 2 - 1
                r2 = 2 + 1
@@ -30,7 +30,7 @@ public sealed class TestArith
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval("""
                 r1 = 1 < 2
                 r2 = 1 <= 2
@@ -56,7 +56,7 @@ public sealed class TestArith
         var sum1 = 0;
         for (var i = 1; i <= LoopCount; i++) sum1 += i;
         
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString($"""
                    local count = {LoopCount}
                    local sum = 0
@@ -76,7 +76,7 @@ public sealed class TestArith
         var sum1 = 0;
         for (var i = 1; i <= LoopCount; i++) sum1 += i;
         
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString("""
                    function AddLoop(count)
                        local sum = 0

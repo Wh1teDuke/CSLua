@@ -70,4 +70,6 @@ public static class Lua
 			Type.LUA_TUPVAL => "upval",
 			_ => "no value"
 		};
+
+	public static LuaState New() => new ();
 }

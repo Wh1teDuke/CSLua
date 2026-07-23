@@ -24,7 +24,7 @@ public static class LuaDebugLib
 	
 	public static int OpenSafeLib(LuaState lua)
 	{
-		Span<NameFuncPair> define =
+		ReadOnlySpan<NameFuncPair> define =
 		[
 			new("traceback", 		DBG_Traceback),
 			//new("getinfo",		DBG_GetInfo),

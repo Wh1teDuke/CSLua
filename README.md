@@ -4,32 +4,28 @@ Lua 5.2 implemented in pure C#. Hard forked from [UniLua](https://github.com/xeb
 ```cs
 public void Test()
 {
-    var L = new LuaState();
+    var L = Lua.New();
     L.OpenLibs(); // or L.OpenSafeLibs();
     
-    L.PushCsDelegate(FromCS);
-    L.SetGlobal("FromCS");
+    L.PushCsDelegate(AddFromCs);
+    L.SetGlobal("AddFromCS");
     
     L.DoString(
         """
-        assert(_CSLUA)
         local a, b = 1, 2
-        return FromCS(a, b);
+        return AddFromCS(a, b);
         """);
 
-    var b = L.PopInteger();
-    var a = L.PopInteger();
-    Assert.Equal(2, a);
-    Assert.Equal(1, b);
+    var r = L.PopInteger();
+    Assert.Equal(3, r);
 }
 
-private static int FromCS(LuaState L)
+private static int AddFromCs(LuaState L)
 {
     var a = L.ToInteger(1);
     var b = L.ToInteger(2);
-    L.PushInteger(a + 1);
-    L.PushInteger(b - 1);
-    return 2;
+    L.PushInteger(a + b);
+    return 1;
 }
 ```
 

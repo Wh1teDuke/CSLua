@@ -52,7 +52,7 @@ public static class LuaStrLib
 	
 	public static int OpenSafeLib(LuaState lua)
 	{
-		Span<NameFuncPair> define = 
+		ReadOnlySpan<NameFuncPair> define = 
 		[
 			new("byte", 	Str_Byte),
 			new("char", 	Str_Char),

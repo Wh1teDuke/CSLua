@@ -8,6 +8,13 @@ public static class LuaExtensions
 {
     extension(LuaState L)
     {
+        /// <summary>
+        /// Pops the integer variable from the top of the stack, then returns it.
+        /// </summary>
+        /// <remarks>
+        /// If the variable is not an integer (for example, a double or a string),
+        /// the engine will try to cast or parse it if possible.
+        /// </remarks>
         public int PopInteger()
         {
             var i = L.ToInteger(-1);
@@ -174,6 +181,7 @@ public static class LuaExtensions
         private void EvalX(string s, BaseClosure? errorHandler = null)
         {
             ThreadStatus status;
+            var popCount = 1;
 		
             if (errorHandler == null)
                 status = L.DoString(s);
@@ -183,6 +191,7 @@ public static class LuaExtensions
                 L.PushClosure(errorHandler);
                 var errIndex = L.GetTop();
                 status = L.LoadString(s);
+                popCount++;
 
                 if (status == ThreadStatus.LUA_OK) 
                     status = L.PCall(0, LuaDef.LUA_MULTRET, errIndex);
@@ -191,7 +200,7 @@ public static class LuaExtensions
             if (status == ThreadStatus.LUA_OK) return;
 
             var msg = L.ToString(-1)!;
-            L.Pop(1);
+            L.Pop(popCount);
             throw new LuaRuntimeException(status, msg);
         }
 
