@@ -96,6 +96,7 @@ public sealed class LuaTable
 		k.SetDouble(key);
 		for (var node = GetHashNode(new StkId(ref k)); node != null; node = node.Next) 
 		{
+			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (node.Key.IsNumber() && node.Key.NValue == key)
 			{
 				value = node.PtrVal;
