@@ -135,6 +135,16 @@ public sealed class TestPatches
         var foobar = L.PopString();
         Assert.Equal("footrue", foobar);
     }
+    
+    [Fact]
+    public void TestStringConcatPlus4()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("return 'foo' + 1 + true + false + 'bar'");
+        var foobar = L.PopString();
+        Assert.Equal("foo1truefalsebar", foobar);
+    }
 
     [Fact]
     public void TestConcatBool1()

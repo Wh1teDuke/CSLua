@@ -8,7 +8,7 @@ public sealed class TestCompile
     [Fact]
     public void TestCompile1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         var r1 = L.DoString("foo = 0");
         Assert.Equal(ThreadStatus.LUA_OK, r1);
         Assert.Equal(0, L.GetTop());
@@ -31,7 +31,7 @@ public sealed class TestCompile
     [Fact]
     public void TestCompile2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         var r1 = L.DoString("foo = 0");
         Assert.Equal(ThreadStatus.LUA_OK, r1);
         Assert.Equal(0, L.GetTop());
@@ -53,5 +53,17 @@ public sealed class TestCompile
         var result = L.GetGlobalInteger("foo");
         Assert.Equal(10, result);
         Assert.Equal(0, L.GetTop());
+    }
+
+    [Fact]
+    public void TestCompile3()
+    {
+        var L = Lua.New();
+        L.DoString("dict = {Foo='Bar',Foo1='Bar1',Foo2='Bar2',Foo3='Bar3'}");
+        L.Compile("_dict", "return dict.Foo");
+        L.GetGlobal("_dict");
+        L.Call(0, 1);
+        var res = L.PopString();
+        Assert.Equal("Bar", res);
     }
 }

@@ -53,7 +53,7 @@ assert(#list1 == 4)
 ```lua
 local concat = 'foo' .. true -- footrue
 ```
-* **string concatenation with the `+` operator:
+* **string concatenation with the `+` operator**:
 ```lua
 local concat = 'foo' + true -- footrue
 ```
