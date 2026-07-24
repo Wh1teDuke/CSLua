@@ -8,7 +8,7 @@ public sealed class TestInt64
     [Fact]
     public void TestInt1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         
         L.Eval("""
@@ -32,7 +32,7 @@ public sealed class TestInt64
     [Fact]
     public void TestInt64Double()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         
         L.Eval("""
@@ -54,7 +54,7 @@ public sealed class TestInt64
     [Fact]
     public void TestInt64Print()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("local i = math.tointeger(5); print(i)");
     }

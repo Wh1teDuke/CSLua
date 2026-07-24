@@ -8,7 +8,7 @@ public sealed class TestUpvalue
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString("""
                      local foo = 123
                      function bar() foo = 456 end
@@ -22,7 +22,7 @@ public sealed class TestUpvalue
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString("""
                      local foo = 123
                      function bar()
@@ -39,7 +39,7 @@ public sealed class TestUpvalue
     [Fact]
     public void Test3()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.DoString("""
                      local foo = 0
                      function bar()
@@ -58,7 +58,7 @@ public sealed class TestUpvalue
     [Fact]
     public void Test4()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval(
             """
             local i = 0
@@ -80,7 +80,7 @@ public sealed class TestUpvalue
     [Fact]
     public void Test5()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval(
             """
             function a()

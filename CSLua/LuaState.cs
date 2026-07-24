@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks.Dataflow;
 using CSLua.Extensions;
 using CSLua.Lib;
 using CSLua.Parse;
@@ -309,8 +310,11 @@ public sealed class LuaState
 				break;
 			}
 			case Lua.Type.LUA_TUSERDATA:
-				throw new NotImplementedException();
-
+			{
+				var udata = o.V.AsUserData()!;
+				mt = udata.MetaTable;
+				break;
+			}
 			default:
 			{
 				mt = G.MetaTables[(int)o.V.Type];
@@ -1154,7 +1158,7 @@ public sealed class LuaState
 			Lua.Type.LUA_TSTRING => addr.V.AsString()?.Length ?? 0,
 			Lua.Type.LUA_TTABLE => addr.V.AsTable()?.Length ?? 0,
 			Lua.Type.LUA_TLIST => addr.V.AsList()?.Count ?? 0,
-			Lua.Type.LUA_TUSERDATA => throw new NotImplementedException(),
+			Lua.Type.LUA_TUSERDATA => addr.V.AsUserData()?.Length ?? 0,
 			_ => 0
 		};
 	}
@@ -1280,6 +1284,14 @@ public sealed class LuaState
 	/// <param name="o">The value to push</param>
 	public void PushLightUserData(object o)
 	{
+		Top.V.SetLightUserData(o);
+		ApiIncrTop();
+	}
+	
+	/// <summary>Pushes a user data (object) to the top of the stack</summary>
+	/// <param name="o">The value to push</param>
+	public void PushUserData(IUSerData o)
+	{
 		Top.V.SetUserData(o);
 		ApiIncrTop();
 	}
@@ -1321,7 +1333,9 @@ public sealed class LuaState
 			}
 			case Lua.Type.LUA_TUSERDATA:
 			{
-				throw new NotImplementedException();
+				var udata = addr.V.AsUserData()!;
+				mt = udata.MetaTable;
+				break;
 			}
 			default:
 			{
@@ -1359,7 +1373,9 @@ public sealed class LuaState
 				tbl.MetaTable = mt;
 				break;
 			case Lua.Type.LUA_TUSERDATA:
-				throw new NotImplementedException();
+				var udata = addr.V.AsUserData()!;
+				udata.MetaTable = mt;
+				break;
 			default:
 				G.MetaTables[(int)addr.V.Type] = mt;
 				break;
@@ -1580,18 +1596,17 @@ public sealed class LuaState
 	public object? ToObject(int index) => 
 		!Index2Addr(index, out var addr) ? null : addr.V.OValue;
 
-	public object? ToUserData(int index)
-	{
-		if (!Index2Addr(index, out var addr))
-			return null;
+	public IUSerData? ToUserData(int index) =>
+		!Index2Addr(index, out var addr) ||
+		addr.V.Type != Lua.Type.LUA_TUSERDATA
+			? null
+			: addr.V.AsUserData();
 
-		return addr.V.Type switch
-		{
-			Lua.Type.LUA_TUSERDATA => throw new NotImplementedException(),
-			Lua.Type.LUA_TLIGHTUSERDATA => addr.V.OValue,
-			_ => null
-		};
-	}
+	public object? ToLightUserData(int index) =>
+		!Index2Addr(index, out var addr) ||
+		addr.V.Type != Lua.Type.LUA_TLIGHTUSERDATA
+			? null
+			: addr.V.AsLightUserData();
 
 	public LuaTable? ToTable(int index) =>
 		!Index2Addr(index, out var addr) ? null : addr.V.AsTable();
@@ -2198,10 +2213,22 @@ public sealed class LuaState
 	/// </summary>
 	/// <param name="n">1-based index stack position</param>
 	/// <returns></returns>
-	public object CheckUserData(int n)
+	public IUSerData CheckUserData(int n)
 	{
 		var o = ToUserData(n);
 		if (o == null) TagError(n, Lua.Type.LUA_TUSERDATA);
+		return o!; // TagError throws
+	}
+	
+	/// <summary>
+	/// Returns the object at the 1-based index position of the stack, or throws a lua exception otherwise.
+	/// </summary>
+	/// <param name="n">1-based index stack position</param>
+	/// <returns></returns>
+	public object CheckLightUserData(int n)
+	{
+		var o = ToLightUserData(n);
+		if (o == null) TagError(n, Lua.Type.LUA_TLIGHTUSERDATA);
 		return o!; // TagError throws
 	}
 
@@ -3722,6 +3749,12 @@ public sealed class LuaState
 			return;
 		}
 
+		if (rb.V.AsUserData() is { } udata)
+		{
+			ra.V.SetDouble(udata.Length);
+			return;
+		}
+
 		if (!TryGetTMByObj(rb, TMS.TM_LEN, out tmObj) || tmObj.V.IsNil())
 			TypeError(rb, "get length of");
 
@@ -4140,7 +4173,7 @@ public sealed class LuaState
 			case Lua.Type.LUA_TSTRING:
 				return t1.V.AsString() == t2.V.AsString();
 			case Lua.Type.LUA_TUSERDATA:
-				throw new NotImplementedException();
+				return t1.V.OValue!.Equals(t2.V.OValue);
 			case Lua.Type.LUA_TLIST:
 			{
 				var l1 = t1.V.AsList()!;

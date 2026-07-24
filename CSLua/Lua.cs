@@ -71,5 +71,5 @@ public static class Lua
 			_ => "no value"
 		};
 
-	public static LuaState New() => new ();
+	public static LuaState New(GlobalState? g = null) => new (g);
 }

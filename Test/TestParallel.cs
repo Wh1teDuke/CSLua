@@ -20,12 +20,12 @@ public sealed class TestParallel
         foreach (var thread in threads)
             thread.Join();
         
-        Assert.Equal(12525000 * Environment.ProcessorCount, _acc);
+        Assert.Equal(12_525_000 * Environment.ProcessorCount, _acc);
     }
 
     private static void Run1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.DoString("""
                      return function()

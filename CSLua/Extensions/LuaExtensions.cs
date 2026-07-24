@@ -57,9 +57,16 @@ public static class LuaExtensions
             return i;
         }
 
-        public object? PopUserData()
+        public IUSerData? PopUserData()
         {
             var i = L.ToUserData(-1);
+            if (i != null) L.Pop(1);
+            return i;
+        }
+        
+        public object? PopLightUserData()
+        {
+            var i = L.ToLightUserData(-1);
             if (i != null) L.Pop(1);
             return i;
         }
@@ -76,6 +83,12 @@ public static class LuaExtensions
             var t = L.ToLuaClosure(-1);
             if (t != null) L.Pop(1);
             return t;
+        }
+        
+        public void SetGlobal(string name, IUSerData udata)
+        {
+            L.PushUserData(udata);
+            L.SetGlobal(name);
         }
 
         public void SetGlobal(string name, Lua.CsDelegate closure)

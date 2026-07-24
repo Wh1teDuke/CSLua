@@ -8,7 +8,7 @@ public sealed class TestFunction
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval(
             """
             local bar = 0
@@ -24,7 +24,7 @@ public sealed class TestFunction
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval(
             """
             bar = 10
@@ -38,7 +38,7 @@ public sealed class TestFunction
     [Fact]
     public void Test3()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.Eval(
             """
             function a(i)
@@ -58,7 +58,7 @@ public sealed class TestFunction
     public void TestErrorHandler1()
     {
         string? error = null;
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.PushCsDelegate(OnError);
         var eIdx = L.GetTop();

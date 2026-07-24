@@ -8,7 +8,7 @@ public sealed class TestCoroutine
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                function producer()

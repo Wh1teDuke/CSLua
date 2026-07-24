@@ -10,7 +10,7 @@ public struct TValue : IEquatable<TValue>
 	private const long BOOLEAN_FALSE = 0;
 	private const long BOOLEAN_TRUE = 1;
 
-	public object? OValue; // TODO consider stringbuilder for strings
+	public object? OValue;
 	public double NValue;
 	public Lua.Type Type;
 
@@ -37,6 +37,7 @@ public struct TValue : IEquatable<TValue>
 			Lua.Type.LUA_TNUMBER => NValue == o.NValue,
 			Lua.Type.LUA_TINT64 => AsInt64() == o.AsInt64(),
 			Lua.Type.LUA_TSTRING => AsString() == o.AsString(),
+			Lua.Type.LUA_TUSERDATA => AsUserData()!.Equals(o.AsUserData()),
 			_ => ReferenceEquals(OValue, o.OValue)
 		};
 
@@ -62,7 +63,9 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsThread() => Type == Lua.Type.LUA_TTHREAD;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsUserData() => Type == Lua.Type.LUA_TLIGHTUSERDATA;
+	public bool IsLightUserData() => Type == Lua.Type.LUA_TLIGHTUSERDATA;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool IsUserData() => Type == Lua.Type.LUA_TUSERDATA;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool IsList() => Type == Lua.Type.LUA_TLIST;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -88,7 +91,10 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaTable? AsTable() => OValue as LuaTable;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public object? AsUserData() => OValue;
+	public object? AsLightUserData() =>
+		Type == Lua.Type.LUA_TLIGHTUSERDATA ? OValue : null;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public IUSerData? AsUserData() => OValue as IUSerData;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public LuaClosure? AsLuaClosure() => OValue as LuaClosure;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -155,9 +161,15 @@ public struct TValue : IEquatable<TValue>
 		NValue = 0.0; OValue = v;
 	}
 
-	public void SetUserData(object v) 
+	public void SetLightUserData(object v) 
 	{
 		Type = Lua.Type.LUA_TLIGHTUSERDATA;
+		NValue = 0.0; OValue = v;
+	}
+	
+	public void SetUserData(IUSerData v) 
+	{
+		Type = Lua.Type.LUA_TUSERDATA;
 		NValue = 0.0; OValue = v;
 	}
 	
@@ -258,7 +270,7 @@ public readonly ref struct StkId(ref TValue v)
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetThread(LuaState v) => V.SetThread(v);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetUserData(object v) => V.SetUserData(v);
+	public void SetUserData(object v) => V.SetLightUserData(v);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetLuaClosure(LuaClosure v) => V.SetLuaClosure(v);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -361,4 +373,10 @@ public sealed class CsClosure: BaseClosure
 	}
 
 	public StkId Ref(int index) => new (ref Upvals[index]);
+}
+
+public interface IUSerData
+{
+	public LuaTable? MetaTable { get; set; }
+	public int Length { get; }
 }

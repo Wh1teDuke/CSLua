@@ -37,7 +37,7 @@ public static class TestError
     [Fact]
     public static void Test4()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.PushCsDelegate(DoTraceBack);
         L.SetGlobal("doTraceBack");
         L.Eval("""
@@ -101,7 +101,7 @@ public static class TestError
     public static void TestParserCompoundAssBug1()
     {
         // Comp ass bug
-        var L = new LuaState();
+        var L = Lua.New();
         var e = Assert.ThrowsAny<LuaException>(() =>
             L.Eval("for i = 1, 10 do res += i end"));
         Assert.StartsWith("for i = 1, 10 do res += i end:1: attempt to Perform arithmetic on a nil value", e.Message);
@@ -110,7 +110,7 @@ public static class TestError
     [Fact]
     public static void TestEvalWithTraceback()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         var e = Assert.ThrowsAny<LuaException>(() =>
             L.Eval("""
                    function foo()
@@ -137,5 +137,5 @@ public static class TestError
         Assert.Equal("Test:1: EOS expected", e.Message);
     }
     private static void Parse(string src) => Parser.Read(src, "Test");
-    private static void Eval(string src) => new LuaState().Eval(src);
+    private static void Eval(string src) => Lua.New().Eval(src);
 }

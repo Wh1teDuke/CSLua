@@ -31,8 +31,8 @@ public sealed class LuaTable
 	
 	public object? GetUserData(string key)
 	{
-		if (TryGetStr(key, out var val) && val.V.IsUserData())
-			return val.V.AsUserData();
+		if (TryGetStr(key, out var val) && val.V.IsLightUserData())
+			return val.V.AsLightUserData();
 		return null!;
 	}
 
@@ -154,7 +154,7 @@ public sealed class LuaTable
 		var v = new TValue();
 		
 		k.SetString(key);
-		v.SetUserData(val);
+		v.SetLightUserData(val);
 		
 		Set(new StkId(ref k), new StkId(ref v));
 	}

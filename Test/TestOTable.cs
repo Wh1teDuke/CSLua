@@ -44,7 +44,7 @@ public sealed class TestOTable
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
 
@@ -67,7 +67,7 @@ public sealed class TestOTable
     [Fact]
     public void TestNext1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
         
@@ -95,7 +95,7 @@ public sealed class TestOTable
     [Fact]
     public void TestIPairs1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
         
@@ -123,7 +123,7 @@ public sealed class TestOTable
     [Fact]
     public void TestIPairsOrder()
     { // TODO: Test when otable.set or any other method receive an invalidad table
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
         L.Open(LuaListLib.NameFuncPair, false);
@@ -178,7 +178,7 @@ public sealed class TestOTable
     [Fact]
     public void TestIPairsDelOrder()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Open(LuaOrderedTableLib.NameFuncPair, false);
         L.Eval("""

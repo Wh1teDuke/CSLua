@@ -236,7 +236,7 @@ public static class LuaOrderedTableLib
 
     private static OrderedDictionary<TValue, TValue> GetTable(LuaState lua, int index)
     {
-        if (lua.CheckUserData(index) is OrderedDictionary<TValue, TValue> table)
+        if (lua.CheckLightUserData(index) is OrderedDictionary<TValue, TValue> table)
             return table;
 
         lua.ArgError(index, "expected an ordered table");

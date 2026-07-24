@@ -8,7 +8,7 @@ public sealed class TestArray
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {}
@@ -33,7 +33,7 @@ public sealed class TestArray
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {}
@@ -55,7 +55,7 @@ public sealed class TestArray
     [Fact]
     public void Test3()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {}
@@ -71,7 +71,7 @@ public sealed class TestArray
     {
         // Undefined https://www.lua.org/manual/5.2/manual.html#3.4.6
         // "[...]the length of a table t is only defined if the table is a sequence"
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
@@ -84,7 +84,7 @@ public sealed class TestArray
     [Fact]
     public void Test5()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
@@ -98,7 +98,7 @@ public sealed class TestArray
     [Fact]
     public void Test6()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                local arr = {1,2,3,4,5,6,7,8,9,10}
@@ -113,7 +113,7 @@ public sealed class TestArray
     [Fact]
     public void TestBigArray1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
                 local t = {};

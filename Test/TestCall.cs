@@ -170,7 +170,7 @@ public sealed class TestCall
     [Fact]
     public void TestMethodData3()
     {
-        new LuaState().Eval(
+        Lua.New().Eval(
         """
         function foo() return 1 end
         foo()
