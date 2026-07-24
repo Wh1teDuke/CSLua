@@ -21,19 +21,29 @@ public class CSharp_Table
         _dict["Foo1"]   = "Bar";
         _dict["Foo2"]   = "Bar";
         _dict["Foo3"]   = "Bar";
+        _dict["Foo4"]   = "Bar";
+        _dict["Foo5"]   = "Bar";
+        _dict["Foo6"]   = "Bar";
+        _dict["Foo7"]   = "Bar";
+        _dict["Foo8"]   = "Bar";
 
         _luaState = Lua.New();
         _luaState.OpenLibs();
         
         _luaState.DoString(
-            "dict = {Foo='Bar',Foo1='Bar',Foo2='Bar',Foo3='Bar'}");
+            "dict = {Foo='Bar',Foo1='Bar',Foo2='Bar',Foo3='Bar',Foo4='Bar',Foo5='Bar',Foo6='Bar',Foo7='Bar',Foo8='Bar'}");
 
         _luaState.Compile(
             "_dict_get", """
                      local a = dict.Foo
                      local b = dict.Foo1
                      local c = dict.Foo2
-                     local d = dict.Foo3 
+                     local d = dict.Foo3
+                     local e = dict.Foo4
+                     local f = dict.Foo5
+                     local g = dict.Foo6
+                     local h = dict.Foo7
+                     local i = dict.Foo8
                      return 4
                      """);
 
@@ -43,6 +53,11 @@ public class CSharp_Table
                      dict.Bar1 = "Foo1"
                      dict.Bar2 = "Foo2"
                      dict.Bar3 = "Foo3"
+                     dict.Bar4 = "Foo4"
+                     dict.Bar5 = "Foo5"
+                     dict.Bar6 = "Foo6"
+                     dict.Bar7 = "Foo7"
+                     dict.Bar8 = "Foo8"
                      return 4
                      """);
         
@@ -59,6 +74,10 @@ public class CSharp_Table
                           dict["nil2"] = nil
                           dict["nil3"] = nil
                           dict["nil4"] = nil
+                          dict["nil5"] = nil
+                          dict["nil6"] = nil
+                          dict["nil7"] = nil
+                          dict["nil8"] = nil
                           return 4
                           """);
     }
@@ -72,7 +91,13 @@ public class CSharp_Table
         var b = _dict["Foo1"];
         var c = _dict["Foo2"];
         var d = _dict["Foo3"];
-        return a.Length + b.Length + c.Length + d.Length; // Don't optimize lookup
+        var e = _dict["Foo4"];
+        var f = _dict["Foo5"];
+        var g = _dict["Foo6"];
+        var h = _dict["Foo7"];
+        var i = _dict["Foo8"];
+        return a.Length + b.Length + c.Length + d.Length + e.Length + 
+               f.Length + g.Length + h.Length + i.Length; // Don't optimize lookup
     }
 
     [Benchmark]
@@ -94,6 +119,11 @@ public class CSharp_Table
         _dict["Bar1"] = "Foo1";
         _dict["Bar2"] = "Foo2";
         _dict["Bar3"] = "Foo3";
+        _dict["Bar4"] = "Foo4";
+        _dict["Bar5"] = "Foo5";
+        _dict["Bar6"] = "Foo6";
+        _dict["Bar7"] = "Foo7";
+        _dict["Bar8"] = "Foo8";
         return _dict.Count;
     }
 
@@ -136,6 +166,10 @@ public class CSharp_Table
         _dict.Remove("nil2");
         _dict.Remove("nil3");
         _dict.Remove("nil4");
+        _dict.Remove("nil5");
+        _dict.Remove("nil6");
+        _dict.Remove("nil7");
+        _dict.Remove("nil8");
         return _dict.Count;
     }
 
