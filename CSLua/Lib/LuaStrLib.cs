@@ -218,7 +218,6 @@ public static class LuaStrLib
 			case 'a': res = char.IsLetter(c); break;
 			case 'c': res = char.IsControl(c); break;
 			case 'd': res = char.IsDigit(c); break;
-			case 'g': throw new NotImplementedException();
 			case 'l': res = char.IsLower(c); break;
 			case 'p': res = char.IsPunctuation(c); break;
 			case 's': res = char.IsWhiteSpace(c); break;
