@@ -2122,6 +2122,15 @@ public sealed class LuaState
 			ArgError(n, "Value expected");
 	}
 
+	public TValue CheckValue(int n)
+	{
+		if (Type(n) == Lua.Type.LUA_TNONE)
+			ArgError(n, "Value expected");
+		if (!Index2Addr(n, out var addr))
+			return 0;
+		return addr;
+	}
+
 	/// <summary>
 	/// Returns the double at the 1-based index position of the stack, or throws a lua exception otherwise.
 	/// </summary>

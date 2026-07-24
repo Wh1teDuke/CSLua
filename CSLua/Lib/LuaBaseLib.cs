@@ -1,4 +1,5 @@
 ﻿
+using System.Text;
 using CSLua.Parse;
 using CSLua.Util;
 
@@ -498,10 +499,11 @@ public static class LuaBaseLib
 	public static int B_Ipairs(LuaState lua) => 
 		PairsMeta(lua, "__ipairs", true, IPairsClosure);
 
-	public static int B_Print(LuaState lua)
+	internal static int? FillStringBuilder(
+		LuaState lua,
+		StringBuilder sb,
+		int n)
 	{
-		var sb = LuaUtil.StrBuilder;
-		var n = lua.GetTop();
 		lua.GetGlobal("tostring");
 		for (var i = 1; i <= n; ++i)
 		{
@@ -515,6 +517,15 @@ public static class LuaBaseLib
 			sb.Append(s);
 			lua.Pop(1);
 		}
+		
+		return null;
+	}
+
+	public static int B_Print(LuaState lua)
+	{
+		var sb = LuaUtil.StrBuilder;
+		var n = lua.GetTop();
+		FillStringBuilder(lua, sb, n);
 
 		foreach (var chunk in sb.GetChunks())
 			LuaOutput.Write(chunk.Span);
