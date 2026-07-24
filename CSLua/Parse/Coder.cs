@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using CSLua.Util;
 
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -48,7 +49,7 @@ public readonly record struct Instruction(uint Val)
 			case OpMode.iAx:
 				return $"{op,-9} {MYK(ax)}";
 			default:
-				throw new Exception("Impossible");
+				throw new UnreachableException();
 		}
 	}
 

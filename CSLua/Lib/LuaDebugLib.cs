@@ -56,7 +56,7 @@ public static class LuaDebugLib
 	{
 		var L = lua;
 		var L1 = lua.GetThread(out var arg);
-		var what = L.OptString(arg + 2, "flnStu");
+		var options = L.OptString(arg + 2, "flnSrtu");
 		var debug = new Lua.Debug();
 		
 		if (L.Type(arg + 1) == Lua.Type.LUA_TNUMBER)
@@ -69,22 +69,71 @@ public static class LuaDebugLib
 			}
 		}
 		else if (L.AsString(arg + 1) is {} str)
-			what = str;
+			options = str;
 		else if (L.Type(arg + 1) == Lua.Type.LUA_TFUNCTION)
 		{
-			what = ">" + what;
+			options = ">" + options;
 			lua.PushValue(arg + 1);
 			lua.XMove(L1, 1);
 		}
 		else
 			return lua.ArgError(arg + 1, "function or level expected");
 
-		L.GetInfo(debug, what);
+		L.GetInfo(debug, options);
 
 		var table = new LuaTable(L);
-		table.Set("name", debug.Name!);
-		table.Set("currentline", debug.CurrentLine);
-		table.Set("linedefined", debug.LineDefined);
+
+		if (options.Contains('S'))
+		{
+			if (debug.Source != null)
+				table.Set("source", debug.Source);
+			if (debug.ShortSrc != null)
+				table.Set("short_src",  debug.ShortSrc);
+			table.Set("linedefined", debug.LineDefined);
+			table.Set("lastlinedefined", debug.LastLineDefined);
+			if (debug.What != null)
+				table.Set("what", debug.What);
+		}
+		
+		if (options.Contains('l'))
+			table.Set("currentline", debug.CurrentLine);
+
+		if (options.Contains('u'))
+		{
+			table.Set("nups", debug.NumUps);
+			table.Set("nparams", debug.NumParams);
+			table.Set("isvararg", debug.IsVarArg);
+		}
+
+		if (options.Contains('n'))
+		{
+			if (debug.Name != null)
+				table.Set("name", debug.Name);
+			if (debug.NameWhat != null)
+				table.Set("namewhat", debug.NameWhat);
+		}
+
+		if (options.Contains('r'))
+		{
+			// TODO this is new
+		}
+		
+		if (options.Contains('t'))
+		{
+			table.Set("istailcall", debug.IsTailCall);
+			// TODO settabsi(L, "extraargs", ar.extraargs);
+		}
+
+		if (options.Contains('L'))
+		{
+			// TODO	
+		}
+		
+		if (options.Contains('f'))
+		{
+			// TODO	
+		}
+
 		L.PushTable(table);
 		
 		return 1;

@@ -9,7 +9,7 @@ public sealed class TestCall
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         
         Assert.Equal(0, L.GetTop());
         var res = L.DoString("function add(a, b) return a + b end");
@@ -32,7 +32,7 @@ public sealed class TestCall
     [Fact]
     public void Test2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         var res = L.DoString("function add(a, b) return a + b end");
         Assert.Equal(ThreadStatus.LUA_OK, res);
 
@@ -53,7 +53,7 @@ public sealed class TestCall
     [Fact]
     public void TestCsClosure1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.PushCsDelegate(TestFunction);
         Assert.Equal(1, L.GetTop());
         L.SetGlobal("inc");
@@ -81,7 +81,7 @@ public sealed class TestCall
     [Fact]
     public void TestCsClosure2()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.PushCsDelegate(TestFunction);
         Assert.Equal(1, L.GetTop());
         L.SetGlobal("inc");
@@ -112,7 +112,7 @@ public sealed class TestCall
     public void TestFuncData1()
     {
         const int id = 123;
-        var L = new LuaState();
+        var L = Lua.New();
         L.NewTable();
         Assert.Equal(1, L.GetTop());
         L.PushCsDelegate(GetID);
@@ -141,7 +141,7 @@ public sealed class TestCall
     public void TestMethodData2()
     {
         const int id = 123;
-        var L = new LuaState();
+        var L = Lua.New();
         L.NewTable();
         Assert.Equal(1, L.GetTop());
         L.PushCsDelegate(GetID);
@@ -180,7 +180,7 @@ public sealed class TestCall
     [Fact]
     public void TestPCallCBWithTraceback()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         
         L.PushCsClosure(LuaUtil.TracebackErrHandler);
         var errFunc = L.GetTop();
@@ -197,7 +197,7 @@ public sealed class TestCall
         Assert.True(L.IsString(-1));
         var msg = L.PopString();
         Assert.Equal(
-            "TestPCallCBWithTraceback:1: Attempt to call a nil value\nstack traceback:\n\t[source \"function foo(arg) return bar(arg) end\"]:1: in function 'foo'",
+            "TestPCallCBWithTraceback:1: attempt to call a nil value\nstack traceback:\n\t[source \"function foo(arg) return bar(arg) end\"]:1: in function 'foo'",
             msg);
     }
 }

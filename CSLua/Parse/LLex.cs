@@ -92,7 +92,7 @@ public readonly record struct LuaToken(
 
 public sealed class LLex
 {
-	private const char EOZ = char.MaxValue;
+	public const char EOZ = char.MaxValue;
 
 	public LuaToken Token;
 	public int LineNumber;

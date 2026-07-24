@@ -214,34 +214,34 @@ function cannotload (msg, a,b)
   assert(not a and string.find(b, msg))
 end
 
--- CSLUA_FAIL a = assert(load(read1(x), "modname", "t", _G))
--- CSLUA_FAIL assert(a() == "\0" and _G.x == 33)
--- CSLUA_FAIL assert(debug.getinfo(a).source == "modname")
+a = assert(load(read1(x), "modname", "t", _G))
+assert(a() == "\0" and _G.x == 33)
+assert(debug.getinfo(a).source == "modname")
 -- cannot read text in binary mode
--- CSLUA_FAIL cannotload("attempt to load a text chunk", load(read1(x), "modname", "b", {}))
--- CSLUA_FAIL cannotload("attempt to load a text chunk", load(x, "modname", "b"))
+cannotload("attempt to load a text chunk", load(read1(x), "modname", "b", {}))
+cannotload("attempt to load a text chunk", load(x, "modname", "b"))
 
--- CSLUA_FAIL a = assert(load(function () return nil end))
--- CSLUA_FAIL a()  -- empty chunk
+a = assert(load(function () return nil end))
+a()  -- empty chunk
 
--- CSLUA_FAIL assert(not load(function () return true end))
+assert(not load(function () return true end))
 
 
 -- small bug
 local t = {nil, "return ", "3"}
--- CSLUA_FAIL f, msg = load(function () return table.remove(t, 1) end)
--- CSLUA_FAIL assert(f() == nil)   -- should read the empty chunk
+f, msg = load(function () return table.remove(t, 1) end)
+assert(f() == nil)   -- should read the empty chunk
 
 -- another small bug (in 5.2.1)
 f = load(string.dump(function () return 1 end), nil, "b", {})
 assert(type(f) == "function" and f() == 1)
 
 
--- CSLUA_FAIL x = string.dump(load("x = 1; return x"))
+x = string.dump(load("x = 1; return x"))
 -- CSLUA_FAIL a = assert(load(read1(x), nil, "b"))
 -- CSLUA_FAIL assert(a() == 1 and _G.x == 1)
 -- CSLUA_FAIL cannotload("attempt to load a binary chunk", load(read1(x), nil, "t"))
--- CSLUA_FAIL cannotload("attempt to load a binary chunk", load(x, nil, "t"))
+cannotload("attempt to load a binary chunk", load(x, nil, "t"))
 
 assert(not pcall(string.dump, print))  -- no dump of C functions
 

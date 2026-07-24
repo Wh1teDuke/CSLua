@@ -74,7 +74,7 @@ public static class TestError
              foo()
              """));
         Assert.Equal(
-           "print(v[0]):4: Attempt to index a nil value",
+           "print(v[0]):4: attempt to index a nil value",
            e.Message);
     }
 
@@ -85,7 +85,7 @@ public static class TestError
         Eval("local bar=123;function foo() return #bar end; foo()")
         );
         Assert.Equal(
-            "local bar=123;function foo() return #bar end; foo():1: Attempt to get length of upvalue 'bar' (a number value)",
+            "local bar=123;function foo() return #bar end; foo():1: attempt to get length of upvalue 'bar' (a number value)",
             e.Message);
     }
 
@@ -94,7 +94,7 @@ public static class TestError
     {
         var e = Assert.ThrowsAny<LuaException>(() =>
             Eval("foobar()"));
-        Assert.StartsWith("foobar():1: Attempt to call a nil value", e.Message);
+        Assert.StartsWith("foobar():1: attempt to call a nil value", e.Message);
     }
     
     [Fact]
@@ -104,7 +104,7 @@ public static class TestError
         var L = new LuaState();
         var e = Assert.ThrowsAny<LuaException>(() =>
             L.Eval("for i = 1, 10 do res += i end"));
-        Assert.StartsWith("for i = 1, 10 do res += i end:1: Attempt to Perform arithmetic on a nil value", e.Message);
+        Assert.StartsWith("for i = 1, 10 do res += i end:1: attempt to Perform arithmetic on a nil value", e.Message);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public static class TestError
                    foo();
                    """, LuaUtil.TracebackErrHandler));
         Assert.Equal(
-            "bar():2: Attempt to call a nil value\nstack traceback:\n\t[source \"function foo()...\"]:2: in function 'foo'\n\t[source \"function foo()...\"]:4: in main chunk",
+            "bar():2: attempt to call a nil value\nstack traceback:\n\t[source \"function foo()...\"]:2: in function 'foo'\n\t[source \"function foo()...\"]:4: in main chunk",
             e.Message);
     }
 

@@ -1,4 +1,5 @@
 ﻿
+using CSLua.Parse;
 using CSLua.Util;
 
 namespace CSLua.Lib;
@@ -120,6 +121,7 @@ public static class LuaBaseLib
 				return 1;
 
 			default:
+				GC.Collect();
 				lua.PushInteger(0);
 				return 1;
 		}
@@ -178,6 +180,68 @@ public static class LuaBaseLib
 		var status = lua.LoadFileX(fName, mode);
 		return LoadAux(lua, status, env);
 	}
+	
+	private struct GenericReader(LuaState L) : ILoadInfo
+	{
+		private string? _chunk;
+		private bool _firstCall = true;
+		private bool _firstPeek = true;
+		private bool _end;
+		private int _p;
+		private int _c = LLex.EOZ;
+
+		public int ReadByte()
+		{
+			if (!_end && _chunk == null)
+				Advance();
+
+			if (_end || _chunk == null || _chunk == "")
+				return _c;
+
+			_c = _chunk[_p++];
+
+			if (_p >= _chunk.Length)
+			{
+				_chunk = null;
+				_p = 0;
+			}
+
+			return _c;
+		}
+
+		public int PeekByte()
+		{
+			return _c;
+		}
+
+		public void Advance()
+		{
+			L.CheckStack(2, "too many nested functions");
+			
+			if (_firstCall)
+				_firstCall = false;
+			else
+				L.Pop(1); /* remove previous result */
+			
+			L.PushValue(1); /* get function */
+			L.Call(0, 1); /* call it */
+			
+			if (L.IsNil(-1) ||
+			    (L.Type(-1) == Lua.Type.LUA_TSTRING &&
+			     L.ToString(-1) is ""))
+			{
+				_c = LLex.EOZ;
+				_end = true;
+				return;
+			}
+
+			if (!L.IsString(-1))
+				L.Error("reader function must return a string");
+			
+			_chunk = L.ToString(-1);
+			_p = 0;
+		}
+	}
 
 	public static int B_Load(LuaState lua)
 	{
@@ -194,8 +258,9 @@ public static class LuaBaseLib
 		{
 			var chunkName = lua.OptString(2, "=(load)");
 			lua.CheckType(1, Lua.Type.LUA_TFUNCTION);
-			
-			throw new NotImplementedException(); // TODO
+			var genericReader = new GenericReader(lua);
+
+			status = lua.Load(genericReader, chunkName, mode);
 		}
 		return LoadAux(lua, status, env);
 	}

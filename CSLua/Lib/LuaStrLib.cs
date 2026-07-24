@@ -904,13 +904,13 @@ public static class LuaStrLib
 		}
 		else
 		{
-			var builder = new StringBuilder();
+			var builder = LuaUtil.StrBuilder;
 			for (var i = 0; i < n; i++)
 			{
 				builder.Append(str);
 				if (sep != null && i + 1 < n) builder.Append(sep);
 			}
-			lua.PushString(builder.ToString());
+			lua.PushString(LuaUtil.StrBuilderToString());
 		}
 
 		return 1;
@@ -919,10 +919,10 @@ public static class LuaStrLib
 	private static int Str_Reverse(LuaState lua)
 	{
 		var s = lua.CheckString(1);
-		var sb = new StringBuilder(s.Length);
+		var sb = LuaUtil.StrBuilder;
 		for (var i = s.Length - 1; i >= 0; --i)
 			sb.Append(s[i]);
-		lua.PushString(sb.ToString());
+		lua.PushString(LuaUtil.StrBuilderToString());
 		return 1;
 	}
 
@@ -933,10 +933,10 @@ public static class LuaStrLib
 		var end = PosRelative(lua.OptInt(3, -1), s.Length);
 		if (start < 1) start = 1;
 		if (end > s.Length) end = s.Length;
-		if (start <= end)
-			lua.PushString(s.Substring(start - 1, end - start + 1));
-		else
-			lua.PushString("");
+		lua.PushString(
+			start <= end 
+				? s.Substring(start - 1, end - start + 1) 
+				: "");
 		return 1;
 	}
 

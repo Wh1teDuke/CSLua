@@ -1,6 +1,7 @@
 using CSLua;
 using CSLua.Extensions;
 using CSLua.Parse;
+using Xunit.Sdk;
 
 namespace Test;
 
@@ -9,7 +10,7 @@ public sealed class TestLoad
     [Fact]
     public void Test1()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
 
         var r1 = L.DoFile(Path.Join("lua", "Test1.lua"));
@@ -26,7 +27,7 @@ public sealed class TestLoad
     public void Test2()
     {
         const string foo = "foo";
-        var L = new LuaState();
+        var L = Lua.New();
         L.OpenLibs();
         L.PushInteger(0);
         L.SetGlobal(foo);
@@ -43,7 +44,7 @@ public sealed class TestLoad
     [Fact]
     public void Test3()
     {
-        var L = new LuaState();
+        var L = Lua.New();
         var proto = Parser.Read("foo = 1").Proto;
         var res = L.DoProto(proto, "Test");
         Assert.Equal(ThreadStatus.LUA_OK, res);
@@ -51,5 +52,24 @@ public sealed class TestLoad
         L.GetGlobal("foo");
         var ret = L.ToInteger(-1);
         Assert.Equal(1, ret);
+    }
+
+    private volatile bool _bilDone;
+    
+    [Fact]
+    public void BugInfiniteLoop()
+    {
+        _bilDone = false;
+        var L = Lua.New();
+        L.OpenLibs();
+        
+        ThreadPool.QueueUserWorkItem(_ =>
+        {
+            Thread.Sleep(500);
+            Assert.True(_bilDone);
+        });
+
+        L.Eval("assert(not load(function () return true end))");
+        _bilDone = true;
     }
 }

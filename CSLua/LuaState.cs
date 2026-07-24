@@ -1,6 +1,7 @@
 ﻿// #define ENABLE_DUMP_STACK
 // #define DEBUG_RECORD_INS
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -338,12 +339,10 @@ public sealed class LuaState
 
 	private void CheckMode(string? given, string expected)
 	{
-		if (given != null && !given.Contains(expected[0]))
-		{
-			var msg = $"Attempt to load a {expected} chunk (mode is '{given}')"; 
-			O_PushString(msg);
-			Throw(ThreadStatus.LUA_ERRSYNTAX, msg);
-		}
+		if (given == null || given.Contains(expected[0])) return;
+		var msg = $"attempt to load a {expected} chunk (mode is '{given}')"; 
+		O_PushString(msg);
+		Throw(ThreadStatus.LUA_ERRSYNTAX, msg);
 	}
 
 	private static void Load<T>(ref LoadParameter<T> param) where T: ILoadInfo
@@ -357,7 +356,7 @@ public sealed class LuaState
 		else if (param.LoadInfo.PeekByte() == LuaConf.LUA_SIGNATURE[0])
 		{
 			L.CheckMode(param.Mode, "binary");
-			proto = UnDump.LoadBinary(param.LoadInfo, param.Name ?? "???");
+			proto = UnDump.LoadBinary(param.LoadInfo, param.Name ?? "?");
 		}
 		else
 		{
@@ -2756,7 +2755,7 @@ public sealed class LuaState
 			LuaOp.LUA_OPMOD => v1 - Math.Floor(v1 / v2) * v2,
 			LuaOp.LUA_OPPOW => Math.Pow(v1, v2),
 			LuaOp.LUA_OPUNM => -v1,
-			_ => throw new Exception("Impossible"),
+			_ => throw new UnreachableException(),
 		};
 
 	private static bool IsFalse(StkId v) => 
@@ -4692,7 +4691,7 @@ public sealed class LuaState
 	private void SimpleTypeError(StkId o, string op)
 	{
 		var t = ObjTypeName(o);
-		RunError("Attempt to {0} a {1} value", op, t);
+		RunError("attempt to {0} a {1} value", op, t);
 	}
 
 	private void TypeError(StkId o, string op)
@@ -4712,10 +4711,10 @@ public sealed class LuaState
 			}
 		}
 		if (kind != null)
-			RunError("Attempt to {0} {1} '{2}' (a {3} value)",
+			RunError("attempt to {0} {1} '{2}' (a {3} value)",
 				op, kind, name!, t);
 		else
-			RunError("Attempt to {0} a {1} value", op, t);
+			RunError("attempt to {0} a {1} value", op, t);
 	}
 
 	private void ArithError(StkId p1, StkId p2)
@@ -4731,9 +4730,9 @@ public sealed class LuaState
 		var t1 = ObjTypeName(p1);
 		var t2 = ObjTypeName(p2);
 		if (t1 == t2)
-			RunError("Attempt to compare two {0} values", t1);
+			RunError("attempt to compare two {0} values", t1);
 		else
-			RunError("Attempt to compare {0} with {1}", t1, t2);
+			RunError("attempt to compare {0} with {1}", t1, t2);
 	}
 
 	private void ConcatError(StkId p1, StkId p2)
