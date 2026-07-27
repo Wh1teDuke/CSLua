@@ -205,7 +205,8 @@ public sealed class LLex
 
 	private string _GetSavedString() => _GetSavedSpan().ToString();
 	
-	private ReadOnlySpan<char> _GetSavedSpan() => new(_saved, _savedStart, _savedCount);
+	private ReadOnlySpan<char> _GetSavedSpan() => 
+		new(_saved, _savedStart, _savedCount);
 
 	private void ClearSaved()
 	{
@@ -309,7 +310,7 @@ public sealed class LLex
 		}
 		endloop:
 		_savedStart = 2 + sep;
-		_savedCount -= 2 + _savedStart;
+		_savedCount -= 2 * _savedStart;
 		return _GetSavedSpan();
 	}
 
@@ -544,13 +545,13 @@ public sealed class LLex
 					if (_current == '[')
 					{
 						var sep = _SkipSep();
-						ClearSaved();
 						if (sep >= 0)
 						{
 							_ReadLongString(sep);
 							ClearSaved();
 							continue;
 						}
+						ClearSaved();
 					}
 
 					// else is a short comment

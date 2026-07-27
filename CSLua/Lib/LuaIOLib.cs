@@ -42,11 +42,7 @@ public static class LuaIOLib
 		return 0;
 	}
 
-	private static int IO_Input(LuaState lua)
-	{
-		// TODO
-		return 0;
-	}
+	private static int IO_Input(LuaState lua) => IOFile(lua, FileMode.Open);
 
 	private static int IO_Lines(LuaState lua)
 	{
@@ -94,5 +90,37 @@ public static class LuaIOLib
 	{
 		// TODO
 		return 0;
+	}
+
+	private static int IOFile(LuaState lua, FileMode mode)
+	{
+		if (!lua.IsNoneOrNil(1))
+		{
+			var filename = lua.ToString(1);
+			if (filename != null) 
+				OpenCheck(lua, filename, mode);
+			else
+			{
+				// TODO
+				throw new NotImplementedException();
+				
+				/* check that it's a valid file handle */
+				lua.PushValue(1);
+			}
+		}
+
+		return 1;
+	}
+
+	private static void OpenCheck(LuaState lua, string filename, FileMode mode)
+	{
+		try
+		{
+			File.Open(filename, mode);
+		}
+		catch (Exception e)
+		{
+			lua.Error($"cannot open file '{filename}' ({e.Message})");
+		}
 	}
 }

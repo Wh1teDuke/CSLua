@@ -21,6 +21,8 @@ public static class LuaOSLib
 			new("rename",       OS_Rename),
 			new("exit",			OS_Exit),
 			new("setlocale",	OS_SetLocale),
+			new("getenv",       OS_GetEnv),
+			new("tmpname",      OS_TempFile),
 		];
 
 		lua.NewLib(define);
@@ -37,6 +39,9 @@ public static class LuaOSLib
 			//new("remove",     OS_Remove),
 			//new("rename",     OS_Rename),
 			//new("exit",		OS_Exit),
+			//new("setlocale",	OS_SetLocale),
+			//new("getenv",       OS_GetEnv),
+			//new("tmpname",      OS_TempFile),
 		];
 
 		lua.NewLib(define);
@@ -125,6 +130,19 @@ public static class LuaOSLib
 	private static int OS_SetLocale(LuaState lua)
 	{
 		lua.PushNil();
+		return 1;
+	}
+	
+	private static int OS_GetEnv(LuaState lua)
+	{
+		var key = lua.CheckString(-1);
+		lua.PushString(Environment.GetEnvironmentVariable(key));
+		return 1;
+	}
+
+	private static int OS_TempFile(LuaState lua)
+	{
+		lua.PushString(Path.GetTempFileName());
 		return 1;
 	}
 }

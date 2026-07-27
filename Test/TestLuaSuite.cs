@@ -25,6 +25,47 @@ public sealed class TestLuaSuite
     public void TestLocals() => Run("locals.lua");
     [Fact]
     public void TestBitwise() => Run("bitwise.lua");
+    [Fact]
+    public void TestApi() => Run("api.lua");
+    [Fact]
+    public void TestAttrib() => Run("attrib.lua");
+    [Fact]
+    public void TestBig() => Run("big.lua");
+    [Fact]
+    public void TestFiles() => Run("files.lua");
+    [Fact]
+    public void TestCheckTable() => Run("checktable.lua");
+    /* TODO Infinite loop [Fact]
+    [Fact]
+    public void TestClosure() => Run("closure.lua");*/
+    [Fact]
+    public void TestErrors() => Run("errors.lua");
+    [Fact]
+    public void TestEvents() => Run("events.lua");
+    [Fact]
+    public void TestLiterals() => Run("literals.lua");
+    [Fact]
+    public void TestPm() => Run("pm.lua");
+    [Fact]
+    public void TestDb() => Run("db.lua");
+    [Fact]
+    public void TestVeryBig() => Run("verybig.lua");
+    
+    // https://github.com/NLua/NLua/tree/main/tests/scripts/core
+    [Fact]
+    public void TestBisect() => Run("bisect.lua");
+    [Fact]
+    public void TestFactorial() => Run("factorial.lua");
+    [Fact]
+    public void TestFib() => Run("fib.lua");
+    [Fact]
+    public void TestFibfor() => Run("fibfor.lua");
+    [Fact]
+    public void TestPrintf() => Run("printf.lua");
+    [Fact]
+    public void TestSieve() => Run("sieve.lua");
+    [Fact]
+    public void TestSort() => Run("sort.lua");
 
     private static void Run(string file)
     {

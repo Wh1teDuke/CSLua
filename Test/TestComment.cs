@@ -37,4 +37,14 @@ public sealed class TestComment
         var res = L.PopInteger();
         Assert.Equal(3, res);
     }
+
+    [Fact]
+    public void TestCommentBug()
+    {
+        var L = Lua.New();
+        L.Eval("""
+               --[[
+               ]]
+               """);
+    }
 }
