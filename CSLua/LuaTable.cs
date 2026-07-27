@@ -26,6 +26,9 @@ public sealed class LuaTable
 		SetNodeVector(0);
 	}
 
+	public TValue? TryGet(TValue key) => 
+		TryGet(key, out var result) ? result : null;
+
 	public bool TryGet(TValue key, out StkId value)
 	{
 		value = StkId.Nil;
@@ -34,30 +37,15 @@ public sealed class LuaTable
 			return false;
 		if (IsPositiveInteger(key))
 			return TryGet((int)key.NValue, out value);
-		if (key.Type == Lua.Type.LUA_TSTRING)
-			return TryGet(key.AsString()!, out value);
 
-		var h = key.GetHashCode();
+		var h =
+			key.AsString() is {} str
+			? str.GetHashCode()
+			: key.GetHashCode();
+
 		for (var node = GetHashNode(h); node != null; node = node.Next)
 		{
 			if (node.Key != key) continue;
-			value = node.PtrVal;
-			return true;
-		}
-
-		return false;
-	}
-
-	public TValue? TryGet(TValue key) => 
-		TryGet(key, out var result) ? result : null;
-
-	public bool TryGet(string key, out StkId value)
-	{
-		value = StkId.Nil;
-		var h = key.GetHashCode();
-		for (var node = GetHashNode(h); node != null; node = node.Next)
-		{
-			if (!node.Key.IsString() || node.Key.AsString() != key) continue;
 			value = node.PtrVal;
 			return true;
 		}
@@ -74,38 +62,31 @@ public sealed class LuaTable
 			return true;
 		}
 
-		var k = new TValue();
-		k.SetDouble(key);
-		for (var node = GetHashNode(new StkId(ref k)); node != null; node = node.Next) 
+		for (var node = GetHashNode(key); node != null; node = node.Next)
 		{
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
-			if (node.Key.IsNumber() && node.Key.NValue == key)
-			{
-				value = node.PtrVal;
-				return true;
-			}
+			if (!node.Key.IsNumber() || node.Key.NValue != key) continue;
+			value = node.PtrVal;
+			return true;
 		}
 
 		return false;
-	}
-	
-	public void Set(int key, TValue val)
-	{
-		if (!TryGet(key, out var value))
-		{
-			var k = new TValue();
-			k.SetDouble(key);
-			var value2 = NewTableKey(new StkId(ref k));
-			value2.Set(val);
-			return;
-		}
-		value.Set(val);
 	}
 
 	public void Set(TValue key, TValue val)
 	{
 		if (!TryGet(key, out var value)) 
 			value = NewTableKey(key);
+		value.Set(val);
+	}
+	
+	public void Set(int key, TValue val)
+	{
+		if (!TryGet(key, out var value))
+		{
+			NewTableKey(key).Set(val);
+			return;
+		}
 		value.Set(val);
 	}
 	
@@ -301,12 +282,6 @@ public sealed class LuaTable
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static bool IsPositiveInteger(TValue v) =>
-		v.IsNumber() && v.NValue > 0 &&
-		v.NValue % 1 == 0 &&
-		v.NValue <= int.MaxValue; // Fix large number key bug
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private HNode GetHashNode(int hashcode)
 	{
 		var n = (uint)hashcode;
@@ -387,7 +362,7 @@ public sealed class LuaTable
 		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
+		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 	];
 
 	private static int CeilLog2(int x)
@@ -405,7 +380,6 @@ public sealed class LuaTable
 			return 0;
 		nums[CeilLog2(k)]++;
 		return 1;
-
 	}
 
 	private int NumUseArray(Span<int> nums)
@@ -561,4 +535,10 @@ public sealed class LuaTable
 		}
 		return (int)i;
 	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsPositiveInteger(TValue v) =>
+		v.IsNumber() && v.NValue > 0 &&
+		v.NValue % 1 == 0 &&
+		v.NValue <= int.MaxValue; // Fix large number key bug
 }

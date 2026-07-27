@@ -229,6 +229,18 @@ public struct TValue : IEquatable<TValue>
 		return result;
 	}
 	
+	/// <summary>
+	/// Produces a TValue of double value.
+	/// </summary>
+	/// <param name="value"></param>
+	/// <returns></returns>
+	public static TValue Of(int value)
+	{
+		var result = new TValue();
+		result.SetDouble(value);
+		return result;
+	}
+	
 	public static TValue Of(bool value)
 	{
 		var result = new TValue();
