@@ -285,7 +285,7 @@ public sealed class LuaTable
 	private HNode GetHashNode(int hashcode)
 	{
 		var n = (uint)hashcode;
-		return _hashPart[n % _hashSize];
+		return _hashPart[n & (_hashSize - 1)];
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -537,8 +537,12 @@ public sealed class LuaTable
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static bool IsPositiveInteger(TValue v) =>
-		v.IsNumber() && v.NValue > 0 &&
-		v.NValue % 1 == 0 &&
-		v.NValue <= int.MaxValue; // Fix large number key bug
+	private static bool IsPositiveInteger(TValue v)
+	{
+		if (!v.IsNumber() || v.NValue <= 0 || v.NValue > int.MaxValue) return false;
+		var intVal = (int)v.NValue; 
+		// ReSharper disable once CompareOfFloatsByEqualityOperator
+		return intVal == v.NValue;
+		// Fix large number key bug
+	}
 }
