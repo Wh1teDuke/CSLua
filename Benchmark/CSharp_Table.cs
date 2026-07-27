@@ -1,4 +1,5 @@
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using CSLua;
 using CSLua.Extensions;
@@ -7,7 +8,7 @@ namespace Benchmark;
 
 [MemoryDiagnoser]
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-[CategoriesColumn]
+[HideColumns(Column.RatioSD, Column.Error, Column.StdDev)]
 public class CSharp_Table
 {
     private LuaState _luaState = null!;
