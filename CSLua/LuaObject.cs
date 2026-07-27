@@ -236,6 +236,27 @@ public struct TValue : IEquatable<TValue>
 		return result;
 	}
 	
+	public static TValue Of(IUSerData value)
+	{
+		var result = new TValue();
+		result.SetUserData(value);
+		return result;
+	}
+
+	public static TValue Of(CsClosure value)
+	{
+		var result = new TValue();
+		result.SetCSClosure(value);
+		return result;
+	}
+	
+	public static TValue Of(LuaClosure value)
+	{
+		var result = new TValue();
+		result.SetLuaClosure(value);
+		return result;
+	}
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(double value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -244,6 +265,10 @@ public struct TValue : IEquatable<TValue>
 	public static implicit operator TValue(long value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(string value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(CsClosure value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(LuaClosure value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(StkId v) => v.V;
 }
