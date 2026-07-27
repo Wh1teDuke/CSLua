@@ -1529,7 +1529,7 @@ public sealed class LuaState
 		if (addr.V.IsNumber())
 		{
 			isNum = true;
-			return (uint)addr.V.NValue;
+			return (uint)(long)addr.V.NValue;
 		}
 		
 		if (addr.V.IsInt64())

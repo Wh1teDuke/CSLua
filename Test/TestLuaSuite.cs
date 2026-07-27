@@ -23,6 +23,8 @@ public sealed class TestLuaSuite
     public void TestCalls() => Run("calls.lua");
     [Fact]
     public void TestLocals() => Run("locals.lua");
+    [Fact]
+    public void TestBitwise() => Run("bitwise.lua");
 
     private static void Run(string file)
     {
