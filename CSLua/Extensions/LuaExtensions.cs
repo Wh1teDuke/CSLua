@@ -52,6 +52,7 @@ public static class LuaExtensions
 
         public LuaTable PopTable()
         {
+            // TODO: Return LuaTable? for consistency
             var i = (LuaTable)L.ToObject(-1)!;
             L.Pop(1);
             return i;
