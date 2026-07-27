@@ -6,6 +6,16 @@ namespace Test;
 public sealed class TestTable
 {
     [Fact]
+    public void TestArrayPart()
+    {
+        var L = Lua.New();
+        L.Eval("return {0,1,2,3,4,5}");
+        var t = L.PopTable();
+
+        Assert.Equal(6, t.Length);
+    }
+    
+    [Fact]
     public void Test1()
     {
         var L = Lua.New();
@@ -89,21 +99,64 @@ public sealed class TestTable
             Assert.Equal(i, val.NValue);
         }
     }
-
+    
     [Fact]
     public void TestIter1()
     {
         var L = Lua.New();
         L.OpenLibs();
         L.Eval("""
+                   local t = {}
+                   t["key" .. 1] = 1
+                   local r = 0
+                   for i, v in pairs(t) do
+                     r = r + 1
+                   end
+                   assert(r==1,tostring(r))
+                   """);
+    }
+    
+    [Fact]
+    public void TestRemove0()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("""
                local t = {}
-               for i = 1, 100 do
-                 t["key" .. i] = i
+               --table.insert(t, 1)
+               t["key" .. 1] = 1
+               assert(table.length(t) == 1, tostring(table.length(t)))
+               local r = 0
+               for i, v in pairs(t) do
+                 r = r + 1
                end
-               assert(table.length(t) == 100)
-               for i, k in pairs(t) do
-                 assert(k == t[i])
-               end
+               return r;
                """);
+        var res = L.PopInteger();
+        Assert.Equal(1, res);
+    }
+
+    [Fact]
+    public void TestRemove1()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.DoString("""
+                   local t = {}
+                   local r = 0
+                   for i = 1, 500 do
+                     table.insert(t, i)
+                   end
+                   for i, v in pairs(t) do
+                     r = r + v
+                   end
+                   for i = 500, 1, -1 do
+                     table.remove(t, i)
+                   end
+                   return r
+                   """);
+
+        var res = L.PopInteger();
+        Assert.Equal(125_250, res);
     }
 }

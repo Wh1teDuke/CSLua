@@ -130,4 +130,24 @@ public sealed class TestArray
             Assert.Equal(i, (int)val.V.NValue);
         }
     }
+
+    [Fact]
+    public void TestIPairs1()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval("""
+               local values = {true,true,true}
+               local res = 0
+               for k in ipairs(values) do
+                 values[k] = true
+                 if values[k] then
+                   res = res + 1
+                 end
+               end
+               return res
+               """);
+        var res = L.PopInteger();
+        Assert.Equal(3, res);
+    }
 }
