@@ -208,16 +208,10 @@ public sealed class LuaState
 
 	private void InitRegistry()
 	{
-		var mt = new TValue();
-		var rmt = new StkId(ref mt);
-
-		G.Registry.V.SetTable(new LuaTable(this));
-
-		mt.SetThread(this);
-		G.Registry.V.AsTable()!.SetInt(LuaDef.LUA_RIDX_MAINTHREAD, rmt);
-
-		mt.SetTable(new LuaTable(this));
-		G.Registry.V.AsTable()!.SetInt(LuaDef.LUA_RIDX_GLOBALS, rmt);
+		var table = new LuaTable(this);
+		table.Set(LuaDef.LUA_RIDX_MAINTHREAD, this);
+		table.Set(LuaDef.LUA_RIDX_GLOBALS, new LuaTable(this));
+		G.Registry.SetTable(table);
 	}
 
 	private string DumpStackToString(int baseIndex, string tag = "")
@@ -286,7 +280,7 @@ public sealed class LuaState
 		val = StkId.Nil;
 		if (mt == null) return false;
 		
-		if (!mt.TryGetStr(GetTagMethodName(tm), out val) || val.V.IsNil()) // no tag method?
+		if (!mt.TryGet(GetTagMethodName(tm), out val) || val.V.IsNil()) // no tag method?
 		{
 			// Cache this fact
 			mt.NoTagMethodFlags |= 1u << (int)tm;
@@ -322,7 +316,7 @@ public sealed class LuaState
 			}
 		}
 
-		return mt != null && mt.TryGetStr(GetTagMethodName(tm), out val);
+		return mt != null && mt.TryGet(GetTagMethodName(tm), out val);
 	}
 	
 	#region Lua.cs
@@ -398,7 +392,7 @@ public sealed class LuaState
 		var cl = below.V.AsLuaClosure()!;
 		if (cl.Length == 1) 
 		{
-			G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
+			G.Registry.V.AsTable()!.TryGet(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 			cl.Upvals[0] = new LuaUpValue();
 			cl.Upvals[0].Value.CopyFrom(gt);
 		}
@@ -973,7 +967,7 @@ public sealed class LuaState
 		var tbl = addr.V.AsTable();
 		LuaUtil.ApiCheck(tbl != null, "Table expected");
 
-		tbl!.TryGetInt(n, out var v);
+		tbl!.TryGet(n, out var v);
 		Top.Set(v);
 		ApiIncrTop();
 	}
@@ -1013,7 +1007,7 @@ public sealed class LuaState
 			LuaUtil.InvalidIndex();
 		LuaUtil.ApiCheck(addr.V.IsTable(), "Table expected");
 		var tbl = addr.V.AsTable()!;
-		tbl.SetInt(n, Ref(--TopIndex));
+		tbl.Set(n, Ref(--TopIndex));
 	}
 
 	internal void RawSet(int index)
@@ -1386,14 +1380,14 @@ public sealed class LuaState
 
 	public void GetGlobal(string name)
 	{
-		G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
+		G.Registry.V.AsTable()!.TryGet(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 		IncTop().V.SetString(name);
 		GetTable(gt, Ref(TopIndex - 1), Ref(TopIndex - 1));
 	}
 
 	public void SetGlobal(string name)
 	{
-		G.Registry.V.AsTable()!.TryGetInt(LuaDef.LUA_RIDX_GLOBALS, out var gt);
+		G.Registry.V.AsTable()!.TryGet(LuaDef.LUA_RIDX_GLOBALS, out var gt);
 		IncTop().V.SetString(name);
 		SetTable(gt, Ref(TopIndex - 1), Ref(TopIndex - 2));
 		TopIndex -= 2;
@@ -3506,7 +3500,7 @@ public sealed class LuaState
 
 					var last = ((c - 1) * LuaDef.LFIELDS_PER_FLUSH) + n;
 					var rai = raIdx;
-					for (; n > 0; --n) tbl!.SetInt(last--, Ref(rai + n));
+					for (; n > 0; --n) tbl!.Set(last--, Ref(rai + n));
 #if DEBUG_OP_SETLIST
 					ULDebug.Log("[VM] ==== OP_SETLIST ci.Top:" + ci.Top.Index);
 					ULDebug.Log("[VM] ==== OP_SETLIST Top:" + Top.Index);
@@ -4357,7 +4351,7 @@ public sealed class LuaState
 			v.SetBool(true);
 			var rv = new StkId(ref v);
 			foreach (var t1 in lineInfo)
-				t.SetInt(t1, rv);
+				t.Set(t1, rv);
 		}
 		else if (func.V.IsCsClosure()) 
 		{

@@ -257,6 +257,20 @@ public struct TValue : IEquatable<TValue>
 		return result;
 	}
 	
+	public static TValue Of(LuaState value)
+	{
+		var result = new TValue();
+		result.SetThread(value);
+		return result;
+	}
+	
+	public static TValue Of(LuaTable value)
+	{
+		var result = new TValue();
+		result.SetTable(value);
+		return result;
+	}
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(double value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -264,11 +278,21 @@ public struct TValue : IEquatable<TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(long value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// Avoid being promoted to long
+	public static implicit operator TValue(int value) => Of((double)value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(string value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(CsClosure value) => Of(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(Lua.CsDelegate value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(LuaClosure value) => Of(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(LuaState v) => Of(v);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator TValue(LuaTable v) => Of(v);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator TValue(StkId v) => v.V;
 }
@@ -398,6 +422,8 @@ public sealed class CsClosure: BaseClosure
 	}
 
 	public StkId Ref(int index) => new (ref Upvals[index]);
+	
+	public static implicit operator CsClosure(Lua.CsDelegate fun) => new(fun);
 }
 
 public interface IUSerData

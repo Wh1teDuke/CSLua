@@ -33,9 +33,9 @@ public sealed class LuaTable
 		if (key.Type == (int)Lua.Type.LUA_TNIL) 
 			return false;
 		if (IsPositiveInteger(key))
-			return TryGetInt((int)key.NValue, out value);
+			return TryGet((int)key.NValue, out value);
 		if (key.Type == Lua.Type.LUA_TSTRING)
-			return TryGetStr(key.AsString()!, out value);
+			return TryGet(key.AsString()!, out value);
 
 		var h = key.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next)
@@ -48,12 +48,10 @@ public sealed class LuaTable
 		return false;
 	}
 
-	public TValue? TryGet(string key)
-	{
-		return TryGet(key, out var result) ? result : null;
-	}
-	
-	public bool TryGetStr(string key, out StkId value)
+	public TValue? TryGet(TValue key) => 
+		TryGet(key, out var result) ? result : null;
+
+	public bool TryGet(string key, out StkId value)
 	{
 		value = StkId.Nil;
 		var h = key.GetHashCode();
@@ -67,7 +65,7 @@ public sealed class LuaTable
 		return false;
 	}
 	
-	public bool TryGetInt(int key, out StkId value)
+	public bool TryGet(int key, out StkId value)
 	{
 		value = StkId.Nil;
 		if (0 < key && key - 1 < _arraySize)
@@ -91,9 +89,9 @@ public sealed class LuaTable
 		return false;
 	}
 	
-	public void SetInt(int key, StkId val)
+	public void Set(int key, TValue val)
 	{
-		if (!TryGetInt(key, out var value))
+		if (!TryGet(key, out var value))
 		{
 			var k = new TValue();
 			k.SetDouble(key);
@@ -104,59 +102,15 @@ public sealed class LuaTable
 		value.Set(val);
 	}
 
-	public void Set(TValue key, StkId val)
+	public void Set(TValue key, TValue val)
 	{
 		if (!TryGet(key, out var value)) 
 			value = NewTableKey(key);
 		value.Set(val);
 	}
-
-	public void Set(string key, string val)
-	{
-		var k = new TValue();
-		var v = new TValue();
-		
-		k.SetString(key);
-		v.SetString(val);
-		
-		Set(new StkId(ref k), new StkId(ref v));
-	}
 	
-	public void Set(string key, object val)
-	{
-		var k = new TValue();
-		var v = new TValue();
-		
-		k.SetString(key);
-		v.SetLightUserData(val);
-		
-		Set(new StkId(ref k), new StkId(ref v));
-	}
-	
-	public void Set(string key, int val)
-	{
-		var k = new TValue();
-		var v = new TValue();
-		
-		k.SetString(key);
-		v.SetDouble(val);
-		
-		Set(new StkId(ref k), new StkId(ref v));
-	}
-
-	public void Set(string key, Lua.CsDelegate val) =>
-		Set(key, new CsClosure(val));
-
-	public void Set(string key, CsClosure val)
-	{
-		var k = new TValue();
-		var v = new TValue();
-		
-		k.SetString(key);
-		v.SetCSClosure(val);
-
-		Set(new StkId(ref k), new StkId(ref v));
-	}
+	public void Set(TValue key, Lua.CsDelegate fun) =>
+		Set(key, TValue.Of(fun));
 
 	public bool Next(StkId key, StkId val)
 	{
@@ -232,7 +186,7 @@ public sealed class LuaTable
 			for (var i= naSize; i < oaSize; ++i) 
 			{
 				if (!oldArrayPart[i].IsNil()) 
-					SetInt(i + 1, new StkId(ref oldArrayPart[i]));
+					Set(i + 1, new StkId(ref oldArrayPart[i]));
 			}
 			
 			// Shrink array
@@ -257,9 +211,9 @@ public sealed class LuaTable
 		if (key.Type == (int)Lua.Type.LUA_TNIL)
 			return false;
 		if (IsPositiveInteger(key))
-			return TryGetInt((int)key.NValue, out value);
+			return TryGet((int)key.NValue, out value);
 		if (key.Type == Lua.Type.LUA_TSTRING)
-			return TryGetStr(key.AsString()!, out value);
+			return TryGet(key.AsString()!, out value);
 
 		var h = key.GetHashCode();
 		for (var node = GetHashNode(h); node != null; node = node.Next) 
@@ -585,7 +539,7 @@ public sealed class LuaTable
 	{
 		var i = j;
 		j++;
-		while (TryGetInt((int)j, out var v) && !v.V.IsNil()) 
+		while (TryGet((int)j, out var v) && !v.V.IsNil()) 
 		{
 			i = j;
 			j *= 2;
@@ -595,14 +549,14 @@ public sealed class LuaTable
 
 			// Table was built with bad purposes: resort to linear search
 			i = 1;
-			while (TryGetInt((int)i, out var v2) && !v2.V.IsNil()) i++;
+			while (TryGet((int)i, out var v2) && !v2.V.IsNil()) i++;
 			return (int)(i - 1);
 		}
 		// Now do a binary search between them
 		while (j - i > 1) 
 		{
 			var m = (i + j) / 2;
-			if (!TryGetInt((int)m, out var v) || v.V.IsNil()) j = m;
+			if (!TryGet((int)m, out var v) || v.V.IsNil()) j = m;
 			else i = m;
 		}
 		return (int)i;

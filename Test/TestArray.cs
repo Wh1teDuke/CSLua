@@ -126,7 +126,7 @@ public sealed class TestArray
         var t = L.PopTable();
         for (var i = 1; i <= 10_000; i++)
         {
-            Assert.True(t.TryGetInt(i, out var val));
+            Assert.True(t.TryGet(i, out var val));
             Assert.Equal(i, (int)val.V.NValue);
         }
     }
