@@ -7,7 +7,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks.Dataflow;
 using CSLua.Extensions;
 using CSLua.Lib;
 using CSLua.Parse;
@@ -110,7 +109,7 @@ public sealed class LuaState
 	
 	public ThreadStatus		Status { get; private set; }
 
-	public string BaseFolder { get; set; }
+	public string BaseFolder { get; set; } // TODO
 
 	public StkId Top => Ref(TopIndex);
 	
@@ -3863,14 +3862,12 @@ public sealed class LuaState
 			return true;
 		}
 
-		if (obj.V.IsString()) 
+		if (obj.V.IsString() && 
+		    LuaUtil.Str2Decimal(
+			    obj.V.AsString().AsSpan(), out var val)) 
 		{
-			if (LuaUtil.Str2Decimal(
-				    obj.V.AsString().AsSpan(), out var val))
-			{
-				n.V.SetDouble(val);
-				return true;
-			}
+			n.V.SetDouble(val);
+			return true;
 		}
 
 		return false;

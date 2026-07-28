@@ -1,5 +1,6 @@
 ﻿using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using CSLua.Util;
 using NumberStyles = System.Globalization.NumberStyles;
@@ -182,7 +183,8 @@ public sealed class LLex
 		ClearSaved();
 		return result;
 	}
-
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void _Next()
 	{
 		var c = _loadInfo.ReadByte();
@@ -625,7 +627,8 @@ public sealed class LLex
 				case '[': 
 				{
 					var sep = _SkipSep();
-					if (sep >= 0) {
+					if (sep >= 0) 
+					{
 						var semInfo = _ReadLongString(sep);
 						var str = GetTokenString();
 						return LuaToken.LongString(str);

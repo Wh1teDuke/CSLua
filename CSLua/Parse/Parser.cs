@@ -38,10 +38,10 @@ public sealed class BlockCnt
 	public bool		IsLoop;
 }
 
-public sealed class ConstructorControl
+public ref struct ConstructorControl()
 {
-	public readonly ExpDesc	ExpLastItem = new();
-	public required ExpDesc	ExpTable;
+	public ExpDesc ExpLastItem = new();
+	public ref ExpDesc ExpTable;
 	public int		NumRecord;
 	public int		NumArray;
 	public int		NumToStore;
@@ -84,35 +84,21 @@ public enum BinOpr
 
 public enum UnOpr { MINUS, NOT, LEN, NOUNOPR, }
 
-public sealed class ExpDesc // TODO struct
+public struct ExpDesc
 {
-	public ExpKind Kind;
-
-	public int Info;
-
 	public struct IndData
-	{
-		public int T;
-		public int Idx;
-		public ExpKind Vt;
-	}
-
+    {
+    	public int T;
+    	public int Idx;
+    	public ExpKind Vt;
+    }
+	
+	public ExpKind Kind;
+	public int Info;
 	public IndData Ind;
-
 	public double NumberValue;
-
 	public int ExitTrue;
 	public int ExitFalse;
-
-	public void CopyFrom(ExpDesc e)
-	{
-		Kind 			= e.Kind;
-		Info 			= e.Info;
-		Ind 			= e.Ind;
-		NumberValue 	= e.NumberValue;
-		ExitTrue 		= e.ExitTrue;
-		ExitFalse 		= e.ExitFalse;
-	}
 }
 
 public readonly record struct VarDesc(int Index);
@@ -129,7 +115,7 @@ public record struct LabelDesc(
 public sealed class LHSAssign
 {
 	public LHSAssign? Prev, Next;
-	public readonly ExpDesc	Exp = new();
+	public ExpDesc Exp = new();
 }
 
 public sealed class Parser
@@ -183,16 +169,16 @@ public sealed class Parser
 		return p;
 	}
 
-	private void CodeClosure(ExpDesc v)
+	private void CodeClosure(ref ExpDesc v)
 	{
 		// Not null here
 		var fs = _curFunc.Prev!;
-		InitExp(v, ExpKind.VRELOCABLE,
+		InitExp(ref v, ExpKind.VRELOCABLE,
 			Coder.CodeABx(fs, OpCode.OP_CLOSURE, 0,
 				(uint)(fs.Proto.P.Count - 1)));
 
 		// Fix it at stack top
-		Coder.Exp2NextReg(fs, v);
+		Coder.Exp2NextReg(fs, ref v);
 	}
 
 	private void OpenFunc(FuncState fs, BlockCnt block)
@@ -235,7 +221,7 @@ public sealed class Parser
 		var block = new BlockCnt();
 		OpenFunc(fs, block);
 		fs.Proto.IsVarArg = true; // Main func is always vararg
-		InitExp(v, ExpKind.VLOCAL, 0);
+		InitExp(ref v, ExpKind.VLOCAL, 0);
 		NewUpValue(fs, LuaDef.LUA_ENV, v, true);
 		_lexer.Next(); // Read first token
 		StatList();
@@ -622,27 +608,27 @@ public sealed class Parser
 	}
 
 	// fieldsel -> ['.' | ':'] NAME
-	private void FieldSel(ExpDesc v)
+	private void FieldSel(ref ExpDesc v)
 	{
 		var fs = _curFunc;
 		var key = new ExpDesc();
-		Coder.Exp2AnyRegUp(fs, v);
+		Coder.Exp2AnyRegUp(fs, ref v);
 		_lexer.Next(); // skip the dot or colon
-		CodeString(key, CheckName());
-		Coder.Indexed(fs, v, key);
+		CodeString(ref key, CheckName());
+		Coder.Indexed(fs, ref v, ref key);
 	}
 
 	// cond -> exp
 	private int Cond()
 	{
 		var v = new ExpDesc();
-		Expr(v); // read condition
+		Expr(ref v); // read condition
 
 		// 'falses' are all equal here
 		if (v.Kind == ExpKind.VNIL)
 			v.Kind = ExpKind.VFALSE;
 
-		Coder.GoIfTrue(_curFunc, v);
+		Coder.GoIfTrue(_curFunc, ref v);
 		return v.ExitFalse;
 	}
 
@@ -750,8 +736,8 @@ public sealed class Parser
 	private int Exp1()
 	{
 		var e = new ExpDesc();
-		Expr(e);
-		Coder.Exp2NextReg(_curFunc, e);
+		Expr(ref e);
+		Coder.Exp2NextReg(_curFunc, ref e);
 		LuaUtil.Assert(e.Kind == ExpKind.VNONRELOC);
 		return e.Info;
 	}
@@ -832,7 +818,7 @@ public sealed class Parser
 		}
 		CheckNext(TK.IN);
 		var line = _lexer.LineNumber;
-		AdjustAssign(3, ExpList(e), e);
+		AdjustAssign(3, ExpList(ref e), ref e);
 		Coder.CheckStack(fs, 3); // extra space to call generator
 		ForBody(save, line, nvars - 3, false);
 	}
@@ -869,13 +855,13 @@ public sealed class Parser
 
 		// read condition
 		var v = new ExpDesc();
-		Expr(v);
+		Expr(ref v);
 
 		CheckNext (TK.THEN);
 		if (_lexer.Token.Val1 is (int)TK.GOTO or (int)TK.BREAK)
 		{
 			// will jump to label if condition is true
-			Coder.GoIfFalse(_curFunc, v);
+			Coder.GoIfFalse(_curFunc, ref v);
 
 			// must enter block before `goto'
 			EnterBlock(fs, block, false);
@@ -898,7 +884,7 @@ public sealed class Parser
 		else
 		{
 			// skip over block if condition is false
-			Coder.GoIfTrue(_curFunc, v);
+			Coder.GoIfTrue(_curFunc, ref v);
 			EnterBlock(fs, block, false);
 			jf = v.ExitFalse;
 		}
@@ -948,7 +934,7 @@ public sealed class Parser
 		var v = NewLocalVar(name);
 		_actVars.Add(v);
 		AdjustLocalVars(1); // enter its scope
-		Body(b, false, _lexer.LineNumber, name);
+		Body(ref b, false, _lexer.LineNumber, name);
 		GetLocalVar(fs, b.Info).StartPc = fs.Pc;
 	}
 
@@ -965,27 +951,27 @@ public sealed class Parser
 		} while (TestNext(','));
 
 		if (TestNext('='))
-			nexps = ExpList(e);
+			nexps = ExpList(ref e);
 		else
 		{
 			e.Kind = ExpKind.VVOID;
 			nexps = 0;
 		}
-		AdjustAssign(nvars, nexps, e);
+		AdjustAssign(nvars, nexps, ref e);
 		AdjustLocalVars(nvars);
 	}
 
 	// funcname -> NAME {fieldsel} [`:' NAME]
-	private bool FuncName(ExpDesc v, out string name)
+	private bool FuncName(ref ExpDesc v, out string name)
 	{
-		SingleVar(v, out name);
+		SingleVar(ref v, out name);
 		while (_lexer.Token.Val1 == '.')
 		{
-			FieldSel(v);
+			FieldSel(ref v);
 		}
 		if (_lexer.Token.Val1 == ':')
 		{
-			FieldSel(v);
+			FieldSel(ref v);
 			return true; // is method
 		}
 
@@ -998,9 +984,9 @@ public sealed class Parser
 		var v = new ExpDesc();
 		var b = new ExpDesc();
 		_lexer.Next();
-		var isMethod = FuncName(v, out var name);
-		Body(b, isMethod, line, name);
-		Coder.StoreVar(_curFunc, v, b);
+		var isMethod = FuncName(ref v, out var name);
+		Body(ref b, isMethod, line, name);
+		Coder.StoreVar(_curFunc, v, ref b);
 		Coder.FixLine(_curFunc, line);
 	}
 
@@ -1008,7 +994,7 @@ public sealed class Parser
 	private void ExprStat()
 	{
 		var v = new LHSAssign();
-		SuffixedExp(v.Exp);
+		SuffixedExp(ref v.Exp);
 
 		// stat -> assignment ?
 		if ((_lexer.Token.Val1 is '=' or ',' or > (int)TK.COMP_START and < (int)TK.COMP_END))
@@ -1039,7 +1025,7 @@ public sealed class Parser
 		else
 		{
 			var e = new ExpDesc();
-			nret = ExpList(e);
+			nret = ExpList(ref e);
 			if (HasMultiRet(e.Kind))
 			{
 				Coder.SetMultiRet(fs, e);
@@ -1056,11 +1042,11 @@ public sealed class Parser
 			{
 				if (nret == 1) // only one single value
 				{
-					first = Coder.Exp2AnyReg(fs, e);
+					first = Coder.Exp2AnyReg(fs, ref e);
 				}
 				else
 				{
-					Coder.Exp2NextReg(fs, e); // values must go to the `stack'
+					Coder.Exp2NextReg(fs, ref e); // values must go to the `stack'
 					first = fs.NumActVar;
 					LuaUtil.Assert(nret == fs.FreeReg - first);
 				}
@@ -1191,7 +1177,7 @@ public sealed class Parser
 	}
 
 	private ExpKind SingleVarAux(
-		FuncState? fs, string name, ExpDesc e, bool flag)
+		FuncState? fs, string name, ref ExpDesc e, bool flag)
 	{
 		if (fs == null)
 			return ExpKind.VVOID;
@@ -1199,7 +1185,7 @@ public sealed class Parser
 		// look up locals at current level
 		if (SearchVar(fs, name) is {} v)
 		{
-			InitExp(e, ExpKind.VLOCAL, v);
+			InitExp(ref e, ExpKind.VLOCAL, v);
 			if (!flag) MarkUpvalue(fs, v); // local will be used as an upval
 			return ExpKind.VLOCAL;
 		}
@@ -1207,26 +1193,26 @@ public sealed class Parser
 		// not found as local at current level; try upvalues
 		if (SearchUpValues(fs, name) is not {} idx) // not found?
 		{
-			if (SingleVarAux(fs.Prev, name, e, false) == ExpKind.VVOID)
+			if (SingleVarAux(fs.Prev, name, ref e, false) == ExpKind.VVOID)
 				return ExpKind.VVOID; // not found; is a global
 			idx = NewUpValue(fs, name, e);
 		}
-		InitExp(e, ExpKind.VUPVAL, idx);
+		InitExp(ref e, ExpKind.VUPVAL, idx);
 		return ExpKind.VUPVAL;
 	}
 
-	private void SingleVar(ExpDesc e, out string name)
+	private void SingleVar(ref ExpDesc e, out string name)
 	{
 		name = CheckName();
-		if (SingleVarAux(_curFunc, name, e, true) != ExpKind.VVOID) return;
+		if (SingleVarAux(_curFunc, name, ref e, true) != ExpKind.VVOID) return;
 		var key = new ExpDesc();
-		SingleVarAux(_curFunc, LuaDef.LUA_ENV, e, true);
+		SingleVarAux(_curFunc, LuaDef.LUA_ENV, ref e, true);
 		LuaUtil.Assert(e.Kind is ExpKind.VLOCAL or ExpKind.VUPVAL);
-		CodeString(key, name);
-		Coder.Indexed(_curFunc, e, key);
+		CodeString(ref key, name);
+		Coder.Indexed(_curFunc, ref e, ref key);
 	}
 
-	private void AdjustAssign(int nvars, int nexps, ExpDesc e)
+	private void AdjustAssign(int nvars, int nexps, ref ExpDesc e)
 	{
 		var fs = _curFunc;
 		var extra = nvars - nexps;
@@ -1243,7 +1229,7 @@ public sealed class Parser
 		else
 		{
 			if (e.Kind != ExpKind.VVOID)
-				Coder.Exp2NextReg(fs, e); // close last expression
+				Coder.Exp2NextReg(fs, ref e); // close last expression
 			if (extra > 0)
 			{
 				var reg = fs.FreeReg;
@@ -1309,7 +1295,7 @@ public sealed class Parser
 		{
 			var nv = new LHSAssign { Prev = lh, Next = null };
 			lh.Next = nv;
-			SuffixedExp(nv.Exp);
+			SuffixedExp(ref nv.Exp);
 			if (nv.Exp.Kind != ExpKind.VINDEXED)
 				CheckConflict(lh, nv.Exp);
 			CheckLimit(_curFunc, nVars + _NumCSharpCalls,
@@ -1325,15 +1311,15 @@ public sealed class Parser
 		else
 		{
 			CheckNext('=');
-			var nexps = ExpList(e);
+			var nexps = ExpList(ref e);
 			if (nexps != nVars)
 			{
-				AdjustAssign(nVars, nexps, e);
+				AdjustAssign(nVars, nexps, ref e);
 			}
 			else
 			{
-				Coder.SetOneRet(_curFunc, e);
-				Coder.StoreVar(_curFunc, lh.Exp, e);
+				Coder.SetOneRet(_curFunc, ref e);
+				Coder.StoreVar(_curFunc, lh.Exp, ref e);
 				return kind; /* avoid default */
 			}
 		}
@@ -1342,8 +1328,8 @@ public sealed class Parser
 			return kind;
 
 		// default assignment
-		InitExp(e, ExpKind.VNONRELOC, _curFunc.FreeReg - 1);
-		Coder.StoreVar(_curFunc, lh.Exp, e);
+		InitExp(ref e, ExpKind.VNONRELOC, _curFunc.FreeReg - 1);
+		Coder.StoreVar(_curFunc, lh.Exp, ref e);
 		return kind;
 	}
 
@@ -1400,14 +1386,14 @@ public sealed class Parser
 				_lexer.SyntaxError("too many right hand side values in compound assignment");
 			}
 
-			infix.CopyFrom(assign.Exp);
-			Coder.Infix(fState, bop, infix);
-			Expr(e);
+			infix = assign.Exp;
+			Coder.Infix(fState, bop, ref infix);
+			Expr(ref e);
 
 			if (_lexer.Token.Val1 == ',')
 			{
-				Coder.PosFix(fState, bop, infix, e, line);
-				Coder.StoreVar(fState, assign.Exp, infix);
+				Coder.PosFix(fState, bop, ref infix, ref e, line);
+				Coder.StoreVar(fState, assign.Exp, ref infix);
 				assign = assign.Next;
 				npexs++;
 			}
@@ -1417,12 +1403,12 @@ public sealed class Parser
 
 		if (npexs + 1 == nVars)
 		{
-			Coder.PosFix(fState, bop, infix, e, line);
-			Coder.StoreVar(fState, lh.Exp, infix);
+			Coder.PosFix(fState, bop, ref infix, ref e, line);
+			Coder.StoreVar(fState, lh.Exp, ref infix);
 		}
 		else if (HasMultiRet(e.Kind))
 		{
-			AdjustAssign(nVars - npexs, 1, e);
+			AdjustAssign(nVars - npexs, 1, ref e);
 			assign = lh;
 
 			var top2 = _curFunc.FreeReg - 1;
@@ -1431,10 +1417,10 @@ public sealed class Parser
 			for (var i = 0; i < nVars - npexs; i++)
 			{
 				infix = assign.Exp;
-				Coder.Infix(fState, bop, infix);
-				InitExp(e, ExpKind.VNONRELOC, top2--);
-				Coder.PosFix(fState, bop, infix, infix, line);
-				Coder.StoreVar(fState, assign.Exp, infix);
+				Coder.Infix(fState, bop, ref infix);
+				InitExp(ref e, ExpKind.VNONRELOC, top2--);
+				Coder.PosFix(fState, bop, ref infix, ref infix, line);
+				Coder.StoreVar(fState, assign.Exp, ref infix);
 			}
 		}
 		else
@@ -1449,22 +1435,22 @@ public sealed class Parser
 		return AssignmentKind.COMPOUND_ASSIGNMENT;
 	}
 
-	private int ExpList(ExpDesc e)
+	private int ExpList(ref ExpDesc e)
 	{
 		var n = 1; // at least one expression
-		Expr(e);
+		Expr(ref e);
 		while (TestNext(','))
 		{
-			Coder.Exp2NextReg(_curFunc, e);
-			Expr(e);
+			Coder.Exp2NextReg(_curFunc, ref e);
+			Expr(ref e);
 			n++;
 		}
 		return n;
 	}
 		
-	private void Expr(ExpDesc e) => SubExpr(e, 0);
+	private void Expr(ref ExpDesc e) => SubExpr(ref e, 0);
 
-	private BinOpr SubExpr(ExpDesc e, int limit)
+	private BinOpr SubExpr(ref ExpDesc e, int limit)
 	{
 		// ULDebug.Log("SubExpr limit:" + limit);
 		EnterLevel();
@@ -1473,10 +1459,10 @@ public sealed class Parser
 		{
 			var line = _lexer.LineNumber;
 			_lexer.Next();
-			SubExpr(e, UnaryPrior);
-			Coder.Prefix(_curFunc, uop, e, line);
+			SubExpr(ref e, UnaryPrior);
+			Coder.Prefix(_curFunc, uop, ref e, line);
 		}
-		else SimpleExp(e);
+		else SimpleExp(ref e);
 
 		// Expand while operators have priorities higher than `limit'
 		var op = GetBinOpr(_lexer.Token.Val1);
@@ -1485,12 +1471,12 @@ public sealed class Parser
 			// ULDebug.Log("op:" + op);
 			var line = _lexer.LineNumber;
 			_lexer.Next();
-			Coder.Infix(_curFunc, op, e);
+			Coder.Infix(_curFunc, op, ref e);
 
 			// Read sub-expression with higher priority
 			var e2 = new ExpDesc();
-			var nextOp = SubExpr(e2, GetBinOprRightPrior(op));
-			Coder.PosFix(_curFunc, op, e, e2, line);
+			var nextOp = SubExpr(ref e2, GetBinOprRightPrior(op));
+			Coder.PosFix(_curFunc, op, ref e, ref e2, line);
 			op = nextOp;
 		}
 		LeaveLevel();
@@ -1535,16 +1521,16 @@ public sealed class Parser
 	}
 
 	// index -> '[' expr ']'
-	private void YIndex(ExpDesc v)
+	private void YIndex(ref ExpDesc v)
 	{
 		_lexer.Next();
-		Expr(v);
-		Coder.Exp2Val(_curFunc, v);
+		Expr(ref v);
+		Coder.Exp2Val(_curFunc, ref v);
 		CheckNext(']');
 	}
 
 	// recfield -> (NAME | '[' exp1 ']') = exp1
-	private void RecField(ConstructorControl cc)
+	private void RecField(ref ConstructorControl cc)
 	{
 		var fs = _curFunc;
 		var reg = fs.FreeReg;
@@ -1554,29 +1540,29 @@ public sealed class Parser
 		{
 			CheckLimit(fs, cc.NumRecord, LuaLimits.MAX_INT,
 				"items in a constructor");
-			CodeString(key, CheckName());
+			CodeString(ref key, CheckName());
 		}
 		// ls->t.token == '['
 		else
 		{
-			YIndex(key);
+			YIndex(ref key);
 		}
 		cc.NumRecord++;
 		CheckNext('=');
-		var rkkey = Coder.Exp2RK(fs, key);
-		Expr(val);
+		var rkkey = Coder.Exp2RK(fs, ref key);
+		Expr(ref val);
 		Coder.CodeABC(fs, OpCode.OP_SETTABLE, cc.ExpTable.Info, rkkey,
-			Coder.Exp2RK(fs, val));
+			Coder.Exp2RK(fs, ref val));
 		fs.FreeReg = reg; // free registers
 	}
 
-	private static void CloseListField(FuncState fs, ConstructorControl cc)
+	private static void CloseListField(FuncState fs, ref ConstructorControl cc)
 	{
 		// there is no list item
 		if (cc.ExpLastItem.Kind == ExpKind.VVOID)
 			return;
 
-		Coder.Exp2NextReg(fs, cc.ExpLastItem);
+		Coder.Exp2NextReg(fs, ref cc.ExpLastItem);
 		cc.ExpLastItem.Kind = ExpKind.VVOID;
 		if (cc.NumToStore == LuaDef.LFIELDS_PER_FLUSH)
 		{
@@ -1588,7 +1574,7 @@ public sealed class Parser
 		}
 	}
 
-	private static void LastListField(FuncState fs, ConstructorControl cc)
+	private static void LastListField(FuncState fs, ref ConstructorControl cc)
 	{
 		if (cc.NumToStore == 0)
 			return;
@@ -1604,15 +1590,15 @@ public sealed class Parser
 		else
 		{
 			if (cc.ExpLastItem.Kind != ExpKind.VVOID)
-				Coder.Exp2NextReg(fs, cc.ExpLastItem);
+				Coder.Exp2NextReg(fs, ref cc.ExpLastItem);
 			Coder.SetList(fs, cc.ExpTable.Info, cc.NumArray, cc.NumToStore);
 		}
 	}
 
 	// listfield -> exp
-	private void ListField(ConstructorControl cc)
+	private void ListField(ref ConstructorControl cc)
 	{
-		Expr(cc.ExpLastItem);
+		Expr(ref cc.ExpLastItem);
 		CheckLimit(_curFunc, cc.NumArray, LuaLimits.MAX_INT,
 			"items in a constructor");
 		cc.NumArray++;
@@ -1620,7 +1606,7 @@ public sealed class Parser
 	}
 
 	// field -> listfield | recfield
-	private void Field(ConstructorControl cc)
+	private void Field(ref ConstructorControl cc)
 	{
 		switch (_lexer.Token.Val1)
 		{
@@ -1628,17 +1614,17 @@ public sealed class Parser
 			case (int)TK.NAME: 
 				// expression?
 				if (_lexer.GetLookAhead().Val1 != '=')
-					ListField(cc);
+					ListField(ref cc);
 				else
-					RecField(cc);
+					RecField(ref cc);
 				break;
 
 			case '[': 
-				RecField(cc);
+				RecField(ref cc);
 				break;
 
 			default: 
-				ListField(cc);
+				ListField(ref cc);
 				break;
 		}
 	}
@@ -1660,26 +1646,26 @@ public sealed class Parser
 
 	// constructor -> '{' [ field { sep field } [sep] ] '}'
 	// sep -> ',' | ';'
-	private void Constructor(ExpDesc t)
+	private void Constructor(ref ExpDesc t)
 	{
 		var fs = _curFunc;
 		var line = _lexer.LineNumber;
 		var pc = Coder.CodeABC(fs, OpCode.OP_NEWTABLE, 0, 0, 0);
-		var cc = new ConstructorControl { ExpTable = t };
-		InitExp(t, ExpKind.VRELOCABLE, pc);
-		InitExp(cc.ExpLastItem, ExpKind.VVOID, 0); // no value (yet)
-		Coder.Exp2NextReg(fs, t);
+		var cc = new ConstructorControl { ExpTable = ref t };
+		InitExp(ref t, ExpKind.VRELOCABLE, pc);
+		InitExp(ref cc.ExpLastItem, ExpKind.VVOID, 0); // no value (yet)
+		Coder.Exp2NextReg(fs, ref t);
 		CheckNext('{');
 		do {
 			LuaUtil.Assert(cc.ExpLastItem.Kind == ExpKind.VVOID ||
 			            cc.NumToStore > 0);
 			if (_lexer.Token.Val1 == '}')
 				break;
-			CloseListField(fs, cc);
-			Field(cc);
+			CloseListField(fs, ref cc);
+			Field(ref cc);
 		} while(TestNext(',') || TestNext(';'));
 		CheckMatch('}', '{', line);
-		LastListField(fs, cc);
+		LastListField(fs, ref cc);
 
 		// set initial array size and table size
 		// Since the handling of ARG_B and ARG_C for OP_NEWTABLE is not implemented,
@@ -1732,7 +1718,8 @@ public sealed class Parser
 		Coder.ReserveRegs(_curFunc, _curFunc.NumActVar);
 	}
 
-	private void Body(ExpDesc e, bool isMethod, int line, string name)
+	private void Body(
+		ref ExpDesc e, bool isMethod, int line, string name)
 	{
 		var newFs = new FuncState();
 		var block = new BlockCnt();
@@ -1753,11 +1740,11 @@ public sealed class Parser
 		StatList();
 		newFs.Proto.LastLineDefined = _lexer.LineNumber;
 		CheckMatch((int)TK.END, (int)TK.FUNCTION, line);
-		CodeClosure(e);
+		CodeClosure(ref e);
 		CloseFunc();
 	}
 
-	private void FuncArgs(ExpDesc e, int line)
+	private void FuncArgs(ref ExpDesc e, int line)
 	{
 		var args = new ExpDesc();
 		switch (_lexer.Token.Val1)
@@ -1768,7 +1755,7 @@ public sealed class Parser
 				if (_lexer.Token.Val1 == ')') // arg list is empty?
 					args.Kind = ExpKind.VVOID;
 				else {
-					ExpList(args);
+					ExpList(ref args);
 					Coder.SetMultiRet(_curFunc, args);
 				}
 				CheckMatch(')', '(', line);
@@ -1776,12 +1763,12 @@ public sealed class Parser
 
 			// funcargs -> constructor
 			case '{': 
-				Constructor(args);
+				Constructor(ref args);
 				break;
 
 			// funcargs -> STRING
 			case (int)TK.STRING:
-				CodeString(args, _lexer.Token.str!);
+				CodeString(ref args, _lexer.Token.str!);
 				_lexer.Next();
 				break;
 
@@ -1797,12 +1784,12 @@ public sealed class Parser
 			nparams = LuaDef.LUA_MULTRET;
 		else {
 			if (args.Kind != ExpKind.VVOID)
-				Coder.Exp2NextReg(_curFunc, args); // close last argument
+				Coder.Exp2NextReg(_curFunc, ref args); // close last argument
 			nparams = _curFunc.FreeReg - (baseReg + 1);
 		}
-		InitExp(e, ExpKind.VCALL, Coder.CodeABC(_curFunc,
+		InitExp(ref e, ExpKind.VCALL, Coder.CodeABC(_curFunc,
 			OpCode.OP_CALL, baseReg, nparams + 1, 2));
-		Coder.FixLine( _curFunc, line );
+		Coder.FixLine(_curFunc, line);
 
 		// call remove function and arguments and leaves
 		// (unless changed) one result
@@ -1814,20 +1801,20 @@ public sealed class Parser
 	// ==============================================================
 
 	// primaryexp -> NAME | '(' expr ')'
-	private void PrimaryExp(ExpDesc e)
+	private void PrimaryExp(ref ExpDesc e)
 	{
 		switch (_lexer.Token.Val1)
 		{
 			case '(': 
 				var line = _lexer.LineNumber;
 				_lexer.Next();
-				Expr(e);
+				Expr(ref e);
 				CheckMatch(')', '(', line);
-				Coder.DischargeVars(_curFunc, e);
+				Coder.DischargeVars(_curFunc, ref e);
 				return;
 
 			case (int)TK.NAME: 
-				SingleVar(e, out _);
+				SingleVar(ref e, out _);
 				return;
 
 			default: 
@@ -1837,26 +1824,26 @@ public sealed class Parser
 	}
 
 	// suffixedexp -> primaryexp { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs
-	private void SuffixedExp(ExpDesc e)
+	private void SuffixedExp(ref ExpDesc e)
 	{
 		var fs = _curFunc;
 		var line = _lexer.LineNumber;
-		PrimaryExp(e);
+		PrimaryExp(ref e);
 		while (true)
 		{
 			switch (_lexer.Token.Val1)
 			{
 				case '.': 
 					// fieldsel
-					FieldSel(e);
+					FieldSel(ref e);
 					break;
 				case '[': 
 				{ 
 					// `[' exp1 `]'
 					var key = new ExpDesc();
-					Coder.Exp2AnyRegUp(fs, e);
-					YIndex(key);
-					Coder.Indexed(fs, e, key);
+					Coder.Exp2AnyRegUp(fs, ref e);
+					YIndex(ref key);
+					Coder.Indexed(fs, ref e, ref key);
 					break;
 				}
 				case ':': 
@@ -1864,67 +1851,67 @@ public sealed class Parser
 					// `:' NAME funcargs
 					var key = new ExpDesc();
 					_lexer.Next();
-					CodeString(key, CheckName());
-					Coder.Self(fs, e, key);
-					FuncArgs(e, line);
+					CodeString(ref key, CheckName());
+					Coder.Self(fs, ref e, ref key);
+					FuncArgs(ref e, line);
 					break;
 				}
 				case '(':
 				case (int)TK.STRING:
 				case '{': 
 					// funcargs
-					Coder.Exp2NextReg(_curFunc, e);
-					FuncArgs(e, line);
+					Coder.Exp2NextReg(_curFunc, ref e);
+					FuncArgs(ref e, line);
 					break;
 				default: return;
 			}
 		}
 	}
 
-	private void SimpleExp(ExpDesc e)
+	private void SimpleExp(ref ExpDesc e)
 	{
 		var t = _lexer.Token;
 		switch (t.Val1)
 		{
 			case (int)TK.NUMBER: 
-				InitExp(e, ExpKind.VKNUM, 0);
+				InitExp(ref e, ExpKind.VKNUM, 0);
 				e.NumberValue = t.Val2;
 				break;
 
 			case (int)TK.STRING:
-				CodeString(e, _lexer.Token.str!);
+				CodeString(ref e, _lexer.Token.str!);
 				break;
 
 			case (int)TK.NIL: 
-				InitExp(e, ExpKind.VNIL, 0);
+				InitExp(ref e, ExpKind.VNIL, 0);
 				break;
 
 			case (int)TK.TRUE: 
-				InitExp(e, ExpKind.VTRUE, 0);
+				InitExp(ref e, ExpKind.VTRUE, 0);
 				break;
 
 			case (int)TK.FALSE: 
-				InitExp(e, ExpKind.VFALSE, 0);
+				InitExp(ref e, ExpKind.VFALSE, 0);
 				break;
 
 			case (int)TK.DOTS: 
 				CheckCondition(_curFunc.Proto.IsVarArg,
 					"Cannot use '...' outside a vararg function");
-				InitExp(e, ExpKind.VVARARG,
+				InitExp(ref e, ExpKind.VVARARG,
 					Coder.CodeABC(_curFunc, OpCode.OP_VARARG, 0, 1, 0));
 				break;
 
 			case '{': 
-				Constructor(e);
+				Constructor(ref e);
 				return;
 
 			case (int)TK.FUNCTION: 
 				_lexer.Next();
-				Body(e, false, _lexer.LineNumber, "(anonymous)");
+				Body(ref e, false, _lexer.LineNumber, "(anonymous)");
 				return;
 
 			default: 
-				SuffixedExp(e);
+				SuffixedExp(ref e);
 				return;
 		}
 		_lexer.Next();
@@ -1957,10 +1944,10 @@ public sealed class Parser
 		return idx;
 	}
 
-	private void CodeString(ExpDesc e, string s) => 
-		InitExp(e, ExpKind.VK, Coder.StringK(_curFunc, s));
+	private void CodeString(ref ExpDesc e, string s) => 
+		InitExp(ref e, ExpKind.VK, Coder.StringK(_curFunc, s));
 
-	private static void InitExp(ExpDesc e, ExpKind k, int i)
+	private static void InitExp(ref ExpDesc e, ExpKind k, int i)
 	{
 		e.Kind = k;
 		e.Info = i;

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using CSLua.Util;
 
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -183,23 +184,22 @@ public static class Coder
 
 	private static void FreeReg(FuncState fs, int reg)
 	{
-		if (!Instruction.ISK(reg) && reg >= fs.NumActVar)
-		{
-			fs.FreeReg--;
-			LuaUtil.Assert(reg == fs.FreeReg);
-		}
+		if (Instruction.ISK(reg) || reg < fs.NumActVar) return;
+		fs.FreeReg--;
+		LuaUtil.Assert(reg == fs.FreeReg);
 	}
 
-	private static void FreeExp(FuncState fs, ExpDesc e)
+	private static void FreeExp(FuncState fs, in ExpDesc e)
 	{
 		if (e.Kind == ExpKind.VNONRELOC) FreeReg(fs, e.Info);
 	}
 
-	private static bool IsNumeral(ExpDesc e) =>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsNumeral(in ExpDesc e) =>
 		e.Kind == ExpKind.VKNUM
 		&& e is { ExitTrue: NO_JUMP, ExitFalse: NO_JUMP };
 
-	private static bool ConstFolding(OpCode op, ExpDesc e1, ExpDesc e2)
+	private static bool ConstFolding(OpCode op, ref ExpDesc e1, ExpDesc e2)
 	{
 		if (!IsNumeral(e1) || !IsNumeral(e2))
 			return false;
@@ -244,13 +244,13 @@ public static class Coder
 		fs.Proto.LineInfo[fs.Pc - 1] = line;
 
 	private static void CodeArith(FuncState fs, OpCode op,
-		ExpDesc e1, ExpDesc e2, int line)
+		ref ExpDesc e1, ref ExpDesc e2, int line)
 	{
-		if (ConstFolding(op, e1, e2)) return;
+		if (ConstFolding(op, ref e1, e2)) return;
 
 		var o2 = (op != OpCode.OP_UNM && op != OpCode.OP_LEN)
-			? Exp2RK(fs, e2) : 0;
-		var o1 = Exp2RK(fs, e1);
+			? Exp2RK(fs, ref e2) : 0;
+		var o1 = Exp2RK(fs, ref e1);
 		if (o1 > o2)
 		{
 			FreeExp(fs, e1);
@@ -368,29 +368,29 @@ public static class Coder
 		pc.Value = pc.Value.SETARG_A(pc.Value.GETARG_A() == 0 ? 1 : 0);
 	}
 
-	private static int JumpOnCond(FuncState fs, ExpDesc e, bool cond)
+	private static int JumpOnCond(FuncState fs, ref ExpDesc e, bool cond)
 	{
 		if (e.Kind == ExpKind.VRELOCABLE)
 		{
-			var ie = fs.GetCode( e ).Value;
+			var ie = fs.GetCode(e).Value;
 			if (ie.GET_OPCODE() == OpCode.OP_NOT)
 			{
 				fs.Pc--; // remove previous OP_NOT
-				return CondJump( fs, OpCode.OP_TEST, ie.GETARG_B(), 0,
-					(cond ? 0 : 1) );
+				return CondJump(fs, OpCode.OP_TEST, ie.GETARG_B(), 0,
+					(cond ? 0 : 1));
 			}
 			// else go through
 		}
-		Discharge2AnyReg(fs, e);
+		Discharge2AnyReg(fs, ref e);
 		FreeExp(fs, e);
 		return CondJump(fs, OpCode.OP_TESTSET, NO_REG, e.Info,
 			(cond ? 1 : 0));
 	}
 
-	public static void GoIfTrue(FuncState fs, ExpDesc e)
+	public static void GoIfTrue(FuncState fs, ref ExpDesc e)
 	{
 		int pc; // pc of last jump
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 
 		switch (e.Kind)
 		{
@@ -406,7 +406,7 @@ public static class Coder
 				break;
 
 			default:
-				pc = JumpOnCond(fs, e, false);
+				pc = JumpOnCond(fs, ref e, false);
 				break;
 		}
 
@@ -416,14 +416,14 @@ public static class Coder
 		e.ExitTrue = NO_JUMP;
 	}
 
-	public static void GoIfFalse(FuncState fs, ExpDesc e)
+	public static void GoIfFalse(FuncState fs, ref ExpDesc e)
 	{
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 		var pc = e.Kind switch // pc of last jump
 		{
 			ExpKind.VJMP => e.Info,
 			ExpKind.VNIL or ExpKind.VFALSE => NO_JUMP,
-			_ => JumpOnCond(fs, e, true)
+			_ => JumpOnCond(fs, ref e, true)
 		};
 
 		// insert last jump in 't' list
@@ -432,9 +432,9 @@ public static class Coder
 		e.ExitFalse = NO_JUMP;
 	}
 
-	private static void CodeNot(FuncState fs, ExpDesc e)
+	private static void CodeNot(FuncState fs, ref ExpDesc e)
 	{
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 
 		switch (e.Kind)
 		{
@@ -455,7 +455,7 @@ public static class Coder
 
 			case ExpKind.VRELOCABLE:
 			case ExpKind.VNONRELOC:
-				Discharge2AnyReg(fs, e);
+				Discharge2AnyReg(fs, ref e);
 				FreeExp(fs, e);
 				e.Info = CodeABC(fs, OpCode.OP_NOT, 0, e.Info, 0);
 				e.Kind = ExpKind.VRELOCABLE;
@@ -473,10 +473,10 @@ public static class Coder
 	}
 
 	private static void CodeComp(
-		FuncState fs, OpCode op, int cond, ExpDesc e1, ExpDesc e2)
+		FuncState fs, OpCode op, int cond, ref ExpDesc e1, ref ExpDesc e2)
 	{
-		var o1 = Exp2RK(fs, e1);
-		var o2 = Exp2RK(fs, e2);
+		var o1 = Exp2RK(fs, ref e1);
+		var o2 = Exp2RK(fs, ref e2);
 		FreeExp(fs, e2);
 		FreeExp(fs, e1);
 
@@ -490,7 +490,7 @@ public static class Coder
 		e1.Kind = ExpKind.VJMP;
 	}
 
-	public static void Prefix(FuncState fs, UnOpr op, ExpDesc e, int line)
+	public static void Prefix(FuncState fs, UnOpr op, ref ExpDesc e, int line)
 	{
 		var e2 = new ExpDesc
 		{
@@ -509,18 +509,18 @@ public static class Coder
 				}
 				else
 				{
-					Exp2AnyReg(fs, e);
-					CodeArith(fs, OpCode.OP_UNM, e, e2, line);
+					Exp2AnyReg(fs, ref e);
+					CodeArith(fs, OpCode.OP_UNM, ref e, ref e2, line);
 				}
 				break;
 
 			case UnOpr.NOT: 
-				CodeNot(fs, e);
+				CodeNot(fs, ref e);
 				break;
 
 			case UnOpr.LEN: 
-				Exp2AnyReg(fs, e); // cannot operate on constants
-				CodeArith(fs, OpCode.OP_LEN, e, e2, line);
+				Exp2AnyReg(fs, ref e); // cannot operate on constants
+				CodeArith(fs, OpCode.OP_LEN, ref e, ref e2, line);
 				break;
 
 			default:
@@ -528,20 +528,20 @@ public static class Coder
 		}
 	}
 
-	public static void Infix(FuncState fs, BinOpr op, ExpDesc e)
+	public static void Infix(FuncState fs, BinOpr op, ref ExpDesc e)
 	{
 		switch (op)
 		{
 			case BinOpr.AND: 
-				GoIfTrue(fs, e);
+				GoIfTrue(fs, ref e);
 				break;
 
 			case BinOpr.OR: 
-				GoIfFalse(fs, e);
+				GoIfFalse(fs, ref e);
 				break;
 
 			case BinOpr.CONCAT: 
-				Exp2NextReg(fs, e); // operand must be on the 'stack'
+				Exp2NextReg(fs, ref e); // operand must be on the 'stack'
 				break;
 
 			case BinOpr.ADD:
@@ -551,34 +551,34 @@ public static class Coder
 			case BinOpr.MOD:
 			case BinOpr.POW: 
 				if (!IsNumeral(e))
-					Exp2RK(fs, e);
+					Exp2RK(fs, ref e);
 				break;
 
 			default: 
-				Exp2RK(fs, e);
+				Exp2RK(fs, ref e);
 				break;
 		}
 	}
 
 	public static void PosFix(
-		FuncState fs, BinOpr op, ExpDesc e1, ExpDesc e2, int line)
+		FuncState fs, BinOpr op, ref ExpDesc e1, ref ExpDesc e2, int line)
 	{
 		switch (op)
 		{
 			case BinOpr.AND: 
 				LuaUtil.Assert(e1.ExitTrue == NO_JUMP);
-				DischargeVars(fs, e2);
+				DischargeVars(fs, ref e2);
 				e2.ExitFalse = Concat(fs, e2.ExitFalse, e1.ExitFalse);
-				e1.CopyFrom(e2);
+				e1 = e2;
 				break;
 			case BinOpr.OR: 
 				LuaUtil.Assert(e1.ExitFalse == NO_JUMP);
-				DischargeVars(fs, e2);
+				DischargeVars(fs, ref e2);
 				e2.ExitTrue = Concat(fs, e2.ExitTrue, e1.ExitTrue);
-				e1.CopyFrom(e2);
+				e1 = e2;
 				break;
 			case BinOpr.CONCAT: 
-				Exp2Val(fs, e2);
+				Exp2Val(fs, ref e2);
 				var pe2 = fs.GetCode(e2);
 				if (e2.Kind == ExpKind.VRELOCABLE &&
 				    pe2.Value.GET_OPCODE() == OpCode.OP_CONCAT)
@@ -592,51 +592,51 @@ public static class Coder
 				else
 				{
 					// operand must be on the `stack'
-					Exp2NextReg(fs, e2);
-					CodeArith(fs, OpCode.OP_CONCAT, e1, e2, line);
+					Exp2NextReg(fs, ref e2);
+					CodeArith(fs, OpCode.OP_CONCAT, ref e1, ref e2, line);
 				}
 				break;
 			case BinOpr.ADD: 
-				CodeArith(fs, OpCode.OP_ADD, e1, e2, line);
+				CodeArith(fs, OpCode.OP_ADD, ref e1, ref e2, line);
 				break;
 			case BinOpr.SUB: 
-				CodeArith(fs, OpCode.OP_SUB, e1, e2, line);
+				CodeArith(fs, OpCode.OP_SUB, ref e1, ref e2, line);
 				break;
 			case BinOpr.MUL: 
-				CodeArith(fs, OpCode.OP_MUL, e1, e2, line);
+				CodeArith(fs, OpCode.OP_MUL, ref e1, ref e2, line);
 				break;
 			case BinOpr.DIV: 
-				CodeArith(fs, OpCode.OP_DIV, e1, e2, line);
+				CodeArith(fs, OpCode.OP_DIV, ref e1, ref e2, line);
 				break;
 			case BinOpr.MOD: 
-				CodeArith(fs, OpCode.OP_MOD, e1, e2, line);
+				CodeArith(fs, OpCode.OP_MOD, ref e1, ref e2, line);
 				break;
 			case BinOpr.POW: 
-				CodeArith(fs, OpCode.OP_POW, e1, e2, line);
+				CodeArith(fs, OpCode.OP_POW, ref e1, ref e2, line);
 				break;
 			case BinOpr.EQ: 
-				CodeComp(fs, OpCode.OP_EQ, 1, e1, e2);
+				CodeComp(fs, OpCode.OP_EQ, 1, ref e1, ref e2);
 				break;
 			case BinOpr.LT: 
-				CodeComp(fs, OpCode.OP_LT, 1, e1, e2);
+				CodeComp(fs, OpCode.OP_LT, 1, ref e1, ref e2);
 				break;
 			case BinOpr.LE: 
-				CodeComp(fs, OpCode.OP_LE, 1, e1, e2);
+				CodeComp(fs, OpCode.OP_LE, 1, ref e1, ref e2);
 				break;
 			case BinOpr.NE: 
-				CodeComp(fs, OpCode.OP_EQ, 0, e1, e2);
+				CodeComp(fs, OpCode.OP_EQ, 0, ref e1, ref e2);
 				break;
 			case BinOpr.GT: 
-				CodeComp(fs, OpCode.OP_LT, 0, e1, e2);
+				CodeComp(fs, OpCode.OP_LT, 0, ref e1, ref e2);
 				break;
 			case BinOpr.GE: 
-				CodeComp(fs, OpCode.OP_LE, 0, e1, e2);
+				CodeComp(fs, OpCode.OP_LE, 0, ref e1, ref e2);
 				break;
 			default: LuaUtil.Assert(false); break;
 		}
 	}
 
-	public static int Jump( FuncState fs )
+	public static int Jump(FuncState fs)
 	{
 		var jpc = fs.Jpc; // save list of jumps to here
 		fs.Jpc = NO_JUMP;
@@ -710,23 +710,20 @@ public static class Coder
 
 	public static int StringK(FuncState fs, string s)
 	{
-		var o = new TValue();
-		o.SetString(s);
-		return AddK(fs, ref o, ref o);
+		var o = TValue.Of(s);
+		return AddK(fs, o, o);
 	}
 
 	public static int NumberK(FuncState fs, double r)
 	{
-		var o = new TValue();
-		o.SetDouble(r);
-		return AddK(fs, ref o, ref o);
+		var o = TValue.Of(r);
+		return AddK(fs, o, o);
 	}
 
 	private static int BoolK(FuncState fs, bool b)
 	{
-		var o = new TValue();
-		o.SetBool(b);
-		return AddK(fs, ref o, ref o);
+		var o = TValue.Of(b);
+		return AddK(fs, o, o);
 	}
 
 	private static int NilK(FuncState fs)
@@ -737,26 +734,25 @@ public static class Coder
 		// var o = new LuaNil();
 		// return AddK( fs, k, o );
 
-		var o = new TValue();
-		o.SetNil();
-		return AddK(fs, ref o, ref o);
+		return AddK(fs, TValue.Nil(), TValue.Nil());
 	}
 
-	public static int AddK(FuncState fs, ref TValue key, ref TValue v)
+	public static int AddK(FuncState fs, TValue key, TValue v)
 	{
-		if (fs.H.TryGetValue(key, out var idx))
-			return idx;
+		ref var idx = ref CollectionsMarshal.GetValueRefOrAddDefault(
+			fs.H, key, out var exists);
+
+		if (exists) return idx;
 
 		idx = fs.Proto.K.Count;
-		fs.H.Add(key, idx);
 		fs.Proto.K.Add(v);
 		return idx;
 	}
 
-	public static void Indexed(FuncState fs, ExpDesc t, ExpDesc k)
+	public static void Indexed(FuncState fs, ref ExpDesc t, ref ExpDesc k)
 	{
 		t.Ind.T = t.Info;
-		t.Ind.Idx = Exp2RK(fs, k);
+		t.Ind.Idx = Exp2RK(fs, ref k);
 		t.Ind.Vt = (t.Kind == ExpKind.VUPVAL) ? ExpKind.VUPVAL
 			: ExpKind.VLOCAL; // FIXME
 		t.Kind = ExpKind.VINDEXED;
@@ -771,9 +767,9 @@ public static class Coder
 		return CodeABC(fs, OpCode.OP_LOADBOOL, a, b, jump);
 	}
 
-	private static void Discharge2Reg(FuncState fs, ExpDesc e, int reg)
+	private static void Discharge2Reg(FuncState fs, ref ExpDesc e, int reg)
 	{
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 		switch (e.Kind)
 		{
 			case ExpKind.VNIL: 
@@ -822,18 +818,16 @@ public static class Coder
 		fs.FreeReg += n;
 	}
 
-	private static void Discharge2AnyReg(FuncState fs, ExpDesc e)
+	private static void Discharge2AnyReg(FuncState fs, ref ExpDesc e)
 	{
-		if (e.Kind != ExpKind.VNONRELOC)
-		{
-			ReserveRegs(fs, 1);
-			Discharge2Reg(fs, e, fs.FreeReg - 1);
-		}
+		if (e.Kind == ExpKind.VNONRELOC) return;
+		ReserveRegs(fs, 1);
+		Discharge2Reg(fs, ref e, fs.FreeReg - 1);
 	}
 
-	private static void Exp2Reg(FuncState fs, ExpDesc e, int reg)
+	private static void Exp2Reg(FuncState fs, ref ExpDesc e, int reg)
 	{
-		Discharge2Reg(fs, e, reg);
+		Discharge2Reg(fs, ref e, reg);
 		if (e.Kind == ExpKind.VJMP)
 			e.ExitTrue = Concat(fs, e.ExitTrue, e.Info);
 
@@ -861,25 +855,23 @@ public static class Coder
 		e.Kind = ExpKind.VNONRELOC;
 	}
 
-	public static void Exp2NextReg(FuncState fs, ExpDesc e)
+	public static void Exp2NextReg(FuncState fs, ref ExpDesc e)
 	{
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 		FreeExp(fs, e);
 		ReserveRegs(fs, 1);
-		Exp2Reg(fs, e, fs.FreeReg - 1);
+		Exp2Reg(fs, ref e, fs.FreeReg - 1);
 	}
 
-	public static void Exp2Val(FuncState fs, ExpDesc e)
+	public static void Exp2Val(FuncState fs, ref ExpDesc e)
 	{
-		if (HasJumps(e))
-			Exp2AnyReg(fs, e);
-		else
-			DischargeVars(fs, e);
+		if (HasJumps(e)) Exp2AnyReg(fs, ref e);
+		else DischargeVars(fs, ref e);
 	}
 
-	public static int Exp2RK(FuncState fs, ExpDesc e)
+	public static int Exp2RK(FuncState fs, ref ExpDesc e)
 	{
-		Exp2Val(fs, e);
+		Exp2Val(fs, ref e);
 		switch (e.Kind)
 		{
 			case ExpKind.VTRUE:
@@ -913,12 +905,12 @@ public static class Coder
 			default: break;
 		}
 
-		return Exp2AnyReg(fs, e);
+		return Exp2AnyReg(fs, ref e);
 	}
 
-	public static int Exp2AnyReg(FuncState fs, ExpDesc e)
+	public static int Exp2AnyReg(FuncState fs, ref ExpDesc e)
 	{
-		DischargeVars(fs, e);
+		DischargeVars(fs, ref e);
 		if (e.Kind == ExpKind.VNONRELOC)
 		{
 			// exp is already in a register
@@ -928,21 +920,21 @@ public static class Coder
 			// reg. is not a local?
 			if (e.Info >= fs.NumActVar)
 			{
-				Exp2Reg(fs, e, e.Info);
+				Exp2Reg(fs, ref e, e.Info);
 				return e.Info;
 			}
 		}
-		Exp2NextReg(fs, e); // default
+		Exp2NextReg(fs, ref e); // default
 		return e.Info;
 	}
 
-	public static void Exp2AnyRegUp(FuncState fs, ExpDesc e)
+	public static void Exp2AnyRegUp(FuncState fs, ref ExpDesc e)
 	{
 		if (e.Kind != ExpKind.VUPVAL || HasJumps(e)) 
-			Exp2AnyReg(fs, e);
+			Exp2AnyReg(fs, ref e);
 	}
 
-	public static void DischargeVars(FuncState fs, ExpDesc e)
+	public static void DischargeVars(FuncState fs, ref ExpDesc e)
 	{
 		switch(e.Kind)
 		{
@@ -969,7 +961,7 @@ public static class Coder
 
 			case ExpKind.VVARARG:
 			case ExpKind.VCALL:
-				SetOneRet(fs, e);
+				SetOneRet(fs, ref e);
 				break;
 
 			default: break;
@@ -995,13 +987,13 @@ public static class Coder
 	public static void SetMultiRet(FuncState fs, ExpDesc e) => 
 		SetReturns(fs, e, LuaDef.LUA_MULTRET);
 
-	public static void SetOneRet(FuncState fs, ExpDesc e)
+	public static void SetOneRet(FuncState fs, ref ExpDesc e)
 	{
 		// expression is an open function call?
 		if (e.Kind == ExpKind.VCALL)
 		{
 			e.Kind = ExpKind.VNONRELOC;
-			e.Info = (fs.GetCode(e)).Value.GETARG_A();
+			e.Info = fs.GetCode(e).Value.GETARG_A();
 		}
 		else if (e.Kind == ExpKind.VVARARG)
 		{
@@ -1011,17 +1003,17 @@ public static class Coder
 		}
 	}
 
-	public static void StoreVar(FuncState fs, ExpDesc v, ExpDesc e)
+	public static void StoreVar(FuncState fs, ExpDesc v, ref ExpDesc e)
 	{
 		switch (v.Kind)
 		{
 			case ExpKind.VLOCAL: 
 				FreeExp(fs, e);
-				Exp2Reg(fs, e, v.Info);
+				Exp2Reg(fs, ref e, v.Info);
 				break;
 
 			case ExpKind.VUPVAL: {
-				var c = Exp2AnyReg(fs, e);
+				var c = Exp2AnyReg(fs, ref e);
 				CodeABC(fs, OpCode.OP_SETUPVAL, c, v.Info, 0);
 				break;
 			}
@@ -1030,7 +1022,7 @@ public static class Coder
 				var op = (v.Ind.Vt == ExpKind.VLOCAL)
 					? OpCode.OP_SETTABLE
 					: OpCode.OP_SETTABUP;
-				var c = Exp2RK(fs, e);
+				var c = Exp2RK(fs, ref e);
 				CodeABC(fs, op, v.Ind.T, v.Ind.Idx, c);
 				break;
 			}
@@ -1041,15 +1033,15 @@ public static class Coder
 		FreeExp(fs, e);
 	}
 
-	public static void Self(FuncState fs, ExpDesc e, ExpDesc key)
+	public static void Self(FuncState fs, ref ExpDesc e, ref ExpDesc key)
 	{
-		Exp2AnyReg(fs, e);
+		Exp2AnyReg(fs, ref e);
 		var eReg = e.Info; // register where 'e' is placed
 		FreeExp(fs, e);
 		e.Info = fs.FreeReg; // base register for op_self
 		e.Kind = ExpKind.VNONRELOC;
 		ReserveRegs(fs, 2);
-		CodeABC(fs, OpCode.OP_SELF, e.Info, eReg, Exp2RK(fs, key));
+		CodeABC(fs, OpCode.OP_SELF, e.Info, eReg, Exp2RK(fs, ref key));
 		FreeExp(fs, key);
 	}
 
