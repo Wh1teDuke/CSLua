@@ -158,10 +158,10 @@ public static class LuaConsoleLib
 
     public static int Console_Beep(LuaState lua)
     {
-        if (lua.IsNumber(1) && lua.IsNumber(2))
+        /*if (lua.IsNumber(1) && lua.IsNumber(2))
             Console.Beep(lua.CheckInteger(1), lua.CheckInteger(2));
-        else
-            Console.Beep();
+        else*/
+        Console.Beep();
         return 0;
     }
 }

@@ -86,19 +86,26 @@ public readonly record struct Instruction(uint Val)
 
 	public const int MAXINDEXRK = (BITRK - 1);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int RKASK(int x) => (x | BITRK);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool ISK(int x) => ((x) & BITRK) != 0;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int INDEXK(int r) => (r & ~BITRK);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int MYK(int x) => (-1 - x);
 
-	public static uint MASK1(int size, int pos) => 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint MASK1(int size, int pos) =>
 		((~((~((uint)0)) << size)) << pos);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static uint MASK0(int size, int pos) => (~MASK1(size, pos));
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public OpCode GET_OPCODE() => 
 		(OpCode)((Val >> POS_OP) & MASK1(SIZE_OP, 0));
 

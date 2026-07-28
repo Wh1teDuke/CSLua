@@ -105,7 +105,7 @@ public static class LuaIOLib
 				throw new NotImplementedException();
 				
 				/* check that it's a valid file handle */
-				lua.PushValue(1);
+				//lua.PushValue(1);
 			}
 		}
 

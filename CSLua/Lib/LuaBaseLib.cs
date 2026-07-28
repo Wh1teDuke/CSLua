@@ -186,7 +186,6 @@ public static class LuaBaseLib
 	{
 		private string? _chunk;
 		private bool _firstCall = true;
-		private bool _firstPeek = true;
 		private bool _end;
 		private int _p;
 		private int _c = LLex.EOZ;
