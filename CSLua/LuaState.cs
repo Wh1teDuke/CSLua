@@ -2816,9 +2816,17 @@ public sealed class LuaState
 
 		private int RBIndex => Base + I.GETARG_B();
 		
-		public StkId RA => new (ref L.Stack[RAIndex]);
+		public StkId RA
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => new(ref L.Stack[RAIndex]);
+		}
 
-		public StkId RB => new (ref L.Stack[RBIndex]);
+		public StkId RB
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => new(ref L.Stack[RBIndex]);
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private StkId RK(int x) => 
@@ -2826,9 +2834,17 @@ public sealed class LuaState
 				? new StkId(ref K[Instruction.INDEXK(x)])
 				: new StkId(ref L.Stack[Base + x]);
 
-		public StkId RKB => RK(I.GETARG_B());
+		public StkId RKB
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => RK(I.GETARG_B());
+		}
 
-		public StkId RKC => RK(I.GETARG_C());
+		public StkId RKC
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => RK(I.GETARG_C());
+		}
 	}
 
 	private void Execute()

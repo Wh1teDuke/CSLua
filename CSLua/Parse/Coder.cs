@@ -109,6 +109,7 @@ public readonly record struct Instruction(uint Val)
 		return new Instruction(nValue);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG(int pos, int size) => 
 		(int)((Val >> pos) & MASK1(size, 0));
 
@@ -122,54 +123,56 @@ public readonly record struct Instruction(uint Val)
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_A() => GETARG(POS_A, SIZE_A);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_A(int value) => SETARG(value, POS_A, SIZE_A);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_B() => GETARG(POS_B, SIZE_B);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_B(int value) => SETARG(value, POS_B, SIZE_B);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_C() => GETARG(POS_C, SIZE_C);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_C(int value) => SETARG(value, POS_C, SIZE_C);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_Bx() => GETARG(POS_Bx, SIZE_Bx);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_Bx(int value) => SETARG(value, POS_Bx, SIZE_Bx);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_Ax() => GETARG(POS_Ax, SIZE_Ax);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_Ax(int value) => SETARG(value, POS_Ax, SIZE_Ax);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int GETARG_sBx() => GETARG_Bx() - MAXARG_sBx;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Instruction SETARG_sBx(int value) => SETARG_Bx(value + MAXARG_sBx);
 
 	public static Instruction CreateAB(OpCode op, int a, int b) =>
 		CreateABC(op, a, b, 0);
 	
-	public static Instruction CreateABC(OpCode op, int a, int b, int c)
-	{
-		return (Instruction)((((uint)op) << POS_OP)
-		                      | ((uint)a << POS_A)
-		                      | ((uint)b << POS_B)
-		                      | ((uint)c << POS_C));
-	}
+	public static Instruction CreateABC(OpCode op, int a, int b, int c) =>
+		(Instruction)((((uint)op) << POS_OP)
+		              | ((uint)a << POS_A)
+		              | ((uint)b << POS_B)
+		              | ((uint)c << POS_C));
 
 	public static Instruction CreateAC(OpCode op, int a, int c) =>
 		CreateABC(op, a, 0, c);
 
-	public static Instruction CreateABx(OpCode op, int a, uint bc)
-	{
-		return (Instruction)((((uint)op) << POS_OP)
-		                      | ((uint)a << POS_A)
-		                      | (bc << POS_Bx));
-	}
-	
+	public static Instruction CreateABx(OpCode op, int a, uint bc) =>
+		(Instruction)((((uint)op) << POS_OP)
+		              | ((uint)a << POS_A)
+		              | (bc << POS_Bx));
+
 	public static Instruction CreateAsBx(OpCode op, int a, int sBx) => 
 		CreateABx(op, a, ((uint)sBx) + MAXARG_sBx);
 
