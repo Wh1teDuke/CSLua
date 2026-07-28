@@ -12,7 +12,6 @@ public sealed class FuncState
 	public FuncState? Prev;
 	public LuaProto Proto = new();
 	public BlockCnt Block = null!;
-	public LuaState State = null!;
 	public LLex		Lexer = null!;
 
 	public readonly Dictionary<TValue, int> H = [];
