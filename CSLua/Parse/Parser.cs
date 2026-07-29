@@ -14,7 +14,7 @@ public sealed class FuncState
 	public BlockCnt Block = null!;
 	public LLex		Lexer = null!;
 
-	public readonly Dictionary<TValue, int> H = [];
+	public readonly Dictionary<TValue, int> H = new(32);
 
 	public int NumActVar;
 	public int FreeReg;
@@ -102,14 +102,15 @@ public struct ExpDesc
 
 public readonly record struct VarDesc(int Index);
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="Name">label identifier</param>
+/// <param name="Pc">position in code</param>
+/// <param name="Line">line where it appears</param>
+/// <param name="NumActVar">local level where it appears in current block</param>
 public record struct LabelDesc(
 	string Name, int Pc, int Line, int NumActVar);
-/*
-	public string 	Name;		// label identifier
-	public int 		Pc;			// position in code
-	public int		Line;		// line where it appear
-	public int		NumActVar;	// local level where it appears in current block
-*/
 
 public sealed class LHSAssign
 {
@@ -119,6 +120,15 @@ public sealed class LHSAssign
 
 public sealed class Parser
 {
+	private static volatile bool _init;
+	
+	internal static void Init()
+	{
+		if (_init) return;
+		_init = true;
+		LLex.Init();
+	}
+	
 	public static Parser Read(
 		ILoadInfo loadInfo, string? name, int numCSharpCalls)
 	{
@@ -135,11 +145,11 @@ public sealed class Parser
 	public static Parser Read(string code, string name = "???") =>
 		Read(new StringLoadInfo(code), name, 0);
 
-	private const int 		MAXVARS = 200;
+	private const int MAXVARS = 200;
 
-	private readonly List<VarDesc> 	_actVars;
-	private readonly List<LabelDesc> _pendingGotos;
-	private readonly List<LabelDesc> _activeLabels;
+	private readonly List<VarDesc> 	_actVars = new(32);
+	private readonly List<LabelDesc> _pendingGotos = new(32);
+	private readonly List<LabelDesc> _activeLabels = new(32);
 
 	private readonly LLex 	_lexer;
 	private FuncState 		_curFunc;
@@ -152,13 +162,9 @@ public sealed class Parser
 
 	private Parser(string? name, LLex lexer)
 	{
-		Name = name;
-		_lexer = lexer;
-		
-		_actVars = [];
-		_pendingGotos = [];
-		_activeLabels = [];
-		_curFunc = null!; // Initialized before reading
+		Name		= name;
+		_lexer		= lexer;
+		_curFunc	= null!; // Initialized before reading
 	}
 
 	private LuaProto AddPrototype()
@@ -357,7 +363,7 @@ public sealed class Parser
 			ref var v = ref GetLocalVar(fs, --fs.NumActVar);
 			v.EndPc = fs.Pc;
 		}
-		_actVars.RemoveRange(_actVars.Count-len, len);
+		_actVars.RemoveRange(_actVars.Count - len, len);
 	}
 
 	private void CloseGoto(int g, LabelDesc label)

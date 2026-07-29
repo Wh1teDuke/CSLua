@@ -76,9 +76,8 @@ public readonly record struct LuaToken(
 	public static LuaToken Number(double val) => new(TokenKind.Number, (int)TK.NUMBER, val);
 	public static LuaToken Of(TK kind) => new(TokenKind.Typed, (int)kind, 0);
 
-	public override string ToString()
-	{
-		return Kind switch
+	public override string ToString() =>
+		Kind switch
 		{
 			TokenKind.Typed => $"TypedToken: {TokenType}",
 			TokenKind.Literal => $"TokenLiteral: {(char)Val1}",
@@ -88,7 +87,6 @@ public readonly record struct LuaToken(
 			TokenKind.Number => $"TokenNumber: {Val2}",
 			_ => throw new ArgumentOutOfRangeException()
 		};
-	}
 }
 
 public sealed class LLex
@@ -109,6 +107,11 @@ public sealed class LLex
 	private int _savedCount;
 	private int _savedStart;
 
+	private readonly Dictionary<string, string> _cachedStrings;
+	
+	private readonly Dictionary<string, string>
+		.AlternateLookup<ReadOnlySpan<char>> _altCS; 
+	
 	private static readonly FrozenDictionary<string, TK> ReservedWordDict =
 		new Dictionary<string, TK>
 		{
@@ -140,9 +143,19 @@ public sealed class LLex
 	private static readonly FrozenDictionary<string, TK>
 		.AlternateLookup<ReadOnlySpan<char>> AltRWD = 
 			ReservedWordDict.GetAlternateLookup<ReadOnlySpan<char>>(); 
+	
+	internal static void Init()
+	{
+		_ = AltRWD["local"];
+		_ = OpCodeInfo.GetMode(OpCode.OP_ADD);
+		_ = double.TryParse("0", out _);
+	}
 
 	public LLex(ILoadInfo loadInfo, string? name)
 	{
+		_cachedStrings = new Dictionary<string, string>(32);
+		_altCS = _cachedStrings.GetAlternateLookup<ReadOnlySpan<char>>();
+		
 		_loadInfo = loadInfo;
 		_name = name;
 		LineNumber = 1;
@@ -205,8 +218,18 @@ public sealed class LLex
 		_saved[_savedCount++] = c;
 	}
 
-	private string _GetSavedString() => _GetSavedSpan().ToString();
-	
+	private string _GetSavedString()
+	{
+		var span = _GetSavedSpan();
+		if (_altCS.TryGetValue(span, out var result))
+			return result;
+
+		result = _GetSavedSpan().ToString();
+		_cachedStrings[result] = result;
+		
+		return result;
+	}
+
 	private ReadOnlySpan<char> _GetSavedSpan() => 
 		new(_saved, _savedStart, _savedCount);
 

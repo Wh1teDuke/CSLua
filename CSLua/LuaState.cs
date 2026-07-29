@@ -1257,7 +1257,7 @@ public sealed class LuaState
 
 	public void PushTValue(TValue val)
 	{
-		Top.V.CopyFrom(new StkId(ref val));
+		Top.V = val;
 		ApiIncrTop();
 	}
 
@@ -1505,6 +1505,9 @@ public sealed class LuaState
 	/// <returns></returns>
 	public int ToInteger(int index) => ToIntegerX(index, out _);
 	
+	public TValue? ToTValue(int index) => 
+		!Index2Addr(index, out var addr) ? null : addr;
+
 	/// <summary>
 	/// Test if the variable at <paramref name="index"/> is a double or can be converted to one
 	/// </summary>

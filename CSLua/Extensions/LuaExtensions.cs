@@ -8,6 +8,13 @@ public static class LuaExtensions
 {
     extension(LuaState L)
     {
+        public TValue? PopTValue()
+        {
+            var i = L.ToTValue(-1);
+            if (i != null) L.Pop(1);
+            return i;
+        }
+        
         /// <summary>
         /// Pops the integer variable from the top of the stack, then returns it.
         /// </summary>
@@ -97,6 +104,13 @@ public static class LuaExtensions
             L.PushCsDelegate(closure);
             L.SetGlobal(name);
         }
+        
+        public void SetGlobal(string name, LuaClosure closure)
+        {
+            L.PushLuaClosure(closure);
+            L.SetGlobal(name);
+        }
+        
 
         public void SetGlobal(string name, int i)
         {
@@ -180,12 +194,6 @@ public static class LuaExtensions
             Console.WriteLine("Error!: " + err);
         }
 
-        public void RegisterFunction(string name, Lua.CsDelegate callBack)
-        {
-            L.PushCsDelegate(callBack);
-            L.SetGlobal(name);
-        }
-
         public void DeleteGlobal(string name)
         {
             L.GetGlobal(name);
@@ -233,6 +241,36 @@ public static class LuaExtensions
 
         public void Eval(string s, Lua.CsDelegate onError) =>
             L.EvalX(s, new CsClosure(onError));
+        
+        public void Call(LuaClosure closure, int args = 0, int results = 0)
+        {
+            L.PushLuaClosure(closure);
+            var tStatus = L.PCall(args, results);
+            L.AssertNoErrors(tStatus);
+        }
+        
+        public void Call(
+            LuaClosure closure,
+            ReadOnlySpan<TValue> args,
+            Span<TValue> results)
+        {
+            L.PushLuaClosure(closure);
+            foreach (var arg in args) L.PushTValue(arg);
+
+            var tStatus = L.PCall(args.Length, results.Length);
+            L.AssertNoErrors(tStatus);
+            
+            foreach (ref var result in results)
+                result = L.PopTValue()!.Value;
+            results.Reverse();
+        }
+
+        public LuaClosure Compile(string code)
+        {
+            var tStatus = L.LoadString(code);
+            L.AssertNoErrors(tStatus);
+            return L.PopLuaClosure()!;
+        }
 
         private void PushClosure(BaseClosure c)
         {
@@ -250,6 +288,14 @@ public static class LuaExtensions
             }
 
             return true;
+        }
+
+        private void AssertNoErrors(ThreadStatus status)
+        {
+            if (status == ThreadStatus.LUA_OK) return;
+            var msg = L.ToString(-1)!;
+            L.Pop(1);
+            throw new LuaRuntimeException(status, msg);
         }
     }
 }

@@ -353,12 +353,12 @@ public record struct UpValueDesc(string Name, int Index, bool InStack, bool IsEn
 
 public sealed class LuaProto
 {
-	public readonly List<Instruction> 	Code = [];
-	public readonly List<TValue>		K = [];
-	public readonly List<LuaProto>		P = [];
-	public readonly List<UpValueDesc>	Upvalues = [];
-	public readonly List<int>			LineInfo = [];
-	public readonly List<LocVar>		LocVars = [];
+	public readonly List<Instruction> 	Code = new(32);
+	public readonly List<TValue>		K = new(32);
+	public readonly List<LuaProto>		P = new(32);
+	public readonly List<UpValueDesc>	Upvalues = new(32);
+	public readonly List<int>			LineInfo = new(32);
+	public readonly List<LocVar>		LocVars = new(32);
 
 	public LuaProto? Parent;
 

@@ -15,7 +15,7 @@ public class StringConcatPatch
     [GlobalSetup]
     public void Setup()
     {
-        _luaState = Lua.New();
+        _luaState = CSLua.Lua.New();
         
         _luaState.DoString("function a2() return 'foo' .. 'bar' end");
         _luaState.DoString("function b2() return 'foo' +  'bar' end");

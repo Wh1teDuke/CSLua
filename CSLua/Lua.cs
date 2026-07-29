@@ -1,4 +1,6 @@
-﻿namespace CSLua;
+﻿using CSLua.Parse;
+
+namespace CSLua;
 
 public static class Lua
 {
@@ -71,5 +73,9 @@ public static class Lua
 			_ => "no value"
 		};
 
-	public static LuaState New(GlobalState? g = null) => new (g);
+	public static LuaState New(GlobalState? g = null)
+	{
+		Parser.Init();
+		return new LuaState(g);
+	}
 }

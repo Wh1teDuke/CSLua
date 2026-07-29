@@ -41,4 +41,34 @@ public sealed class TestLuaExtensions
             Assert.Equal(top1, top2);
         }
     }
+
+    [Fact]
+    public void TestCallLuaClosure1()
+    {
+        var L = Lua.New();
+        var closure = L.Compile("return 1 + 2");
+        
+        L.Call(closure, 0, 1);
+        var res = L.PopInteger();
+        Assert.Equal(3, res);
+    }
+    
+    [Fact]
+    public void TestCallLuaClosure2()
+    {
+        var L = Lua.New();
+        L.OpenLibs();
+        L.Eval( """
+                    return function(a, b)
+                        assert(type(a) == "number", type(a))
+                        assert(type(b) == "string", type(b)) 
+                        return 1, 2, 3
+                    end
+                   """);
+        var closure = L.PopLuaClosure()!;
+        
+        Span<TValue> results = [0, 0, 0];
+        L.Call(closure, [1, "foobar"], results);
+        Assert.Equal([1, 2, 3], results);
+    }
 }
