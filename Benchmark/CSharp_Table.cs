@@ -28,7 +28,7 @@ public class CSharp_Table
         _dict["Foo7"]   = "Bar";
         _dict["Foo8"]   = "Bar";
 
-        _luaState = Lua.New();
+        _luaState = CSLua.Lua.New();
         _luaState.OpenLibs();
         
         _luaState.DoString(

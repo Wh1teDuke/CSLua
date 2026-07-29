@@ -15,7 +15,7 @@ public class CSharp_String
     [GlobalSetup]
     public void Setup()
     {
-        _luaState = Lua.New();
+        _luaState = CSLua.Lua.New();
         _luaState.DoString("""
                            function AddLoop(count)
                                local str = ""

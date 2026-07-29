@@ -13,5 +13,6 @@
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.16.0-preview.1" />
+      <PackageReference Include="LuaCSharp" Version="0.5.5" />
     </ItemGroup>
 </Project>
