@@ -107,7 +107,7 @@ public class CSharp_Table
     {
         _luaState.GetGlobal("_dict_get");
         _luaState.Call(0, 1);
-        return _luaState.PopInteger();
+        return _luaState.PopInteger()!.Value;
     }
     #endregion
     
@@ -134,7 +134,7 @@ public class CSharp_Table
     {
         _luaState.GetGlobal("_dict_set");
         _luaState.Call(0, 1);
-        return _luaState.PopInteger();
+        return _luaState.PopInteger()!.Value;
     }
     #endregion
     
@@ -154,7 +154,7 @@ public class CSharp_Table
     {
         _luaState.GetGlobal("_dict_iter");
         _luaState.Call(0, 1);
-        return _luaState.PopInteger();
+        return _luaState.PopInteger()!.Value;
     }
     #endregion
     
@@ -180,7 +180,7 @@ public class CSharp_Table
     {
         _luaState.GetGlobal("_dict_del");
         _luaState.Call(0, 1);
-        return _luaState.PopInteger();
+        return _luaState.PopInteger()!.Value;
     }
     #endregion
 }

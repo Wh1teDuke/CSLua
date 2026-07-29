@@ -10,7 +10,7 @@ public sealed class TestTable
     {
         var L = Lua.New();
         L.Eval("return {0,1,2,3,4,5}");
-        var t = L.PopTable();
+        var t = L.PopTable()!;
 
         Assert.Equal(6, t.Length);
     }
@@ -24,7 +24,7 @@ public sealed class TestTable
                return t;
                """);
 
-        var t = L.PopTable();
+        var t = L.PopTable()!;
         var optTVal1 = t.TryGet("foo");
         var optTVal2 = t.TryGet("bar");
 
@@ -73,7 +73,7 @@ public sealed class TestTable
                 end
                 return getFoo(t);
                """);
-        var t = L.PopTable();
+        var t = L.PopTable()!;
         var optTVal1 = t.TryGet("bar");
         var bar = Assert.NotNull(optTVal1);
         Assert.Equal("bar", bar.AsString());
@@ -91,7 +91,7 @@ public sealed class TestTable
                 return t;
                """);
 
-        var t = L.PopTable();
+        var t = L.PopTable()!;
         for (var i = 1; i <= 10_000; i++)
         {
             var optTVal1 = t.TryGet("key" + i);

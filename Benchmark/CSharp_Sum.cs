@@ -44,6 +44,6 @@ public class CSharp_Sum
         
         return _luaState.Status != ThreadStatus.LUA_OK 
             ? throw new Exception(_luaState.PopErrorMsg()) 
-            : _luaState.PopNumber();
+            : _luaState.PopDouble()!.Value;
     }
 }

@@ -203,7 +203,7 @@ public sealed class TestStack
         const double n1 = 1.0;
         L.PushNumber(n1);
         Assert.Equal(1, L.GetTop());
-        var n2 = L.PopNumber();
+        var n2 = L.PopDouble();
         
         Assert.Equal(0, L.GetTop());
         Assert.Equal(n1, n2);
@@ -283,7 +283,7 @@ public sealed class TestStack
         Assert.Equal(3, L.GetTop());
         var n3 = L.PopBool();
         Assert.Equal(2, L.GetTop());
-        var n2 = L.PopNumber();
+        var n2 = L.PopDouble();
         Assert.Equal(1, L.GetTop());
         var n1 = L.PopInteger();
         

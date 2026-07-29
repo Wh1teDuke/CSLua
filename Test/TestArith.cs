@@ -65,7 +65,7 @@ public sealed class TestArith
                    end
                    return sum
                    """);
-        var sum2 = L.PopNumber();
+        var sum2 = L.PopDouble();
         Assert.Equal(sum1, sum2);
     }
     
@@ -93,7 +93,7 @@ public sealed class TestArith
         
         var sum2 = L.Status != ThreadStatus.LUA_OK 
             ? throw new Exception(L.PopErrorMsg()) 
-            : L.PopNumber();
+            : L.PopDouble();
 
         Assert.Equal(sum1, sum2);
     }

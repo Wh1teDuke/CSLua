@@ -8,6 +8,10 @@ public static class LuaExtensions
 {
     extension(LuaState L)
     {
+        /// <summary>
+        /// Pops the lua value from the top of the stack, then
+        /// returns it or null if there is nothing at the top.
+        /// </summary>
         public TValue? PopTValue()
         {
             var i = L.ToTValue(-1);
@@ -16,40 +20,66 @@ public static class LuaExtensions
         }
         
         /// <summary>
-        /// Pops the integer variable from the top of the stack, then returns it.
+        /// Pops the integer value from the top of the stack, then
+        /// returns it or null if the value at the top is not a number.
         /// </summary>
         /// <remarks>
         /// If the variable is not an integer (for example, a double or a string),
         /// the engine will try to cast or parse it if possible.
         /// </remarks>
-        public int PopInteger()
+        public int? PopInteger()
         {
-            var i = L.ToInteger(-1);
+            var i = L.ToIntegerX(-1, out var isNum);
+
+            if (!isNum) return null;
             L.Pop(1);
             return i;
         }
 
-        public long PopInt64()
+        /// <summary>
+        /// Pops the long value from the top of the stack, then
+        /// returns it or null if the value at the top is not a long.
+        /// </summary>
+        public long? PopInt64()
         {
+            if (L.Type(-1) != Lua.Type.LUA_TINT64) return null;
+            
             var i = L.ToInt64(-1);
             L.Pop(1);
             return i;
         }
 
-        public double PopNumber()
-        { // TODO: Return double? for consistency
+        /// <summary>
+        /// Pops the double value from the top of the stack, then
+        /// returns it or null if the value at the top is not a double.
+        /// </summary>
+        public double? PopDouble()
+        {
+            if (L.Type(-1) != Lua.Type.LUA_TNUMBER) 
+                return null;
+
             var i = L.ToNumber(-1);
             L.Pop(1);
             return i;
         }
 
+        /// <summary>
+        /// Pops the bool value from the top of the stack, then
+        /// returns it or null if the value at the top is not a bool.
+        /// </summary>
         public bool? PopBool()
         {
+            if (L.Type(-1) != Lua.Type.LUA_TBOOLEAN) return null;
+            
             var i = L.ToBoolean(-1);
             L.Pop(1);
             return i;
         }
 
+        /// <summary>
+        /// Pops the string value from the top of the stack, then
+        /// returns it or null if the value at the top is not a string.
+        /// </summary>
         public string? PopString()
         {
             var i = L.ToString(-1);
@@ -57,14 +87,21 @@ public static class LuaExtensions
             return i;
         }
 
-        public LuaTable PopTable()
+        /// <summary>
+        /// Pops the table value from the top of the stack, then
+        /// returns it or null if the value at the top is not a table.
+        /// </summary>
+        public LuaTable? PopTable()
         {
-            // TODO: Return LuaTable? for consistency
-            var i = (LuaTable)L.ToObject(-1)!;
-            L.Pop(1);
+            var i = L.ToTable(-1);
+            if (i != null) L.Pop(1);
             return i;
         }
 
+        /// <summary>
+        /// Pops the user data value from the top of the stack, then
+        /// returns it or null if the value at the top is not a user data value.
+        /// </summary>
         public IUSerData? PopUserData()
         {
             var i = L.ToUserData(-1);
@@ -72,6 +109,10 @@ public static class LuaExtensions
             return i;
         }
         
+        /// <summary>
+        /// Pops the light user data value from the top of the stack, then
+        /// returns it or null if the value at the top is not a light user data value.
+        /// </summary>
         public object? PopLightUserData()
         {
             var i = L.ToLightUserData(-1);
@@ -79,6 +120,10 @@ public static class LuaExtensions
             return i;
         }
 
+        /// <summary>
+        /// Pops the thread value from the top of the stack, then
+        /// returns it or null if the value at the top is not a thread.
+        /// </summary>
         public LuaState? PopThread()
         {
             var t = L.ToThread(-1);
@@ -86,11 +131,21 @@ public static class LuaExtensions
             return t;
         }
 
+        /// <summary>
+        /// Pops the lua closure value from the top of the stack, then
+        /// returns it or null if the value at the top is not a lua closure.
+        /// </summary>
         public LuaClosure? PopLuaClosure()
         {
             var t = L.ToLuaClosure(-1);
             if (t != null) L.Pop(1);
             return t;
+        }
+        
+        public void SetGlobal(string name, object lightUserData)
+        {
+            L.PushLightUserData(lightUserData);
+            L.SetGlobal(name);
         }
         
         public void SetGlobal(string name, IUSerData udata)
@@ -133,7 +188,7 @@ public static class LuaExtensions
         public double GetGlobalNumber(string name)
         {
             L.GetGlobal(name);
-            return L.PopNumber();
+            return L.PopDouble()!.Value;
         }
 
         public void SetGlobal(string name, bool value)

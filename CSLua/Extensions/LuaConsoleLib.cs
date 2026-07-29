@@ -1,6 +1,7 @@
+using CSLua.Lib;
 using CSLua.Util;
 
-namespace CSLua.Lib;
+namespace CSLua.Extensions;
 
 public static class LuaConsoleLib
 {

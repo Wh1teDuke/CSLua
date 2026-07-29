@@ -190,7 +190,7 @@ public class LuaCSharp
     public double BenchmarkAdd_CSLua()
     {
         _csLua.DoString(CodeAdd);
-        return _csLua.PopNumber();
+        return _csLua.PopDouble()!.Value;
     }
     
     [Benchmark(Description = "Lua-CSharp")]

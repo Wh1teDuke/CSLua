@@ -1570,13 +1570,7 @@ public sealed class LuaState
 
 	internal long ToInt64X(int index, out bool isNum)
 	{
-		if (!Index2Addr(index, out var addr)) 
-		{
-			isNum = false;
-			return 0;
-		}
-
-		if (!addr.V.IsInt64()) 
+		if (!Index2Addr(index, out var addr) || !addr.V.IsInt64())
 		{
 			isNum = false;
 			return 0;

@@ -26,8 +26,8 @@ public sealed class TestArray
         Assert.Equal(00, L.GetGlobalInteger("len3"));
         Assert.Equal(01, L.GetGlobalInteger("first1"));
         Assert.Equal(10, L.GetGlobalInteger("last1"));
-        Assert.Equal(00, L.GetGlobalInteger("first2"));
-        Assert.Equal(00, L.GetGlobalInteger("last2"));
+        Assert.Null(L.GetGlobalInteger("first2"));
+        Assert.Null(L.GetGlobalInteger("last2"));
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public sealed class TestArray
         Assert.Equal(00, L.GetGlobalInteger("len1"));
         Assert.Equal(10, L.GetGlobalInteger("len2"));
         Assert.Equal(00, L.GetGlobalInteger("len3"));
-        Assert.Equal(00, L.GetGlobalInteger("first2"));
-        Assert.Equal(00, L.GetGlobalInteger("last2"));
+        Assert.Null(L.GetGlobalInteger("first2"));
+        Assert.Null(L.GetGlobalInteger("last2"));
     }
     
     [Fact]
@@ -123,7 +123,7 @@ public sealed class TestArray
                 return t;
                """);
 
-        var t = L.PopTable();
+        var t = L.PopTable()!;
         for (var i = 1; i <= 10_000; i++)
         {
             Assert.True(t.TryGet(i, out var val));
