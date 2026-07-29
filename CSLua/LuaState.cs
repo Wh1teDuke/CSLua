@@ -1342,7 +1342,7 @@ public sealed class LuaState
 		return true;
 	}
 
-	internal bool SetMetaTable(int index)
+	public bool SetMetaTable(int index)
 	{
 		LuaUtil.ApiCheckNumElems(this, 1);
 
