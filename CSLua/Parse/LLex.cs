@@ -262,8 +262,8 @@ public sealed class LLex
 		return false;
 	}
 
-	public static bool IsReservedWord(string name) => 
-		ReservedWordDict.ContainsKey(name);
+	public static bool IsReservedWord(ReadOnlySpan<char> name) => 
+		AltRWD.ContainsKey(name);
 
 	private void _IncLineNumber()
 	{
