@@ -160,13 +160,31 @@ public static class LuaExtensions
             L.SetGlobal(name);
         }
         
+        public void SetGlobal(string name, Action<LuaState> closure)
+        {
+            L.PushCsDelegate(L =>
+            {
+                closure(L);
+                return 0;
+            });
+            L.SetGlobal(name);
+        }
+        public void SetGlobal(string name, Action closure)
+        {
+            L.PushCsDelegate(L =>
+            {
+                closure();
+                return 0;
+            });
+            L.SetGlobal(name);
+        }
+        
         public void SetGlobal(string name, LuaClosure closure)
         {
             L.PushLuaClosure(closure);
             L.SetGlobal(name);
         }
         
-
         public void SetGlobal(string name, int i)
         {
             L.PushInteger(i);

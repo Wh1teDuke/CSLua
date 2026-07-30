@@ -71,4 +71,19 @@ public sealed class TestLuaExtensions
         L.Call(closure, [1, "foobar"], results);
         Assert.Equal([1, 2, 3], results);
     }
+
+    [Fact]
+    public void TestPushAction()
+    {
+        var L = Lua.New();
+        var test1 = false; 
+        var test2 = false; 
+
+        L.OpenLibs();
+        L.SetGlobal("test1", () => test1 = true);
+        L.SetGlobal("test2", _ => test2 = true);
+        L.Eval("test1();test2();");
+        Assert.True(test1);
+        Assert.True(test2);
+    }
 }
