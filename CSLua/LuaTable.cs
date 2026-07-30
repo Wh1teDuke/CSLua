@@ -7,7 +7,8 @@ namespace CSLua;
 
 public sealed class LuaTable
 {
-	internal LuaTable? MetaTable;
+	public LuaTable? MetaTable;
+
 	internal uint NoTagMethodFlags;
 
 	private readonly LuaState L;
